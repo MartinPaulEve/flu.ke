@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 
+from apps.staticgen.models import BuildState
 from apps.staticgen.renderer import (
     fingerprint,
     load_manifest,
@@ -90,6 +91,7 @@ class Command(BaseCommand):
             media_copied = sync_tree(Path(settings.MEDIA_ROOT), build_dir / "media")
 
         save_manifest(manifest_path, new_manifest)
+        BuildState.mark_built()
         self.stdout.write(
             self.style.SUCCESS(
                 f"Built {rendered} pages ({skipped} unchanged) into {build_dir}. "
