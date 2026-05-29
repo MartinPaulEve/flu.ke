@@ -1,14 +1,17 @@
 {% extends "base.html" %}
 {% load content %}
-{% block title %}{{ post.resolved_seo_title }} &middot; {{ site_name }}{% endblock %}
+{% block title %}{{ post.resolved_seo_title }} — {{ site_name }}{% endblock %}
 {% block content %}
-<article>
-  <h1>{{ post.title }}</h1>
-  {% if post.published_at %}<p><time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:'j N Y' }}</time></p>{% endif %}
-  {% if post.cover_image %}<img src="{{ post.cover_image.url }}" alt="">{% endif %}
-  <div>{{ post.body|markdownify }}</div>
+<article class="wrap">
+  <header class="article-head">
+    <p class="kicker">News</p>
+    <h1>{{ post.title }}</h1>
+    {% if post.published_at %}<p class="entry__meta"><time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:'j F Y' }}</time></p>{% endif %}
+  </header>
+  {% if post.cover_image %}<img src="{{ post.cover_image.url }}" alt="" class="reveal">{% endif %}
+  <div class="prose reveal">{{ post.body|markdownify }}</div>
   {% if post.categories.all %}
-    <p>Filed under:
+    <p class="entry__meta" style="margin-top:2rem">Filed under:
       {% for category in post.categories.all %}<a href="{{ category.get_absolute_url }}">{{ category.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
     </p>
   {% endif %}

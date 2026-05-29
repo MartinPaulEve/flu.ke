@@ -1,18 +1,22 @@
 {% extends "base.html" %}
-{% block title %}News &middot; {{ site_name }}{% endblock %}
+{% block title %}News — {{ site_name }}{% endblock %}
 {% block content %}
-<h1>News</h1>
-<ul>
-  {% for post in posts %}
-    <li>
-      <article>
-        <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-        {% if post.published_at %}<p><time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:'j N Y' }}</time></p>{% endif %}
-        {% if post.excerpt %}<p>{{ post.excerpt }}</p>{% endif %}
-      </article>
-    </li>
-  {% empty %}
-    <li>No posts yet.</li>
-  {% endfor %}
-</ul>
+<section class="section wrap">
+  <p class="kicker">Dispatches</p>
+  <h1>News</h1>
+  <ul class="entries reveal" data-reveal="stagger">
+    {% for post in posts %}
+      <li class="entry">
+        <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
+        <span>
+          <span class="entry__title"><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></span>
+          {% if post.excerpt %}<span class="prose" style="display:block;color:var(--muted)">{{ post.excerpt }}</span>{% endif %}
+        </span>
+        {% if post.published_at %}<span class="entry__meta"><time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:'j M Y' }}</time></span>{% endif %}
+      </li>
+    {% empty %}
+      <li class="entry"><span class="entry__index">—</span><span class="entry__title">No posts yet.</span><span></span></li>
+    {% endfor %}
+  </ul>
+</section>
 {% endblock %}

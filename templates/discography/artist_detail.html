@@ -1,15 +1,22 @@
 {% extends "base.html" %}
-{% block title %}{{ artist.name }} &middot; {{ site_name }}{% endblock %}
+{% block title %}{{ artist.name }} — {{ site_name }}{% endblock %}
 {% block content %}
-<h1>{{ artist.name }}</h1>
-{% if artist.is_alias and artist.primary_artist %}
-  <p>An alias of <a href="{{ artist.primary_artist.get_absolute_url }}">{{ artist.primary_artist.name }}</a>.</p>
-{% endif %}
-{% if artist.biography %}<div>{{ artist.biography|linebreaks }}</div>{% endif %}
-<h2>Releases</h2>
-<ul>
-  {% for release in releases %}
-    <li><a href="{{ release.get_absolute_url }}">{% if release.year %}{{ release.year }} &middot; {% endif %}{{ release.name }}</a></li>
-  {% endfor %}
-</ul>
+<section class="section wrap">
+  <p class="kicker">{% if artist.is_alias %}Alias{% else %}Artist{% endif %}</p>
+  <h1>{{ artist.name }}</h1>
+  {% if artist.is_alias and artist.primary_artist %}
+    <p class="prose">An alias of <a href="{{ artist.primary_artist.get_absolute_url }}">{{ artist.primary_artist.name }}</a>.</p>
+  {% endif %}
+  {% if artist.biography %}<div class="prose">{{ artist.biography|linebreaks }}</div>{% endif %}
+  <h2 style="margin-top:2.5rem">Releases</h2>
+  <ul class="entries" data-reveal="stagger">
+    {% for release in releases %}
+      <li class="entry">
+        <span class="entry__index">{% if release.year %}{{ release.year }}{% else %}—{% endif %}</span>
+        <span class="entry__title"><a href="{{ release.get_absolute_url }}">{{ release.name }}</a></span>
+        <span class="entry__meta">{{ release.type.name }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
 {% endblock %}

@@ -1,0 +1,62 @@
+/* Fluke design tokens — industrial techno / brutalist-editorial.
+   Black ground, one electric red, warm near-white text. All colour pairings are
+   verified for WCAG AA by tests/test_design_tokens_contrast.py. */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("../fonts/bricolage-grotesque.woff2") format("woff2");
+  font-weight: 400 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Spline Sans Mono";
+  src: url("../fonts/spline-sans-mono.woff2") format("woff2");
+  font-weight: 400 600;
+  font-display: swap;
+  font-style: normal;
+}
+
+:root {
+  /* Surfaces */
+  --bg: #0a0a0a;          /* near-black ground */
+  --bg-raise: #151311;    /* raised panel */
+  --bg-inset: #050505;    /* deep inset */
+  --hairline: #2a2622;    /* hairline rules / borders */
+
+  /* Text (all >= 4.5:1 on --bg) */
+  --fg: #f4f1ea;          /* warm near-white body */
+  --muted: #a8a299;       /* secondary text */
+  --link: #f4f1ea;        /* links: white text + red underline */
+
+  /* Red — the single accent */
+  --accent: #ff2e1f;      /* electric red: large display + UI (>= 3:1) */
+  --accent-text: #ff5a45; /* red usable at normal text size (>= 4.5:1) */
+  --accent-ink: #0a0a0a;  /* text on a solid red fill */
+
+  /* Focus — deliberately not red so it never hides on red controls */
+  --focus: #5ad1ff;
+
+  /* Type */
+  --font-display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "Cascadia Code", monospace;
+  --step--1: clamp(0.78rem, 0.74rem + 0.2vw, 0.86rem);
+  --step-0: clamp(0.95rem, 0.9rem + 0.25vw, 1.05rem);
+  --step-1: clamp(1.2rem, 1.05rem + 0.7vw, 1.6rem);
+  --step-2: clamp(1.6rem, 1.3rem + 1.5vw, 2.6rem);
+  --step-3: clamp(2.2rem, 1.6rem + 3vw, 4rem);
+  --display: clamp(3rem, 1.5rem + 9vw, 11rem);
+
+  /* Space + structure */
+  --gutter: clamp(1.1rem, 0.6rem + 2.5vw, 3rem);
+  --measure: 64ch;
+  --rule: 1px;
+  --radius: 0;
+
+  /* Motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --reveal-shift: 2.2rem;
+  --reveal-time: 0.7s;
+}
