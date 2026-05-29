@@ -34,8 +34,20 @@ uv run python manage.py import_media --dry-run    # then without --dry-run
 uv run python manage.py import_blog               # best-effort from the Wayback Machine
 ```
 
-## Build & deploy the static site
+## Build & preview the static site
 ```bash
-uv run python manage.py build_site        # writes dist/
-./scripts/deploy.sh                        # rsync / object-storage sync
+uv run python manage.py build_site         # writes dist/ (incremental; --full / --clean)
+uv run python -m http.server -d dist 8000  # preview at http://localhost:8000
 ```
+You can also publish from the admin: the **Build state** screen shows an
+"Unpublished changes" banner and a **Publish now** button that rebuilds `dist/`.
+
+## Deploy
+The public site is just the files in `dist/`. Configure `DEPLOY_*` in `.env`, then:
+```bash
+bash scripts/deploy.sh
+```
+Targets: `rsync` (to an nginx box — see `scripts/nginx-flu.ke.conf` for MIME types
+and cache headers), `s3` (S3 / Cloudflare R2 / Backblaze B2), or `rclone`. The host
+must serve large files, since the full ~10 GB media library is part of the output —
+use object storage or a plain web server, not a size-limited PaaS.
