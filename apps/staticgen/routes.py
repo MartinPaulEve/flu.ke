@@ -37,15 +37,10 @@ def iter_routes() -> Iterator[Route]:
     releases = list(Release.objects.published().select_related("artist", "type"))
 
     # Landing
-    marquee = [r.name for r in releases[:16]]
     yield Route(
         "/",
         "landing.html",
-        {
-            "recent_posts": posts[:6],
-            "latest_resources": resources[:8],
-            "marquee": marquee,
-        },
+        {"recent_posts": posts[:6], "latest_resources": resources[:8]},
     )
 
     # Blog / News

@@ -126,16 +126,6 @@ h3 { font-size: var(--step-1); }
 .entry:hover::after, .entry:focus-within::after { width: 100%; }
 .entry:hover .entry__title a { color: var(--accent-text); }
 
-/* ---------- kinetic marquee ---------- */
-.marquee { overflow: clip; border-block: var(--rule) solid var(--hairline); padding-block: 0.6rem; }
-.marquee__track { display: inline-flex; gap: 2.5rem; white-space: nowrap; will-change: transform; }
-.marquee__track span { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; font-size: var(--step-2); color: transparent; -webkit-text-stroke: 1px var(--hairline); }
-.marquee__track span:nth-child(3n) { color: var(--accent); -webkit-text-stroke: 0; }
-@media (prefers-reduced-motion: no-preference) {
-  .marquee__track { animation: slide 40s linear infinite; }
-  @keyframes slide { to { transform: translateX(-50%); } }
-}
-
 /* ---------- discography ---------- */
 .disco-section + .disco-section { margin-top: clamp(2rem, 5vw, 4rem); }
 details.edition { border-top: var(--rule) solid var(--hairline); }
@@ -168,4 +158,4 @@ time { font-variant-numeric: tabular-nums; }
   .js .reveal.is-visible[data-reveal="stagger"] > * { opacity: 1; transform: none; transition-delay: calc(var(--i, 0) * 70ms); }
 }
 
-@media print { body::before, body::after, .site-nav, .marquee { display: none; } body { color: #000; background: #fff; } }
+@media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }

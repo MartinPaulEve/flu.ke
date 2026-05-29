@@ -9,15 +9,6 @@
   <span class="hero__scrim" aria-hidden="true"></span>
 </section>
 
-{% if marquee %}
-<div class="marquee" aria-hidden="true">
-  <div class="marquee__track">
-    {% for term in marquee %}<span>{{ term }}</span>{% endfor %}
-    {% for term in marquee %}<span>{{ term }}</span>{% endfor %}
-  </div>
-</div>
-{% endif %}
-
 <section class="section wrap reveal" aria-labelledby="recent-news-title">
   <p class="kicker">01 — Dispatches</p>
   <h2 id="recent-news-title">Latest news</h2>
