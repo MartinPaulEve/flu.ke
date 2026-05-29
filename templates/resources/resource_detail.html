@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load content %}
 {% block title %}{{ resource.resolved_seo_title }} — {{ site_name }}{% endblock %}
+{% block meta %}{% include "partials/og_meta.html" with seo_object=resource og_type="article" %}{% endblock %}
 {% block content %}
 <article class="section wrap">
   <p class="kicker">{{ resource.get_kind_display }}{% if resource.subcategory %} — {{ resource.subcategory.name }}{% endif %}</p>

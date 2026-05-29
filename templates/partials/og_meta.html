@@ -1,0 +1,17 @@
+{# Open Graph + Twitter + canonical meta for any SeoFieldsMixin object (seo_object). #}
+{% if seo_object.meta_description %}<meta name="description" content="{{ seo_object.meta_description }}">{% endif %}
+<link rel="canonical" href="{% if seo_object.canonical_url %}{{ seo_object.canonical_url }}{% else %}{{ site_base_url }}{{ seo_object.get_absolute_url }}{% endif %}">
+{% if seo_object.noindex %}<meta name="robots" content="noindex">{% endif %}
+<meta property="og:site_name" content="{{ site_name }}">
+<meta property="og:title" content="{{ seo_object.resolved_og_title }}">
+{% if seo_object.resolved_og_description %}<meta property="og:description" content="{{ seo_object.resolved_og_description }}">{% endif %}
+<meta property="og:type" content="{{ og_type|default:'article' }}">
+<meta property="og:url" content="{{ site_base_url }}{{ seo_object.get_absolute_url }}">
+{% if seo_object.og_image %}
+<meta property="og:image" content="{{ site_base_url }}{{ seo_object.og_image.url }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+{% else %}
+<meta name="twitter:card" content="summary">
+{% endif %}

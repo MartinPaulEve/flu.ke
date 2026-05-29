@@ -1,8 +1,10 @@
 """Blog / News models."""
 
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
+from apps.blog.og import render_og_image
 from apps.core.models import (
     PublishableQuerySet,
     SeoFieldsMixin,
@@ -86,3 +88,10 @@ class Post(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     def get_absolute_url(self):
         return f"/news/{self.display_date.year}/{self.slug}/"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.title and not self.og_image:
+            data = render_og_image(self.title)
+            self.og_image.save(f"{self.pk}.png", ContentFile(data), save=False)
+            super().save(update_fields=["og_image"])

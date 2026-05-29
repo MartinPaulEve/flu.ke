@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load content %}
 {% block title %}{{ page.resolved_seo_title }} — {{ site_name }}{% endblock %}
+{% block meta %}{% include "partials/og_meta.html" with seo_object=page og_type="website" %}{% endblock %}
 {% block body_class %}page-{{ page.template_key }}{% endblock %}
 {% block content %}
 <article class="section wrap">
