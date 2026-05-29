@@ -1,0 +1,121 @@
+"""
+Django settings for the Fluke CMS.
+
+The CMS runs privately/locally for editing; the public site is rendered to static
+files (see the ``staticgen`` app) and served as plain files. Secrets come from the
+environment / a ``.env`` file via django-environ — never hard-coded.
+"""
+
+from pathlib import Path
+
+import environ
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env(
+    DJANGO_DEBUG=(bool, False),
+    DJANGO_ALLOWED_HOSTS=(list, ["127.0.0.1", "localhost"]),
+    SITE_BASE_URL=(str, "https://flu.ke"),
+    SITE_NAME=(str, "Fluke"),
+    BUILD_DIR=(str, "dist"),
+    MEDIA_ROOT=(str, "media"),
+    MUSICBRAINZ_APP=(str, "flukecms"),
+    MUSICBRAINZ_VERSION=(str, "1.0"),
+    MUSICBRAINZ_CONTACT=(str, ""),
+)
+
+# Read .env if present (not required in CI/tests, which set sensible defaults).
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    environ.Env.read_env(env_file)
+
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="insecure-dev-key-override-in-env")
+DEBUG = env("DJANGO_DEBUG")
+ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
+
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # First-party
+    "apps.core",
+    "apps.pages",
+    "apps.blog",
+    "apps.resources",
+    "apps.discography",
+    "apps.importers",
+    "apps.staticgen",
+]
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+ROOT_URLCONF = "config.urls"
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.site",
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = "config.wsgi.application"
+
+DATABASES = {
+    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+LANGUAGE_CODE = "en-gb"
+TIME_ZONE = "Europe/London"
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "assets"]
+STATIC_ROOT = BASE_DIR / ".staticcollect"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / env("MEDIA_ROOT")
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Project-specific settings ---------------------------------------------
+SITE_BASE_URL = env("SITE_BASE_URL").rstrip("/")
+SITE_NAME = env("SITE_NAME")
+BUILD_DIR = BASE_DIR / env("BUILD_DIR")
+
+# Source archive of the legacy site (used by the import_* management commands).
+INGEST_DIR = BASE_DIR / "Ingest"
+
+MUSICBRAINZ = {
+    "app": env("MUSICBRAINZ_APP"),
+    "version": env("MUSICBRAINZ_VERSION"),
+    "contact": env("MUSICBRAINZ_CONTACT"),
+}

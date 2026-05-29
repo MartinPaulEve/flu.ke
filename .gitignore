@@ -1,0 +1,29 @@
+# Source archive of the old site (huge, not part of the app)
+Ingest/
+
+# Build output (the deployable static site) and uploaded media
+dist/
+media/
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Django
+*.sqlite3
+db.sqlite3
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# OS / editors
+.DS_Store
+*.swp
