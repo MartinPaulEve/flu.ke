@@ -17,9 +17,10 @@ Blog/News · Official Resources · Fan Remixes & Resources · Discography · arb
 The CMS runs as a single container; the repo is bind-mounted so `db.sqlite3`,
 `media/` and `dist/` persist on the host and `Ingest/` is available to the importers.
 ```bash
-cp .env.example .env                       # set DJANGO_SECRET_KEY (+ DJANGO_SUPERUSER_PASSWORD to auto-create admin)
-docker compose up --build                  # editing CMS (admin) at http://localhost:8000/admin/
-docker compose exec cms python manage.py createsuperuser   # if you didn't set a password above
+cp .env.example .env                       # then set DJANGO_SECRET_KEY (compose refuses to start without it)
+#   generate one:  python -c "import secrets; print(secrets.token_urlsafe(50))"
+docker compose up --build                  # editing CMS (admin) at http://localhost:8000/admin/ (loopback only)
+docker compose exec cms python manage.py createsuperuser   # create your admin login
 # one-off content import + generation, run inside the container:
 docker compose exec cms python manage.py import_discography
 docker compose exec cms python manage.py import_media      # ~10 GB; once

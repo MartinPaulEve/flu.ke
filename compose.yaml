@@ -19,20 +19,22 @@ services:
     container_name: fluke-cms
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     ports:
-      - "8000:8000"
+      # Loopback only — this is a private editing tool, never exposed on the LAN.
+      - "127.0.0.1:8000:8000"
     environment:
-      DJANGO_DEBUG: "True"
-      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-dev-insecure-secret-change-me}"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+      # DEBUG is on so runserver serves static + media for local editing. It is
+      # loopback-only above; override to False if you ever bind it more widely.
+      DJANGO_DEBUG: "${DJANGO_DEBUG:-True}"
+      # Required — no insecure fallback. Generate one and put it in .env:
+      #   python -c "import secrets; print(secrets.token_urlsafe(50))"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
       DATABASE_URL: "sqlite:////app/db.sqlite3"
       SITE_NAME: "${SITE_NAME:-Fluke}"
       SITE_BASE_URL: "${SITE_BASE_URL:-https://flu.ke}"
       MUSICBRAINZ_CONTACT: "${MUSICBRAINZ_CONTACT:-}"
-      # Set DJANGO_SUPERUSER_PASSWORD (e.g. in .env) to auto-create an admin on
-      # first start; otherwise run `createsuperuser` manually.
-      DJANGO_SUPERUSER_USERNAME: "${DJANGO_SUPERUSER_USERNAME:-admin}"
-      DJANGO_SUPERUSER_EMAIL: "${DJANGO_SUPERUSER_EMAIL:-martin@eve.gd}"
-      DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD:-}"
+      # Create the admin yourself (keeps no password in the long-running env):
+      #   docker compose exec cms python manage.py createsuperuser
     volumes:
       - .:/app                 # live source + db/media/dist/Ingest on the host
       - venv-cache:/app/.venv  # mask any host .venv (the image uses /opt/venv)
