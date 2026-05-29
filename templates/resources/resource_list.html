@@ -1,38 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Resources — {{ site_name }}{% endblock %}
+
 {% block content %}
 <section class="section wrap">
   <p class="kicker">From the vault</p>
   <h1>Resources</h1>
 
-  <div class="disco-section reveal" aria-labelledby="official-title">
-    <h2 id="official-title">Official Resources</h2>
-    <ul class="entries" data-reveal="stagger">
-      {% for resource in official %}
-        <li class="entry">
-          <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
-          <span class="entry__title"><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></span>
-          {% if resource.subcategory %}<span class="entry__meta">{{ resource.subcategory.name }}</span>{% else %}<span></span>{% endif %}
-        </li>
-      {% empty %}
-        <li class="entry"><span class="entry__index">—</span><span class="entry__title">Nothing here yet.</span><span></span></li>
-      {% endfor %}
-    </ul>
-  </div>
-
-  <div class="disco-section reveal" aria-labelledby="fan-title">
-    <h2 id="fan-title">Fan Remixes &amp; Resources</h2>
-    <ul class="entries" data-reveal="stagger">
-      {% for resource in fan %}
-        <li class="entry">
-          <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
-          <span class="entry__title"><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></span>
-          {% if resource.contributor %}<span class="entry__meta">{{ resource.contributor }}</span>{% else %}<span></span>{% endif %}
-        </li>
-      {% empty %}
-        <li class="entry"><span class="entry__index">—</span><span class="entry__title">Nothing here yet.</span><span></span></li>
-      {% endfor %}
-    </ul>
-  </div>
+  {% for section in sections %}
+    {% include "resources/_kind.html" with heading=section.heading anchor=section.anchor groups=section.groups %}
+  {% endfor %}
 </section>
 {% endblock %}

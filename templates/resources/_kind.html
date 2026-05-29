@@ -1,0 +1,18 @@
+{# Renders one resource kind (official/fan) grouped by subcategory. #}
+<div class="disco-section reveal" aria-labelledby="{{ anchor }}-title">
+  <h2 id="{{ anchor }}-title">{{ heading }}</h2>
+  {% for group in groups %}
+    {% if group.subcategory %}<h3>{{ group.subcategory.name }}</h3>{% endif %}
+    <ul class="entries" data-reveal="stagger">
+      {% for resource in group.resources %}
+        <li class="entry">
+          <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
+          <span class="entry__title"><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></span>
+          <span class="entry__meta">{% if resource.contributor %}{{ resource.contributor }}{% elif resource.released_date %}{{ resource.released_date|date:"Y" }}{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% empty %}
+    <p class="prose">Nothing here yet.</p>
+  {% endfor %}
+</div>

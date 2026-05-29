@@ -24,6 +24,7 @@ def iter_routes() -> Iterator[Route]:
     from apps.blog.models import Post
     from apps.discography.models import Artist, Release, ReleaseType
     from apps.pages.models import Page
+    from apps.resources.grouping import group_by_subcategory
     from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource
 
     posts = list(Post.objects.published().prefetch_related("categories", "tags"))
@@ -73,8 +74,22 @@ def iter_routes() -> Iterator[Route]:
         "/resources/",
         "resources/resource_list.html",
         {
-            "official": [r for r in resources if r.kind == KIND_OFFICIAL],
-            "fan": [r for r in resources if r.kind == KIND_FAN],
+            "sections": [
+                {
+                    "heading": "Official Resources",
+                    "anchor": "official",
+                    "groups": group_by_subcategory(
+                        [r for r in resources if r.kind == KIND_OFFICIAL]
+                    ),
+                },
+                {
+                    "heading": "Fan Remixes & Resources",
+                    "anchor": "fan",
+                    "groups": group_by_subcategory(
+                        [r for r in resources if r.kind == KIND_FAN]
+                    ),
+                },
+            ]
         },
     )
     for resource in resources:

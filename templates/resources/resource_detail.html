@@ -15,8 +15,8 @@
       {% for f in resource.files.all %}
         <li class="entry">
           <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
-          <span class="entry__title"><a href="{{ f.file.url }}">{{ f.original_filename|default:f.file.name }}</a></span>
-          <span class="entry__meta">{{ f.get_file_kind_display }}</span>
+          <span class="entry__title"><a href="{{ f.file.url }}" download>{{ f.original_filename|default:f.file.name }}</a></span>
+          <span class="entry__meta">{{ f.get_file_kind_display }}{% if f.byte_size %} · {{ f.byte_size|filesizeformat }}{% endif %}</span>
         </li>
       {% endfor %}
     </ul>
@@ -24,7 +24,12 @@
     <p class="prose"><a href="{{ resource.external_url }}">Open resource →</a></p>
   {% endif %}
 
-  {% if resource.license %}<p class="entry__meta" style="margin-top:1.5rem">Licence: {{ resource.license }}</p>{% endif %}
-  {% if resource.source_attribution %}<p class="entry__meta">Source: {{ resource.source_attribution }}</p>{% endif %}
+  <dl class="entry__meta" style="margin-top:2rem">
+    {% if resource.related_release %}<dt>Release</dt><dd><a href="{{ resource.related_release.get_absolute_url }}">{{ resource.related_release.name }}</a></dd>{% endif %}
+    {% if resource.recorded_date %}<dt>Recorded</dt><dd>{{ resource.recorded_date|date:"j M Y" }}</dd>{% endif %}
+    {% if resource.released_date %}<dt>Released</dt><dd>{{ resource.released_date|date:"j M Y" }}</dd>{% endif %}
+    {% if resource.license %}<dt>Licence</dt><dd>{{ resource.license }}</dd>{% endif %}
+    {% if resource.source_attribution %}<dt>Source</dt><dd>{{ resource.source_attribution }}</dd>{% endif %}
+  </dl>
 </article>
 {% endblock %}
