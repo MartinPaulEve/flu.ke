@@ -15,10 +15,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DJANGO_DEBUG=(bool, False),
     DJANGO_ALLOWED_HOSTS=(list, ["127.0.0.1", "localhost"]),
+    DJANGO_SECURE=(bool, False),
+    CSRF_TRUSTED_ORIGINS=(list, []),
     SITE_BASE_URL=(str, "https://flu.ke"),
     SITE_NAME=(str, "Fluke"),
     BUILD_DIR=(str, "dist"),
     MEDIA_ROOT=(str, "media"),
+    MEDIA_URL=(str, "/media/"),
     MUSICBRAINZ_APP=(str, "flukecms"),
     MUSICBRAINZ_VERSION=(str, "1.0"),
     MUSICBRAINZ_CONTACT=(str, ""),
@@ -52,6 +55,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serves the CMS's own static files (admin CSS/JS) when DEBUG is off, so the
+    # admin works on a real web server without extra web-server config.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -101,10 +107,30 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "assets"]
 STATIC_ROOT = BASE_DIR / ".staticcollect"
 
-MEDIA_URL = "/media/"
+# WhiteNoise serves the collected static files (run `collectstatic` on deploy).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
+
+MEDIA_URL = env("MEDIA_URL")
 MEDIA_ROOT = BASE_DIR / env("MEDIA_ROOT")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Security (enable on the public CMS host via DJANGO_SECURE=True) ---------
+# Not tied to DEBUG: the test runner forces DEBUG=False, and we must not redirect
+# test/local HTTP requests to HTTPS.
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
+if env("DJANGO_SECURE"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
 
 # --- Project-specific settings ---------------------------------------------
 SITE_BASE_URL = env("SITE_BASE_URL").rstrip("/")

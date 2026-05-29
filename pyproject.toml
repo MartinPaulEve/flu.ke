@@ -13,6 +13,7 @@ dependencies = [
     "markdown>=3.6",
     "musicbrainzngs>=0.7.1",
     "requests>=2.32",
+    "whitenoise>=6.6",
 ]
 
 [dependency-groups]

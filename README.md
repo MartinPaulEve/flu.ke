@@ -149,7 +149,9 @@ You can also publish from the admin: the **Build state** screen shows an
 "Unpublished changes" banner and a **Publish now** button that rebuilds `dist/`.
 
 ## Deploy
-The public site is just the files in `dist/`. Configure `DEPLOY_*` in `.env`, then:
+
+**Option A — edit locally, push the static output.** The public site is just the
+files in `dist/`. Configure `DEPLOY_*` in `.env`, then:
 ```bash
 bash scripts/deploy.sh
 ```
@@ -157,3 +159,9 @@ Targets: `rsync` (to an nginx box — see `scripts/nginx-flu.ke.conf` for MIME t
 and cache headers), `s3` (S3 / Cloudflare R2 / Backblaze B2), or `rclone`. The host
 must serve large files, since the full ~10 GB media library is part of the output —
 use object storage or a plain web server, not a size-limited PaaS.
+
+**Option B — run the CMS on a web server (e.g. Reclaim Hosting / cPanel).** Host the
+Django CMS on a subdomain (`cms.flu.ke`) that generates straight into the document
+root of `flu.ke`. The CMS serves its own admin static via WhiteNoise; set
+`DJANGO_DEBUG=False`, `DJANGO_SECURE=True`, and the build/media paths via env. Full
+step-by-step: **[docs/deploy-reclaim.md](docs/deploy-reclaim.md)**.

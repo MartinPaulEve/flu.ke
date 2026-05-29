@@ -92,10 +92,12 @@ class Command(BaseCommand):
         for static_dir in settings.STATICFILES_DIRS:
             static_copied += sync_tree(Path(static_dir), build_dir / "static")
 
-        # Media library.
+        # Media library. When MEDIA_ROOT already lives inside BUILD_DIR (e.g. the
+        # public site serves /media/ directly), there is nothing to copy.
         media_copied = 0
-        if not options["no_media"]:
-            media_copied = sync_tree(Path(settings.MEDIA_ROOT), build_dir / "media")
+        media_root = Path(settings.MEDIA_ROOT)
+        if not options["no_media"] and not self._is_inside(media_root, build_dir):
+            media_copied = sync_tree(media_root, build_dir / "media")
 
         save_manifest(manifest_path, new_manifest)
         BuildState.mark_built()
@@ -105,3 +107,11 @@ class Command(BaseCommand):
                 f"Synced {static_copied} static and {media_copied} media files."
             )
         )
+
+    @staticmethod
+    def _is_inside(path, parent):
+        try:
+            Path(path).resolve().relative_to(Path(parent).resolve())
+            return True
+        except ValueError:
+            return False

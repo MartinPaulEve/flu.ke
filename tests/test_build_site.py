@@ -30,6 +30,14 @@ def _build(tmp_path, **kwargs):
         call_command("build_site", **kwargs)
 
 
+def test_is_inside_detects_media_within_build_dir(tmp_path):
+    from apps.staticgen.management.commands.build_site import Command
+
+    assert Command._is_inside(tmp_path / "site" / "media", tmp_path / "site") is True
+    assert Command._is_inside(tmp_path / "site", tmp_path / "site") is True
+    assert Command._is_inside(tmp_path / "elsewhere", tmp_path / "site") is False
+
+
 def test_build_writes_expected_pages(tmp_path, seeded):
     _build(tmp_path, no_media=True)
     assert (tmp_path / "index.html").exists()

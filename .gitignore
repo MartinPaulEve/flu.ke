@@ -17,6 +17,7 @@ __pycache__/
 # Django
 *.sqlite3
 db.sqlite3
+.staticcollect/
 
 # Tooling
 .pytest_cache/
