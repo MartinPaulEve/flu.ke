@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ release.resolved_seo_title }} — {{ site_name }}{% endblock %}
-{% block meta %}{% include "partials/og_meta.html" with seo_object=release og_type="music.album" %}{% endblock %}
+{% block meta %}{% include "partials/og_meta.html" with seo_object=release og_type="music.album" %}{% if jsonld %}<script type="application/ld+json">{{ jsonld|safe }}</script>{% endif %}{% endblock %}
 {% block content %}
 <article class="section wrap">
   <p class="kicker">{{ release.type.name }}{% if release.year %} — {{ release.year }}{% endif %}</p>

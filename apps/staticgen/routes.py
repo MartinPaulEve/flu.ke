@@ -21,11 +21,18 @@ class Route:
 
 def iter_routes() -> Iterator[Route]:
     """Yield every public route for the current published content."""
+    import json
+
+    from django.conf import settings
+
     from apps.blog.models import Post
+    from apps.core.seo import blog_posting_jsonld, music_album_jsonld
     from apps.discography.models import Artist, Release, ReleaseType
     from apps.pages.models import Page
     from apps.resources.grouping import group_by_subcategory
     from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource
+
+    base_url = settings.SITE_BASE_URL
 
     posts = list(Post.objects.published().prefetch_related("categories", "tags"))
     resources = list(Resource.objects.published().select_related("subcategory"))
@@ -46,7 +53,11 @@ def iter_routes() -> Iterator[Route]:
     # Blog / News
     yield Route("/news/", "blog/post_list.html", {"posts": posts})
     for post in posts:
-        yield Route(post.get_absolute_url(), "blog/post_detail.html", {"post": post})
+        yield Route(
+            post.get_absolute_url(),
+            "blog/post_detail.html",
+            {"post": post, "jsonld": json.dumps(blog_posting_jsonld(post, base_url))},
+        )
 
     # Discography
     sections = []
@@ -66,7 +77,9 @@ def iter_routes() -> Iterator[Route]:
         )
     for release in releases:
         yield Route(
-            release.get_absolute_url(), "discography/release_detail.html", {"release": release}
+            release.get_absolute_url(),
+            "discography/release_detail.html",
+            {"release": release, "jsonld": json.dumps(music_album_jsonld(release, base_url))},
         )
 
     # Resources

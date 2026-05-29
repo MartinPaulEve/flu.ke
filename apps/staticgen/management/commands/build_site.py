@@ -73,11 +73,18 @@ class Command(BaseCommand):
             rendered += 1
 
         # Non-HTML outputs (always written; cheap).
+        from apps.blog.models import Post
+        from apps.staticgen.feeds import build_feed
+
         (build_dir / "sitemap.xml").write_text(
             build_sitemap(url_paths, settings.SITE_BASE_URL), encoding="utf-8"
         )
         (build_dir / "robots.txt").write_text(
             build_robots(settings.SITE_BASE_URL), encoding="utf-8"
+        )
+        (build_dir / "feed.xml").write_text(
+            build_feed(list(Post.objects.published()), settings.SITE_BASE_URL, settings.SITE_NAME),
+            encoding="utf-8",
         )
 
         # Static assets.
