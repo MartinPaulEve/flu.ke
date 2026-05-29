@@ -7,6 +7,22 @@ contexts serialise these to JSON and the templates emit them in a
 
 from __future__ import annotations
 
+import json
+
+
+def jsonld_dumps(data) -> str:
+    """Serialise a JSON-LD dict for safe inline ``<script>`` embedding.
+
+    Escapes ``<``, ``>`` and ``&`` as unicode escapes (valid JSON) so values can
+    never break out of the script element (e.g. a title containing ``</script>``).
+    """
+    return (
+        json.dumps(data, ensure_ascii=False)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+    )
+
 
 def blog_posting_jsonld(post, base_url: str) -> dict:
     """schema.org BlogPosting for a blog post."""
