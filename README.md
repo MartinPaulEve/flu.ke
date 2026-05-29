@@ -111,6 +111,13 @@ Compose reads `.env` for these (all optional except the secret key):
 - **Full cleanup** (also removes the cached venv volume): `docker compose down -v`.
   Your host `db.sqlite3`, `media/` and `dist/` are untouched.
 
+### File ownership
+The container runs as a non-root user matching your host UID/GID (default 1000), so
+files it writes into the working tree (`db.sqlite3`, `dist/`, `media/`) are owned by
+you. If your host user isn't 1000, build with `UID=$(id -u) GID=$(id -g) docker compose build`.
+If you ran an *older* image as root, clear the root-owned leftovers once with
+`sudo rm -rf dist .staticcollect`.
+
 ### Troubleshooting
 - *`required variable DJANGO_SECRET_KEY is missing a value`* — set `DJANGO_SECRET_KEY`
   in `.env` (see step 1).

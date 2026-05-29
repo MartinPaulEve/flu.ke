@@ -14,7 +14,14 @@
 
 services:
   cms:
-    build: .
+    build:
+      context: .
+      args:
+        # Match the container user to your host user so bind-mounted files
+        # (db.sqlite3, dist/, media/) are owned by you, not root. Override for a
+        # non-1000 host: `UID=$(id -u) GID=$(id -g) docker compose build`.
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
     image: flukecms:local
     container_name: fluke-cms
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
