@@ -13,7 +13,20 @@ application or database to attack.
 ## Sections
 Blog/News · Official Resources · Fan Remixes & Resources · Discography · arbitrary CMS pages
 
-## Quick start
+## Quick start (Docker)
+The CMS runs as a single container; the repo is bind-mounted so `db.sqlite3`,
+`media/` and `dist/` persist on the host and `Ingest/` is available to the importers.
+```bash
+cp .env.example .env                       # set DJANGO_SECRET_KEY (+ DJANGO_SUPERUSER_PASSWORD to auto-create admin)
+docker compose up --build                  # editing CMS (admin) at http://localhost:8000/admin/
+docker compose exec cms python manage.py createsuperuser   # if you didn't set a password above
+# one-off content import + generation, run inside the container:
+docker compose exec cms python manage.py import_discography
+docker compose exec cms python manage.py import_media      # ~10 GB; once
+docker compose exec cms python manage.py build_site        # writes ./dist
+```
+
+## Quick start (without Docker)
 ```bash
 uv sync
 cp .env.example .env            # then edit DJANGO_SECRET_KEY etc.

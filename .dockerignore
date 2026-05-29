@@ -1,0 +1,17 @@
+# Keep the build context tiny — source is bind-mounted at runtime, deps come from
+# pyproject.toml + uv.lock. Never ship the 30 GB archive or local artifacts.
+Ingest/
+.venv/
+dist/
+media/
+*.sqlite3
+.git/
+.github/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.staticcollect/
+node_modules/
+.env

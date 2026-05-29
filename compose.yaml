@@ -1,0 +1,42 @@
+# Local CMS for flu.ke — the private editing + static-generation tool.
+#
+#   docker compose up --build            # admin at http://localhost:8000/admin/
+#   docker compose exec cms python manage.py import_discography
+#   docker compose exec cms python manage.py import_media        # ~10 GB; once
+#   docker compose exec cms python manage.py import_blog         # Wayback (network)
+#   docker compose exec cms python manage.py build_site          # writes ./dist
+#   docker compose exec cms python manage.py createsuperuser     # if not auto-created
+#
+# The repo is bind-mounted, so db.sqlite3, media/ and dist/ persist on the host
+# (dist/ is what you deploy with scripts/deploy.sh) and Ingest/ is available to
+# the import commands. SQLite suits a single editor; point DATABASE_URL at
+# Postgres if you ever need more.
+
+services:
+  cms:
+    build: .
+    image: flukecms:local
+    container_name: fluke-cms
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-dev-insecure-secret-change-me}"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+      DATABASE_URL: "sqlite:////app/db.sqlite3"
+      SITE_NAME: "${SITE_NAME:-Fluke}"
+      SITE_BASE_URL: "${SITE_BASE_URL:-https://flu.ke}"
+      MUSICBRAINZ_CONTACT: "${MUSICBRAINZ_CONTACT:-}"
+      # Set DJANGO_SUPERUSER_PASSWORD (e.g. in .env) to auto-create an admin on
+      # first start; otherwise run `createsuperuser` manually.
+      DJANGO_SUPERUSER_USERNAME: "${DJANGO_SUPERUSER_USERNAME:-admin}"
+      DJANGO_SUPERUSER_EMAIL: "${DJANGO_SUPERUSER_EMAIL:-martin@eve.gd}"
+      DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD:-}"
+    volumes:
+      - .:/app                 # live source + db/media/dist/Ingest on the host
+      - venv-cache:/app/.venv  # mask any host .venv (the image uses /opt/venv)
+    restart: unless-stopped
+
+volumes:
+  venv-cache:
