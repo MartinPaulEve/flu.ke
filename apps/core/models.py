@@ -8,6 +8,42 @@ published querysets, OG-image generation) lives on the concrete models and in
 
 from django.db import models
 
+from apps.core.text import unique_slug
+
+
+class PublishableQuerySet(models.QuerySet):
+    """Reusable queryset exposing ``.published()`` for content with ``is_published``."""
+
+    def published(self):
+        return self.filter(is_published=True)
+
+
+class SluggedModel(models.Model):
+    """Abstract base giving a model a unique, auto-populated ``slug``.
+
+    Set ``slug_source_field`` to the attribute the slug derives from (``title`` by
+    default; discography models use ``name``). The slug is generated once on first
+    save and left alone afterwards so published URLs stay stable.
+    """
+
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    slug_source_field = "title"
+
+    class Meta:
+        abstract = True
+
+    def _slug_is_taken(self, candidate):
+        qs = type(self)._default_manager.filter(slug=candidate)
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        return qs.exists()
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            source = getattr(self, self.slug_source_field, "") or ""
+            self.slug = unique_slug(source, exists=self._slug_is_taken, max_length=200)
+        super().save(*args, **kwargs)
+
 
 class TimeStampedModel(models.Model):
     """Abstract base adding self-managing ``created``/``modified`` timestamps."""
