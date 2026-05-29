@@ -64,7 +64,10 @@ class SeoFieldsMixin(models.Model):
     """
 
     seo_title = models.CharField(
-        max_length=200, blank=True, help_text="Overrides the <title>; defaults to the title."
+        max_length=200,
+        blank=True,
+        # NB: admin renders help_text as raw HTML, so avoid literal tags like <title>.
+        help_text="Overrides the HTML page title; defaults to the title.",
     )
     meta_description = models.CharField(
         max_length=300, blank=True, help_text="Search-result snippet; ~150–160 chars ideal."

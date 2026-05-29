@@ -23,6 +23,23 @@ def test_post_change_page_has_save_and_delete(admin_client):
     assert b"deletelink" in resp.content, "no Delete link on change form"
 
 
+def test_change_form_submit_row_survives_browser_parsing(admin_client):
+    """The submit row must remain in the DOM after a real (browser-like) HTML parse.
+
+    Regression: a field help_text containing a literal '<title>' opened an RCDATA
+    element that swallowed everything after it (incl. Save/Delete) when a browser
+    parsed the page, even though it was present in View Source.
+    """
+    from bs4 import BeautifulSoup
+
+    post = Post.objects.create(title="X", published_at=timezone.now())
+    resp = admin_client.get(reverse("admin:blog_post_change", args=[post.pk]))
+    soup = BeautifulSoup(resp.content, "lxml")  # lxml parses <title> as RCDATA, like browsers
+    submit_row = soup.select_one(".submit-row")
+    assert submit_row is not None, "submit-row dropped during HTML parsing"
+    assert submit_row.select_one('input[name="_save"]') is not None
+
+
 def test_view_only_user_gets_readonly_form_without_buttons(client, django_user_model):
     """A staff user with only 'view' permission sees a read-only form — no Save/Delete.
 
