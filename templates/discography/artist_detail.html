@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ artist.name }} &middot; {{ site_name }}{% endblock %}
+{% block content %}
+<h1>{{ artist.name }}</h1>
+{% if artist.is_alias and artist.primary_artist %}
+  <p>An alias of <a href="{{ artist.primary_artist.get_absolute_url }}">{{ artist.primary_artist.name }}</a>.</p>
+{% endif %}
+{% if artist.biography %}<div>{{ artist.biography|linebreaks }}</div>{% endif %}
+<h2>Releases</h2>
+<ul>
+  {% for release in releases %}
+    <li><a href="{{ release.get_absolute_url }}">{% if release.year %}{{ release.year }} &middot; {% endif %}{{ release.name }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load content %}
+{% block title %}{{ page.resolved_seo_title }} &middot; {{ site_name }}{% endblock %}
+{% block body_class %}page-{{ page.template_key }}{% endblock %}
+{% block content %}
+<article>
+  <h1>{{ page.title }}</h1>
+  <div>{{ page.body|markdownify }}</div>
+</article>
+{% endblock %}

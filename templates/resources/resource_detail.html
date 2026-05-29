@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load content %}
+{% block title %}{{ resource.resolved_seo_title }} &middot; {{ site_name }}{% endblock %}
+{% block content %}
+<article>
+  <h1>{{ resource.title }}</h1>
+  <p>{{ resource.get_kind_display }}{% if resource.subcategory %} &middot; {{ resource.subcategory.name }}{% endif %}</p>
+  {% if resource.contributor %}<p>By {{ resource.contributor }}</p>{% endif %}
+  <div>{{ resource.description|markdownify }}</div>
+
+  {% if resource.files.all %}
+    <h2>Files</h2>
+    <ul>
+      {% for f in resource.files.all %}
+        <li><a href="{{ f.file.url }}">{{ f.original_filename|default:f.file.name }}</a> ({{ f.get_file_kind_display }})</li>
+      {% endfor %}
+    </ul>
+  {% elif resource.external_url %}
+    <p><a href="{{ resource.external_url }}">Open resource</a></p>
+  {% endif %}
+
+  {% if resource.license %}<p>Licence: {{ resource.license }}</p>{% endif %}
+  {% if resource.source_attribution %}<p>Source: {{ resource.source_attribution }}</p>{% endif %}
+</article>
+{% endblock %}

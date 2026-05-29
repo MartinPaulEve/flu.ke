@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  {% block meta %}{% endblock %}
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header>
+    {% block header %}
+    <a class="brand" href="/">{{ site_name }}</a>
+    <nav aria-label="Primary navigation">
+      <a href="/news/">News</a>
+      <a href="/discography/">Discography</a>
+      <a href="/resources/">Resources</a>
+    </nav>
+    {% endblock %}
+  </header>
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    {% block footer %}<p>{{ site_name }} &middot; fan site</p>{% endblock %}
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ release.resolved_seo_title }} &middot; {{ site_name }}{% endblock %}
+{% block content %}
+<article>
+  <h1>{{ release.name }}</h1>
+  <p>
+    <a href="{{ release.artist.get_absolute_url }}">{{ release.artist.name }}</a>
+    {% if release.year %} &middot; {{ release.year }}{% endif %}
+    &middot; {{ release.type.name }}
+  </p>
+  {% if release.purchase_link %}<p><a href="{{ release.purchase_link }}">Buy this release</a></p>{% endif %}
+
+  <h2>Editions</h2>
+  {% for edition in release.editions.all %}
+    <details{% if forloop.first %} open{% endif %}>
+      <summary>
+        {{ edition.name|default:edition.catalogue_number|default:'Edition' }}
+        {% if edition.media %} &middot; {{ edition.media }}{% endif %}
+        {% if edition.year %} &middot; {{ edition.year }}{% endif %}
+      </summary>
+
+      {% if edition.record_label or edition.catalogue_number %}
+        <p>{{ edition.record_label }}{% if edition.catalogue_number %} &middot; {{ edition.catalogue_number }}{% endif %}</p>
+      {% endif %}
+
+      {% if edition.covers.all %}
+        <ul class="covers">
+          {% for cover in edition.covers.all %}
+            <li>{% if cover.image %}<img src="{{ cover.image.url }}" alt="{{ cover.alt_text }}">{% else %}{{ cover.display_name }}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      <ol class="tracklist">
+        {% for track in edition.tracks.all %}
+          <li>
+            {{ track.display_title }}{% if track.length %} <span>({{ track.length }})</span>{% endif %}
+            {% if track.remixer %} &middot; remix by {{ track.remixer.name }}{% endif %}
+            {% if track.sample %} &middot; <a href="{{ track.sample.url }}">sample</a>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </details>
+  {% endfor %}
+</article>
+{% endblock %}

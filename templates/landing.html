@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<section aria-labelledby="hero-title">
+  <h1 id="hero-title">{{ site_name }}</h1>
+  <p>The fan hub for Fluke and its aliases.</p>
+</section>
+
+<section aria-labelledby="recent-news-title">
+  <h2 id="recent-news-title">Latest news</h2>
+  <ul>
+    {% for post in recent_posts %}
+      <li><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></li>
+    {% empty %}
+      <li>No posts yet.</li>
+    {% endfor %}
+  </ul>
+  <p><a href="/news/">All news</a></p>
+</section>
+
+<section aria-labelledby="latest-resources-title">
+  <h2 id="latest-resources-title">Latest resources</h2>
+  <ul>
+    {% for resource in latest_resources %}
+      <li><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></li>
+    {% empty %}
+      <li>No resources yet.</li>
+    {% endfor %}
+  </ul>
+  <p><a href="/resources/">All resources</a></p>
+</section>
+{% endblock %}

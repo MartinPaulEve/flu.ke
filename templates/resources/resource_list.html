@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Resources &middot; {{ site_name }}{% endblock %}
+{% block content %}
+<h1>Resources</h1>
+
+<section aria-labelledby="official-title">
+  <h2 id="official-title">Official Resources</h2>
+  <ul>
+    {% for resource in official %}
+      <li><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></li>
+    {% empty %}
+      <li>Nothing here yet.</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section aria-labelledby="fan-title">
+  <h2 id="fan-title">Fan Remixes &amp; Resources</h2>
+  <ul>
+    {% for resource in fan %}
+      <li><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></li>
+    {% empty %}
+      <li>Nothing here yet.</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}
