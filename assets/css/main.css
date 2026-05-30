@@ -86,6 +86,29 @@ body::after {
 .site-nav a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: -0.25rem; height: 2px; background: var(--accent); transition: right 0.3s var(--ease); }
 .site-nav a:hover::after, .site-nav a:focus-visible::after { right: 0; }
 
+/* ---------- theme toggle ---------- */
+.theme-toggle {
+  align-self: center;
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.3rem 0.6rem;
+  font: inherit; font-size: var(--step--1);
+  text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--muted);
+  background: transparent;
+  border: var(--rule) solid var(--hairline);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.theme-toggle:hover { color: var(--fg); border-color: var(--accent); }
+.theme-toggle__glyph { width: 1em; height: 1em; line-height: 1; }
+/* Moon while dark (a switch to light is offered); sun while light. */
+.theme-toggle__glyph::before { content: "\263E"; } /* ☾ */
+:root[data-theme="light"] .theme-toggle__glyph::before { content: "\2600"; } /* ☀ */
+@media (max-width: 30rem) {
+  .theme-toggle__label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
 /* ---------- section heading: numbered mono kicker + big display title ---------- */
 .kicker {
   font-size: var(--step--1); letter-spacing: 0.28em; text-transform: uppercase;

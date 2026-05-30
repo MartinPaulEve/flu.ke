@@ -58,3 +58,27 @@
   /* Motion */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Light theme — opt-in via data-theme="light" on <html>. Dark above is the
+   default. Only the colour tokens are overridden; type/space/motion are shared.
+   All pairings verified for WCAG AA by tests/test_design_tokens_contrast.py. */
+:root[data-theme="light"] {
+  /* Surfaces */
+  --bg: #f7f5f0;          /* warm paper ground */
+  --bg-raise: #ffffff;    /* raised panel */
+  --bg-inset: #ebe8e1;    /* recessed inset */
+  --hairline: #d4cfc5;    /* hairline rules / borders */
+
+  /* Text (all >= 4.5:1 on --bg) */
+  --fg: #16140f;          /* near-black warm body */
+  --muted: #5c554a;       /* secondary text */
+  --link: #16140f;        /* links: dark text + red underline */
+
+  /* Red — the single accent, deepened so it holds AA on light paper */
+  --accent: #d4231a;      /* red: large display + UI (>= 3:1) */
+  --accent-text: #c01c14; /* deeper red usable at normal text size (>= 4.5:1) */
+  --accent-ink: #ffffff;  /* text on a solid red fill */
+
+  /* Focus — deliberately not red so it never hides on red controls */
+  --focus: #0b63c4;
+}
