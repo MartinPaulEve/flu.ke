@@ -121,8 +121,8 @@ If you ran an *older* image as root, clear the root-owned leftovers once with
 ### Troubleshooting
 - *`required variable DJANGO_SECRET_KEY is missing a value`* — set `DJANGO_SECRET_KEY`
   in `.env` (see step 1).
-- *Port 8000 already in use* — stop the other process, or change the published port
-  in `compose.yaml` (`"127.0.0.1:8001:8000"`).
+- *Port 8000 already in use* — set `CMS_PORT` in `.env` (e.g. `CMS_PORT=8800`) and
+  restart; the admin is then at `http://localhost:8800/admin/`.
 - *Admin CSS missing / 400 errors* — ensure `DJANGO_DEBUG=True` (the default) so
   runserver serves static files.
 

@@ -27,7 +27,9 @@ services:
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     ports:
       # Loopback only — this is a private editing tool, never exposed on the LAN.
-      - "127.0.0.1:8000:8000"
+      # Host port is configurable (set CMS_PORT in .env if 8000 is taken); the
+      # container always listens on 8000 internally.
+      - "127.0.0.1:${CMS_PORT:-8000}:8000"
     environment:
       # DEBUG is on so runserver serves static + media for local editing. It is
       # loopback-only above; override to False if you ever bind it more widely.
