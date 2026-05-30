@@ -122,6 +122,16 @@ h3 { font-size: var(--step-1); }
 
 .section { padding-block: clamp(3rem, 8vw, 7rem); border-top: var(--rule) solid var(--hairline); }
 
+/* ---------- heading helpers ---------- */
+/* A heading with a rule beneath it and breathing room before the content that follows. */
+.ruled-heading {
+  border-bottom: var(--rule) solid var(--hairline);
+  padding-bottom: clamp(0.6rem, 2vw, 1rem);
+  margin-bottom: clamp(1.2rem, 3vw, 2rem);
+}
+/* Nudge a clickable byline (e.g. the artist) a shade below its title. */
+.byline { margin-top: 0.6rem; }
+
 /* ---------- hero ---------- */
 .hero { min-height: 86vh; display: grid; align-content: center; padding-block: 4rem; position: relative; }
 .hero__mark {
