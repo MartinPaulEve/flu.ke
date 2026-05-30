@@ -21,6 +21,7 @@ from apps.core.models import (
     SluggedModel,
     TimeStampedModel,
 )
+from apps.discography.storage import uuid_upload_to
 
 # The canonical primary act. Any release by an artist other than this one is
 # rendered with the artist name in parentheses (see Release.display_title).
@@ -159,7 +160,7 @@ class Track(TimeStampedModel):
         Artist, null=True, blank=True, on_delete=models.SET_NULL, related_name="remixes"
     )
     length = models.CharField(max_length=20, blank=True, help_text="m:ss")
-    sample = models.FileField(upload_to="samples/", blank=True)
+    sample = models.FileField(upload_to=uuid_upload_to("samples"), blank=True)
     sample_source_url = models.URLField(blank=True)
     lyric = models.ForeignKey(
         Lyric, null=True, blank=True, on_delete=models.SET_NULL, related_name="tracks"
