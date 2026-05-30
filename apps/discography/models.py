@@ -94,6 +94,13 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     def get_absolute_url(self):
         return f"/discography/{self.artist.slug}/{self.slug}/"
 
+    @property
+    def display_title(self):
+        """Release name, suffixed with the artist when it is a Fluke alias."""
+        if self.artist.is_alias:
+            return f"{self.name} ({self.artist.name})"
+        return self.name
+
 
 class Edition(TimeStampedModel):
     """A specific physical/digital version of a release (CD, vinyl, promo, …)."""

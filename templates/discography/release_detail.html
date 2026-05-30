@@ -5,7 +5,7 @@
 {% block content %}
 <article class="section wrap">
   <p class="kicker">{{ release.type.name }}{% if release.year %} — {{ release.year }}{% endif %}</p>
-  <h1>{{ release.name }}</h1>
+  <h1>{{ release.display_title }}</h1>
   <p class="prose">
     <a href="{{ release.artist.get_absolute_url }}">{{ release.artist.name }}</a>
     {% if release.artist.is_alias and release.artist.primary_artist %}<span class="entry__meta"> (alias of {{ release.artist.primary_artist.name }})</span>{% endif %}
