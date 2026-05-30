@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from tinymce.widgets import TinyMCE
 
 from .models import Category, Post, Tag
 
@@ -23,6 +25,8 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ("is_published", "import_confidence", "categories")
     search_fields = ("title", "excerpt", "body")
     prepopulated_fields = {"slug": ("title",)}
+    # Rich-text editing for the Body and Excerpt text fields.
+    formfield_overrides = {models.TextField: {"widget": TinyMCE()}}
     filter_horizontal = ("categories", "tags")
     date_hierarchy = "published_at"
     fieldsets = (

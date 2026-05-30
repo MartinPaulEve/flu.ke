@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party
+    "tinymce",
     # First-party
     "apps.core",
     "apps.pages",
@@ -144,4 +146,18 @@ MUSICBRAINZ = {
     "app": env("MUSICBRAINZ_APP"),
     "version": env("MUSICBRAINZ_VERSION"),
     "contact": env("MUSICBRAINZ_CONTACT"),
+}
+
+# TinyMCE rich-text editor (self-hosted; no external/CDN calls).
+TINYMCE_DEFAULT_CONFIG = {
+    "height": 420,
+    "menubar": "edit view insert format table",
+    "plugins": "advlist autolink lists link image charmap preview anchor "
+    "searchreplace visualblocks code fullscreen insertdatetime media table help wordcount",
+    "toolbar": "undo redo | blocks | bold italic underline | "
+    "alignleft aligncenter alignright | bullist numlist | link image media | "
+    "removeformat code",
+    "branding": False,
+    "promotion": False,
+    "convert_urls": False,
 }

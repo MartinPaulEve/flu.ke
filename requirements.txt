@@ -9,8 +9,12 @@ certifi==2026.5.20
 charset-normalizer==3.4.7
     # via requests
 django==5.2.14
-    # via flukecms
+    # via
+    #   django-tinymce
+    #   flukecms
 django-environ==0.13.0
+    # via flukecms
+django-tinymce==5.0.0
     # via flukecms
 idna==3.17
     # via requests
