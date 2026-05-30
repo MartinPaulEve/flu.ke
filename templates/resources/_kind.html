@@ -1,9 +1,9 @@
 {# Renders one resource kind (official/fan) grouped by subcategory. #}
-<div class="disco-section reveal" aria-labelledby="{{ anchor }}-title">
+<div class="disco-section" aria-labelledby="{{ anchor }}-title">
   <h2 id="{{ anchor }}-title">{{ heading }}</h2>
   {% for group in groups %}
     {% if group.subcategory %}<h3>{{ group.subcategory.name }}</h3>{% endif %}
-    <ul class="entries" data-reveal="stagger">
+    <ul class="entries">
       {% for resource in group.resources %}
         <li class="entry">
           <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>

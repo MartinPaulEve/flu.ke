@@ -10,7 +10,7 @@
   {% endif %}
   {% if artist.biography %}<div class="prose">{{ artist.biography|linebreaks }}</div>{% endif %}
   <h2 style="margin-top:2.5rem">Releases</h2>
-  <ul class="entries" data-reveal="stagger">
+  <ul class="entries">
     {% for release in releases %}
       <li class="entry">
         <span class="entry__index">{% if release.year %}{{ release.year }}{% else %}—{% endif %}</span>

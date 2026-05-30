@@ -67,3 +67,14 @@ def test_incremental_rebuild_skips_unchanged(tmp_path, seeded, capsys):
     _build(tmp_path, no_media=True)
     out = capsys.readouterr().out
     assert "0 pages" in out  # second run rebuilt nothing
+
+
+def test_news_list_renders_post_titles_without_reveal(tmp_path, seeded):
+    """The All Posts page must list post titles and carry no scroll-reveal markup
+    that could leave them stuck at opacity:0."""
+    _build(tmp_path, no_media=True)
+    html = (tmp_path / "news" / "index.html").read_text()
+    assert "Hello world" in html  # post title is present
+    assert '<span class="entry__title">' in html or 'class="entry__title"' in html
+    assert "reveal" not in html  # no reveal class/attribute survives
+    assert "data-reveal" not in html

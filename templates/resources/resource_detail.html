@@ -7,7 +7,7 @@
   <p class="kicker">{{ resource.get_kind_display }}{% if resource.subcategory %} — {{ resource.subcategory.name }}{% endif %}</p>
   <h1>{{ resource.title }}</h1>
   {% if resource.contributor %}<p class="entry__meta">By {{ resource.contributor }}</p>{% endif %}
-  <div class="prose reveal">{{ resource.description|markdownify }}</div>
+  <div class="prose">{{ resource.description|markdownify }}</div>
 
   {% if resource.files.all %}
     <h2 style="margin-top:2.5rem">Files</h2>
@@ -25,7 +25,7 @@
   {% endif %}
 
   {% if resource.related_post and resource.related_post.is_live %}
-    <section class="related-post reveal" aria-labelledby="related-post-title" style="margin-top:2.5rem">
+    <section class="related-post" aria-labelledby="related-post-title" style="margin-top:2.5rem">
       <p class="kicker">From the blog</p>
       <h2 id="related-post-title"><a href="{{ resource.related_post.get_absolute_url }}">{{ resource.related_post.title }}</a></h2>
       {% if resource.related_post.published_at %}<p class="entry__meta"><time datetime="{{ resource.related_post.published_at|date:'c' }}">{{ resource.related_post.published_at|date:'j M Y' }}</time></p>{% endif %}

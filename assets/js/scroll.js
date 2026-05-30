@@ -4,40 +4,12 @@
 (function () {
   "use strict";
 
-  var root = document.documentElement;
   var reduceMotion =
     window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Mark JS available; CSS only hides reveal elements once this class is present
-  // AND motion is allowed, so no-JS / reduced-motion users see everything immediately.
-  if (!reduceMotion) {
-    root.classList.add("js");
-  }
-  if (reduceMotion || !("IntersectionObserver" in window)) {
+  if (reduceMotion) {
     return;
   }
-
-  // Index staggered children so each can offset its transition.
-  document.querySelectorAll('[data-reveal="stagger"]').forEach(function (group) {
-    Array.prototype.forEach.call(group.children, function (child, i) {
-      child.style.setProperty("--i", i);
-    });
-  });
-
-  var observer = new IntersectionObserver(
-    function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { rootMargin: "0px 0px -10% 0px", threshold: 0.1 }
-  );
-  document.querySelectorAll(".reveal").forEach(function (el) {
-    observer.observe(el);
-  });
 
   // Subtle parallax on opted-in elements (data-parallax = strength).
   var parallax = Array.prototype.slice.call(document.querySelectorAll("[data-parallax]"));

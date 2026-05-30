@@ -14,7 +14,7 @@
 
   <h2 style="margin-top:2.5rem">Editions</h2>
   {% for edition in release.editions.all %}
-    <details class="edition reveal"{% if forloop.first %} open{% endif %}>
+    <details class="edition"{% if forloop.first %} open{% endif %}>
       <summary>
         {{ edition.name|default:edition.catalogue_number|default:"Edition" }}
         {% if edition.media %} <span class="entry__meta">· {{ edition.media }}</span>{% endif %}

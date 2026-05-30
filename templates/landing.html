@@ -9,10 +9,10 @@
   <span class="hero__scrim" aria-hidden="true"></span>
 </section>
 
-<section class="section wrap reveal" aria-labelledby="recent-news-title">
+<section class="section wrap" aria-labelledby="recent-news-title">
   <p class="kicker">01 — Dispatches</p>
   <h2 id="recent-news-title">Latest news</h2>
-  <ul class="entries" data-reveal="stagger">
+  <ul class="entries">
     {% for post in recent_posts %}
       <li class="entry">
         <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
@@ -26,10 +26,10 @@
   <p><a class="prose" href="/news/">All news →</a></p>
 </section>
 
-<section class="section wrap reveal" aria-labelledby="latest-resources-title">
+<section class="section wrap" aria-labelledby="latest-resources-title">
   <p class="kicker">02 — From the vault</p>
   <h2 id="latest-resources-title">Latest resources</h2>
-  <ul class="entries" data-reveal="stagger">
+  <ul class="entries">
     {% for resource in latest_resources %}
       <li class="entry">
         <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
@@ -43,7 +43,7 @@
   <p><a class="prose" href="/resources/">All resources →</a></p>
 </section>
 
-<section class="section wrap reveal" aria-labelledby="disco-cta-title">
+<section class="section wrap" aria-labelledby="disco-cta-title">
   <p class="kicker">03 — The record</p>
   <h2 id="disco-cta-title">The complete discography</h2>
   <p class="prose">Albums, singles, live sets and best-ofs — every edition, catalogue number and track, with cover art and samples.</p>
