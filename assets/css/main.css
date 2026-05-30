@@ -147,6 +147,10 @@ details.edition[open] > summary::before { content: "\2013"; }
 .article-head { padding-block: clamp(2.5rem, 6vw, 5rem); }
 time { font-variant-numeric: tabular-nums; }
 
+/* ---------- related blog post pulled into a resource ---------- */
+.related-post { border-top: var(--rule) solid var(--hairline); padding-top: 1.5rem; border-left: 3px solid var(--accent); padding-left: clamp(1rem, 3vw, 2rem); }
+.related-post > .prose { color: var(--muted); }
+
 /* ---------- footer ---------- */
 .site-footer { border-top: var(--rule) solid var(--hairline); padding: 2.5rem var(--gutter); color: var(--muted); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.14em; }
 

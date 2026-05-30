@@ -25,7 +25,13 @@ class ResourceAdmin(admin.ModelAdmin):
     list_filter = ("kind", "is_published", "subcategory")
     search_fields = ("title", "description", "contributor")
     prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("artist", "related_release", "related_edition", "subcategory")
+    autocomplete_fields = (
+        "artist",
+        "related_release",
+        "related_edition",
+        "related_post",
+        "subcategory",
+    )
     date_hierarchy = "uploaded_at"
     inlines = [ResourceFileInline]
     fieldsets = (
@@ -37,6 +43,7 @@ class ResourceAdmin(admin.ModelAdmin):
                     "artist",
                     "related_release",
                     "related_edition",
+                    "related_post",
                     "contributor",
                     "source_attribution",
                     "license",

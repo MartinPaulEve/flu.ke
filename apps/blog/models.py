@@ -86,6 +86,19 @@ class Post(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     def display_date(self):
         return self.published_at or self.created
 
+    @property
+    def is_live(self):
+        """True when the post is on the static site (published, publish date passed).
+
+        Mirrors ``PostQuerySet.published`` so links to a post are only shown when a
+        page actually exists for it.
+        """
+        return bool(
+            self.is_published
+            and self.published_at is not None
+            and self.published_at <= timezone.now()
+        )
+
     def get_absolute_url(self):
         return f"/news/{self.display_date.year}/{self.slug}/"
 

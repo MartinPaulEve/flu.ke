@@ -71,6 +71,14 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         on_delete=models.SET_NULL,
         related_name="resources",
     )
+    related_post = models.ForeignKey(
+        "blog.Post",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="resources",
+        help_text="Optional blog post that announces or discusses this resource.",
+    )
     contributor = models.CharField(
         max_length=200, blank=True, help_text="Fan / remixer credit."
     )

@@ -34,3 +34,12 @@ def test_published_includes_past_dated_published():
     past = timezone.now() - timedelta(days=1)
     Post.objects.create(title="Live one", is_published=True, published_at=past)
     assert list(Post.objects.published().values_list("title", flat=True)) == ["Live one"]
+
+
+def test_is_live_true_only_for_published_and_past_dated():
+    past = timezone.now() - timedelta(days=1)
+    future = timezone.now() + timedelta(days=1)
+    assert Post(title="a", is_published=True, published_at=past).is_live is True
+    assert Post(title="b", is_published=False, published_at=past).is_live is False
+    assert Post(title="c", is_published=True, published_at=future).is_live is False
+    assert Post(title="d", is_published=True, published_at=None).is_live is False

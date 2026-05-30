@@ -24,6 +24,16 @@
     <p class="prose"><a href="{{ resource.external_url }}">Open resource →</a></p>
   {% endif %}
 
+  {% if resource.related_post and resource.related_post.is_live %}
+    <section class="related-post reveal" aria-labelledby="related-post-title" style="margin-top:2.5rem">
+      <p class="kicker">From the blog</p>
+      <h2 id="related-post-title"><a href="{{ resource.related_post.get_absolute_url }}">{{ resource.related_post.title }}</a></h2>
+      {% if resource.related_post.published_at %}<p class="entry__meta"><time datetime="{{ resource.related_post.published_at|date:'c' }}">{{ resource.related_post.published_at|date:'j M Y' }}</time></p>{% endif %}
+      <div class="prose">{{ resource.related_post.body|markdownify }}</div>
+      <p><a class="prose" href="{{ resource.related_post.get_absolute_url }}">Read the original post →</a></p>
+    </section>
+  {% endif %}
+
   <dl class="entry__meta" style="margin-top:2rem">
     {% if resource.related_release %}<dt>Release</dt><dd><a href="{{ resource.related_release.get_absolute_url }}">{{ resource.related_release.name }}</a></dd>{% endif %}
     {% if resource.recorded_date %}<dt>Recorded</dt><dd>{{ resource.recorded_date|date:"j M Y" }}</dd>{% endif %}
