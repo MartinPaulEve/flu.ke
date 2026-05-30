@@ -160,6 +160,15 @@ time { font-variant-numeric: tabular-nums; }
   .js .reveal.is-visible { opacity: 1; transform: none; }
   .js .reveal[data-reveal="stagger"] > * { opacity: 0; transform: translateY(var(--reveal-shift)); transition: opacity var(--reveal-time) var(--ease), transform var(--reveal-time) var(--ease); }
   .js .reveal.is-visible[data-reveal="stagger"] > * { opacity: 1; transform: none; transition-delay: calc(var(--i, 0) * 70ms); }
+
+  /* Discography pages are dense reference pages — show everything at once,
+     with no scroll-driven load/fade-in. */
+  .js body.discography .reveal,
+  .js body.discography .reveal[data-reveal="stagger"] > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 @media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }
