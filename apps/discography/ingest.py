@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from django.db import transaction
 
 from apps.discography.models import (
+    PRIMARY_ARTIST_NAME,
     Artist,
     CoverImage,
     Edition,
@@ -20,7 +21,7 @@ from apps.discography.models import (
     Track,
 )
 
-PRIMARY_ARTIST = "Fluke"
+PRIMARY_ARTIST = PRIMARY_ARTIST_NAME
 
 # Display order for the known discography sections; unknown sections sort last.
 SECTION_ORDER = {

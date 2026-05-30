@@ -22,6 +22,10 @@ from apps.core.models import (
     TimeStampedModel,
 )
 
+# The canonical primary act. Any release by an artist other than this one is
+# rendered with the artist name in parentheses (see Release.display_title).
+PRIMARY_ARTIST_NAME = "Fluke"
+
 
 class ReleaseType(models.Model):
     """A discography section, e.g. Albums / Live Albums / Best Ofs / Singles."""
@@ -96,10 +100,12 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     @property
     def display_title(self):
-        """Release name, suffixed with the artist when it is a Fluke alias."""
-        if self.artist.is_alias:
-            return f"{self.name} ({self.artist.name})"
-        return self.name
+        """Release name, suffixed with the artist unless the artist is Fluke."""
+        return (
+            f"{self.name} ({self.artist.name})"
+            if self.artist.name != PRIMARY_ARTIST_NAME
+            else self.name
+        )
 
 
 class Edition(TimeStampedModel):
