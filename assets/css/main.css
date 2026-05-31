@@ -102,9 +102,9 @@ body::after {
 }
 .theme-toggle:hover { color: var(--fg); border-color: var(--accent); }
 .theme-toggle__glyph { width: 1em; height: 1em; line-height: 1; }
-/* Moon while dark (a switch to light is offered); sun while light. */
-.theme-toggle__glyph::before { content: "\263E"; } /* ☾ */
-:root[data-theme="light"] .theme-toggle__glyph::before { content: "\2600"; } /* ☀ */
+/* Sun while light (the default); moon while dark. */
+.theme-toggle__glyph::before { content: "\2600"; } /* ☀ */
+:root[data-theme="dark"] .theme-toggle__glyph::before { content: "\263E"; } /* ☾ */
 @media (max-width: 30rem) {
   .theme-toggle__label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }

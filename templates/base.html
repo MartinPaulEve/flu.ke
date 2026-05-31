@@ -6,17 +6,17 @@
   <title>{% block title %}{{ site_name }} — the fan source{% endblock %}</title>
   <script>
     // No-flash theme init: apply the stored choice before first paint.
-    // Default (nothing stored) stays dark, which is the design default.
+    // Default (nothing stored) is light, the design default; dark is opt-in.
     try {
-      if (localStorage.getItem("theme") === "light") {
-        document.documentElement.dataset.theme = "light";
+      if (localStorage.getItem("theme") === "dark") {
+        document.documentElement.dataset.theme = "dark";
       }
     } catch (e) {}
   </script>
   {% load static %}
   <link rel="preload" href="{% static 'fonts/bricolage-grotesque.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
-  <meta name="theme-color" content="#0a0a0a">
+  <meta name="theme-color" content="#f7f5f0">
   <link rel="alternate" type="application/rss+xml" title="{{ site_name }} news" href="/feed.xml">
   {% block meta %}
   <meta property="og:site_name" content="{{ site_name }}">
@@ -39,7 +39,7 @@
       <a href="/discography/">Discography</a>
       <a href="/resources/">Resources</a>
     </nav>
-    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to light theme" aria-pressed="false">
+    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false">
       <span class="theme-toggle__glyph" aria-hidden="true"></span>
       <span class="theme-toggle__label">Theme</span>
     </button>

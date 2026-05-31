@@ -1,5 +1,5 @@
 /* Light/dark theme toggle for flu.ke.
-   Dark is the default; light is opt-in via data-theme="light" on <html>.
+   Light is the default; dark is opt-in via data-theme="dark" on <html>.
    The no-flash inline script in <head> applies the stored choice before paint;
    this file wires up the toggle button and keeps its ARIA state in sync. */
 (function () {
@@ -9,22 +9,22 @@
   var root = document.documentElement;
 
   function currentTheme() {
-    return root.dataset.theme === "light" ? "light" : "dark";
+    return root.dataset.theme === "dark" ? "dark" : "light";
   }
 
   function syncButton(button, theme) {
-    var isLight = theme === "light";
-    // aria-pressed reflects "light theme is on".
-    button.setAttribute("aria-pressed", isLight ? "true" : "false");
+    var isDark = theme === "dark";
+    // aria-pressed reflects "dark theme is on" (light is the default).
+    button.setAttribute("aria-pressed", isDark ? "true" : "false");
     button.setAttribute(
       "aria-label",
-      isLight ? "Switch to dark theme" : "Switch to light theme"
+      isDark ? "Switch to light theme" : "Switch to dark theme"
     );
   }
 
   function apply(theme) {
-    if (theme === "light") {
-      root.dataset.theme = "light";
+    if (theme === "dark") {
+      root.dataset.theme = "dark";
     } else {
       delete root.dataset.theme;
     }
@@ -40,7 +40,7 @@
     syncButton(button, currentTheme());
 
     button.addEventListener("click", function () {
-      var next = currentTheme() === "light" ? "dark" : "light";
+      var next = currentTheme() === "dark" ? "light" : "dark";
       apply(next);
       try {
         localStorage.setItem(STORAGE_KEY, next);

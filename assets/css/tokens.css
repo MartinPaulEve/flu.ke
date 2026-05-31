@@ -1,6 +1,7 @@
 /* Fluke design tokens — industrial techno / brutalist-editorial.
-   Black ground, one electric red, warm near-white text. All colour pairings are
-   verified for WCAG AA by tests/test_design_tokens_contrast.py. */
+   Warm paper ground, one deep red, near-black text by default; a black/electric-red
+   dark theme is opt-in via data-theme="dark". All colour pairings are verified for
+   WCAG AA by tests/test_design_tokens_contrast.py. */
 
 @font-face {
   font-family: "Bricolage Grotesque";
@@ -21,23 +22,23 @@
 
 :root {
   /* Surfaces */
-  --bg: #0a0a0a;          /* near-black ground */
-  --bg-raise: #151311;    /* raised panel */
-  --bg-inset: #050505;    /* deep inset */
-  --hairline: #2a2622;    /* hairline rules / borders */
+  --bg: #f7f5f0;          /* warm paper ground */
+  --bg-raise: #ffffff;    /* raised panel */
+  --bg-inset: #ebe8e1;    /* recessed inset */
+  --hairline: #d4cfc5;    /* hairline rules / borders */
 
   /* Text (all >= 4.5:1 on --bg) */
-  --fg: #f4f1ea;          /* warm near-white body */
-  --muted: #a8a299;       /* secondary text */
-  --link: #f4f1ea;        /* links: white text + red underline */
+  --fg: #16140f;          /* near-black warm body */
+  --muted: #5c554a;       /* secondary text */
+  --link: #16140f;        /* links: dark text + red underline */
 
-  /* Red — the single accent */
-  --accent: #ff2e1f;      /* electric red: large display + UI (>= 3:1) */
-  --accent-text: #ff5a45; /* red usable at normal text size (>= 4.5:1) */
-  --accent-ink: #0a0a0a;  /* text on a solid red fill */
+  /* Red — the single accent, deepened so it holds AA on light paper */
+  --accent: #d4231a;      /* red: large display + UI (>= 3:1) */
+  --accent-text: #c01c14; /* deeper red usable at normal text size (>= 4.5:1) */
+  --accent-ink: #ffffff;  /* text on a solid red fill */
 
   /* Focus — deliberately not red so it never hides on red controls */
-  --focus: #5ad1ff;
+  --focus: #0b63c4;
 
   /* Type */
   --font-display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
@@ -59,26 +60,26 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Light theme — opt-in via data-theme="light" on <html>. Dark above is the
+/* Dark theme — opt-in via data-theme="dark" on <html>. Light above is the
    default. Only the colour tokens are overridden; type/space/motion are shared.
    All pairings verified for WCAG AA by tests/test_design_tokens_contrast.py. */
-:root[data-theme="light"] {
+:root[data-theme="dark"] {
   /* Surfaces */
-  --bg: #f7f5f0;          /* warm paper ground */
-  --bg-raise: #ffffff;    /* raised panel */
-  --bg-inset: #ebe8e1;    /* recessed inset */
-  --hairline: #d4cfc5;    /* hairline rules / borders */
+  --bg: #0a0a0a;          /* near-black ground */
+  --bg-raise: #151311;    /* raised panel */
+  --bg-inset: #050505;    /* deep inset */
+  --hairline: #2a2622;    /* hairline rules / borders */
 
   /* Text (all >= 4.5:1 on --bg) */
-  --fg: #16140f;          /* near-black warm body */
-  --muted: #5c554a;       /* secondary text */
-  --link: #16140f;        /* links: dark text + red underline */
+  --fg: #f4f1ea;          /* warm near-white body */
+  --muted: #a8a299;       /* secondary text */
+  --link: #f4f1ea;        /* links: white text + red underline */
 
-  /* Red — the single accent, deepened so it holds AA on light paper */
-  --accent: #d4231a;      /* red: large display + UI (>= 3:1) */
-  --accent-text: #c01c14; /* deeper red usable at normal text size (>= 4.5:1) */
-  --accent-ink: #ffffff;  /* text on a solid red fill */
+  /* Red — the single accent */
+  --accent: #ff2e1f;      /* electric red: large display + UI (>= 3:1) */
+  --accent-text: #ff5a45; /* red usable at normal text size (>= 4.5:1) */
+  --accent-ink: #0a0a0a;  /* text on a solid red fill */
 
   /* Focus — deliberately not red so it never hides on red controls */
-  --focus: #0b63c4;
+  --focus: #5ad1ff;
 }
