@@ -1,9 +1,10 @@
 """
 Django settings for the Fluke CMS.
 
-The CMS runs privately/locally for editing; the public site is rendered to static
-files (see the ``staticgen`` app) and served as plain files. Secrets come from the
-environment / a ``.env`` file via django-environ — never hard-coded.
+Django serves the public site live (``apps.frontend``) and a read-only REST API
+(``apps.api``, documented with Swagger), with the admin for private editing.
+Secrets come from the environment / a ``.env`` file via django-environ — never
+hard-coded.
 """
 
 from pathlib import Path
@@ -43,8 +44,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     # Third-party
     "tinymce",
+    "rest_framework",
+    "django_filters",
+    "drf_spectacular",
     # First-party
     "apps.core",
     "apps.pages",
@@ -52,6 +57,8 @@ INSTALLED_APPS = [
     "apps.resources",
     "apps.discography",
     "apps.importers",
+    "apps.frontend",
+    "apps.api",
     "apps.staticgen",
 ]
 
@@ -146,6 +153,27 @@ MUSICBRAINZ = {
     "app": env("MUSICBRAINZ_APP"),
     "version": env("MUSICBRAINZ_VERSION"),
     "contact": env("MUSICBRAINZ_CONTACT"),
+}
+
+# --- REST API (read-only public discography API) ---------------------------
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 50,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Fluke discography API",
+    "DESCRIPTION": "Read-only API for the Fluke discography — artists, releases, "
+    "editions, tracks, lyrics and cover art.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # TinyMCE rich-text editor (self-hosted; no external/CDN calls).

@@ -1,0 +1,120 @@
+"""Read-only viewsets for the discography API.
+
+Every viewset is a :class:`~rest_framework.viewsets.ReadOnlyModelViewSet`, so
+only ``GET`` (list/retrieve) is allowed — write methods return 405. Releases
+and everything reachable through them (editions, tracks, covers) are scoped to
+*published* releases only; artists, release types and lyrics are reference data
+and are exposed unfiltered.
+"""
+
+import django_filters
+from rest_framework import viewsets
+
+from apps.discography.models import (
+    Artist,
+    CoverImage,
+    Edition,
+    Lyric,
+    Release,
+    ReleaseType,
+    Track,
+)
+
+from .serializers import (
+    ArtistSerializer,
+    CoverImageSerializer,
+    EditionSerializer,
+    LyricSerializer,
+    ReleaseDetailSerializer,
+    ReleaseSerializer,
+    ReleaseTypeSerializer,
+    TrackSerializer,
+)
+
+
+class ReleaseFilter(django_filters.FilterSet):
+    """Filter releases by year, type and artist slug."""
+
+    artist = django_filters.CharFilter(field_name="artist__slug")
+
+    class Meta:
+        model = Release
+        fields = ["year", "type", "artist"]
+
+
+class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Artist.objects.select_related("primary_artist").all()
+    serializer_class = ArtistSerializer
+    lookup_field = "slug"
+    search_fields = ["name"]
+    ordering_fields = ["name"]
+    ordering = ["name"]
+
+
+class ReleaseTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ReleaseType.objects.all()
+    serializer_class = ReleaseTypeSerializer
+    ordering_fields = ["display_order", "name"]
+    ordering = ["display_order", "name"]
+
+
+class ReleaseViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = (
+        Release.objects.published()
+        .select_related("artist", "type")
+        .prefetch_related("editions__tracks", "editions__covers")
+    )
+    lookup_field = "slug"
+    filterset_class = ReleaseFilter
+    search_fields = ["name"]
+    ordering_fields = ["year", "name", "order"]
+    ordering = ["-year", "order", "name"]
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return ReleaseDetailSerializer
+        return ReleaseSerializer
+
+
+class EditionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = (
+        Edition.objects.filter(release__is_published=True)
+        .select_related("release")
+        .prefetch_related("tracks", "covers")
+    )
+    serializer_class = EditionSerializer
+    filterset_fields = {"release__slug": ["exact"]}
+    ordering_fields = ["display_order", "year"]
+    ordering = ["display_order"]
+
+
+class TrackViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = (
+        Track.objects.filter(edition__release__is_published=True)
+        .select_related("remixer", "lyric")
+    )
+    serializer_class = TrackSerializer
+    filterset_fields = {"edition": ["exact"], "remixer__slug": ["exact"]}
+    search_fields = ["name"]
+    ordering_fields = ["display_order", "track_number", "name"]
+    ordering = ["display_order", "track_number"]
+
+
+class LyricViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Lyric.objects.select_related("artist").all()
+    serializer_class = LyricSerializer
+    lookup_field = "slug"
+    filterset_fields = {"artist__slug": ["exact"]}
+    search_fields = ["title", "lyrics"]
+    ordering_fields = ["title"]
+    ordering = ["title"]
+
+
+class CoverImageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CoverImage.objects.filter(
+        edition__release__is_published=True
+    ).select_related("edition")
+    serializer_class = CoverImageSerializer
+    filterset_fields = {"edition": ["exact"], "kind": ["exact"]}
+    ordering_fields = ["display_order"]
+    ordering = ["display_order"]

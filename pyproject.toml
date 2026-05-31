@@ -15,6 +15,9 @@ dependencies = [
     "requests>=2.32",
     "whitenoise>=6.6",
     "django-tinymce>=4.0",
+    "djangorestframework>=3.17.1",
+    "drf-spectacular>=0.29.0",
+    "django-filter>=25.2",
 ]
 
 [dependency-groups]
