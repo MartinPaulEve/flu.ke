@@ -98,15 +98,6 @@ DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
 
-# Use full Unicode (utf8mb4) when DATABASE_URL points at MySQL/MariaDB, so lyrics
-# and post bodies keep emoji, smart quotes, etc. No-op on the SQLite default.
-# See docs/mysql-migration.md.
-if "mysql" in DATABASES["default"]["ENGINE"]:
-    DATABASES["default"].setdefault("OPTIONS", {})["charset"] = "utf8mb4"
-    DATABASES["default"].setdefault("TEST", {}).update(
-        {"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_unicode_ci"}
-    )
-
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

@@ -82,9 +82,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
 # --- Database (SQLite production tuning) -----------------------------------
-# Only touch the SQLite backend; leave MySQL/MariaDB (or any other engine)
-# exactly as the base settings configured it. Merge into any existing OPTIONS
-# rather than clobbering it.
+# Only touch the SQLite backend; leave any other engine exactly as the base
+# settings configured it. Merge into any existing OPTIONS rather than clobbering it.
 if "sqlite" in DATABASES["default"]["ENGINE"].lower():  # noqa: F405
     _options = DATABASES["default"].setdefault("OPTIONS", {})  # noqa: F405
     _options.update(
