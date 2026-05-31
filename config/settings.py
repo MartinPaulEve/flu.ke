@@ -20,7 +20,6 @@ env = environ.Env(
     CSRF_TRUSTED_ORIGINS=(list, []),
     SITE_BASE_URL=(str, "https://flu.ke"),
     SITE_NAME=(str, "Fluke"),
-    BUILD_DIR=(str, "dist"),
     MEDIA_ROOT=(str, "media"),
     MEDIA_URL=(str, "/media/"),
     MUSICBRAINZ_APP=(str, "flukecms"),
@@ -59,7 +58,6 @@ INSTALLED_APPS = [
     "apps.importers",
     "apps.frontend",
     "apps.api",
-    "apps.staticgen",
 ]
 
 MIDDLEWARE = [
@@ -153,7 +151,6 @@ if env("DJANGO_SECURE"):
 # --- Project-specific settings ---------------------------------------------
 SITE_BASE_URL = env("SITE_BASE_URL").rstrip("/")
 SITE_NAME = env("SITE_NAME")
-BUILD_DIR = BASE_DIR / env("BUILD_DIR")
 
 # Source archive of the legacy site (used by the import_* management commands).
 INGEST_DIR = BASE_DIR / "Ingest"

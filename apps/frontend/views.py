@@ -1,10 +1,9 @@
 """Live public-site views.
 
-These reproduce the static build's url_path -> template -> context mapping (see
-``apps.staticgen.routes``) but evaluate their querysets per request and 404 for
-unpublished or missing content. The ``site_name``/``site_base_url`` template
-globals come from ``apps.core.context_processors.site``, so the views don't pass
-them.
+Each view maps a url_path to a template and context, evaluating its querysets per
+request and returning 404 for unpublished or missing content. The
+``site_name``/``site_base_url`` template globals come from
+``apps.core.context_processors.site``, so the views don't pass them.
 """
 
 from __future__ import annotations

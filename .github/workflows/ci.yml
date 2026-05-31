@@ -45,12 +45,10 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Build the static site
+      - name: Migrate the database
         env:
           DJANGO_SECRET_KEY: ci-secret-key-not-used-in-production
-        run: |
-          uv run python manage.py migrate
-          uv run python manage.py build_site --no-media
+        run: uv run python manage.py migrate
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -58,10 +56,13 @@ jobs:
           node-version: 20
 
       - name: Serve and audit with pa11y-ci
+        env:
+          DJANGO_SECRET_KEY: ci-secret-key-not-used-in-production
+          DJANGO_DEBUG: "True"
         run: |
-          npx --yes http-server dist -p 8080 -s &
-          npx --yes wait-on http://localhost:8080/index.html
+          uv run python manage.py runserver 127.0.0.1:8080 &
+          npx --yes wait-on http://127.0.0.1:8080/
           npx --yes pa11y-ci \
-            --sitemap http://localhost:8080/sitemap.xml \
+            --sitemap http://127.0.0.1:8080/sitemap.xml \
             --sitemap-find https://flu.ke \
-            --sitemap-replace http://localhost:8080
+            --sitemap-replace http://127.0.0.1:8080

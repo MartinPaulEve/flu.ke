@@ -1,7 +1,8 @@
-# Local CMS / static-site generator for flu.ke.
+# Local CMS image for flu.ke.
 # This image runs the PRIVATE editing environment (Django admin + management
-# commands). The public site is the static output of `build_site` — it is not
-# served by this image.
+# commands) for local content editing. The public site is served live by the
+# Django app (apps.frontend + apps.api); see docs/deploy-docker.md for the
+# production deployment.
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -26,7 +27,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Run as a non-root user whose UID/GID match the host (override at build time with
 # --build-arg UID=$(id -u) GID=$(id -g)). This way files the container writes into
-# the bind-mounted working tree (db.sqlite3, dist/, media/) are owned by you, not root.
+# the bind-mounted working tree (db.sqlite3, media/) are owned by you, not root.
 ARG UID=1000
 ARG GID=1000
 RUN groupadd --gid "$GID" app || true \

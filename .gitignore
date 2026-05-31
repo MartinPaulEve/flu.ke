@@ -1,8 +1,7 @@
 # Source archive of the old site (huge, not part of the app)
 Ingest/
 
-# Build output (the deployable static site) and uploaded media
-dist/
+# Uploaded media
 media/
 
 # Secrets

@@ -1,16 +1,14 @@
-# Local CMS for flu.ke — the private editing + static-generation tool.
+# Local CMS for flu.ke — the private editing tool for the live Django site.
 #
 #   docker compose up --build            # admin at http://localhost:8000/admin/
 #   docker compose exec cms python manage.py import_discography
 #   docker compose exec cms python manage.py import_media        # ~10 GB; once
 #   docker compose exec cms python manage.py import_blog         # Wayback (network)
-#   docker compose exec cms python manage.py build_site          # writes ./dist
 #   docker compose exec cms python manage.py createsuperuser     # if not auto-created
 #
-# The repo is bind-mounted, so db.sqlite3, media/ and dist/ persist on the host
-# (dist/ is what you deploy with scripts/deploy.sh) and Ingest/ is available to
-# the import commands. SQLite suits a single editor; point DATABASE_URL at
-# MySQL if you ever need more.
+# The repo is bind-mounted, so db.sqlite3 and media/ persist on the host and
+# Ingest/ is available to the import commands. SQLite suits a single editor;
+# point DATABASE_URL at MySQL if you ever need more.
 #
 # An optional `db` (MariaDB) service is included for a local MySQL dry-run before
 # migrating the live host — see docs/mysql-migration.md. It is OFF by default:
@@ -26,7 +24,7 @@ services:
       context: .
       args:
         # Match the container user to your host user so bind-mounted files
-        # (db.sqlite3, dist/, media/) are owned by you, not root. Override for a
+        # (db.sqlite3, media/) are owned by you, not root. Override for a
         # non-1000 host: `UID=$(id -u) GID=$(id -g) docker compose build`.
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
@@ -56,7 +54,7 @@ services:
       # Create the admin yourself (keeps no password in the long-running env):
       #   docker compose exec cms python manage.py createsuperuser
     volumes:
-      - .:/app                 # live source + db/media/dist/Ingest on the host
+      - .:/app                 # live source + db/media/Ingest on the host
       - venv-cache:/app/.venv  # mask any host .venv (the image uses /opt/venv)
     # For the MySQL dry-run, uncomment so cms waits for the db to be healthy. Left
     # commented so the default `up` stays SQLite-only and never pulls in `db`.
