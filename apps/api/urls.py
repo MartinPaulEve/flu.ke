@@ -1,13 +1,14 @@
 """Discography REST API URLs.
 
-Registers the read-only resource viewsets on a DefaultRouter and exposes the
-OpenAPI schema plus interactive docs:
+Registers the read-only resource viewsets on a router and exposes the OpenAPI
+schema plus interactive docs:
 
-* ``/api/docs/``   — Swagger UI
-* ``/api/redoc/``  — ReDoc
-* ``/api/schema/`` — raw OpenAPI document
+* ``/discography/api/docs/``   — Swagger UI
+* ``/discography/api/redoc/``  — ReDoc
+* ``/discography/api/schema/`` — raw OpenAPI document
 
-All resource endpoints (``/api/releases/`` etc.) live alongside these.
+All resource endpoints (``/discography/api/releases/`` etc.) live alongside
+these.
 """
 
 from django.urls import path
@@ -16,7 +17,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import APIRootView, DefaultRouter
 
 from .views import (
     ArtistViewSet,
@@ -28,7 +29,18 @@ from .views import (
     TrackViewSet,
 )
 
-router = DefaultRouter()
+
+class DiscographyAPIRootView(APIRootView):
+    """Fluke discography API — a read-only API for the Fluke discography: artists, release types, releases, editions, tracks, lyrics and cover art. Browse the interactive docs at /discography/api/docs/ (Swagger) or /discography/api/redoc/, or fetch the OpenAPI schema at /discography/api/schema/."""  # noqa: E501
+
+
+class DiscographyAPIRouter(DefaultRouter):
+    """DefaultRouter whose browsable root shows a descriptive overview."""
+
+    APIRootView = DiscographyAPIRootView
+
+
+router = DiscographyAPIRouter()
 router.register("artists", ArtistViewSet, basename="artist")
 router.register("release-types", ReleaseTypeViewSet, basename="releasetype")
 router.register("releases", ReleaseViewSet, basename="release")

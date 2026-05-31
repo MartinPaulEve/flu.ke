@@ -79,7 +79,7 @@ def discography():
 # --- Releases list: pagination + published-only ----------------------------
 
 def test_releases_list_is_paginated_and_excludes_unpublished(client, discography):
-    resp = client.get("/api/releases/")
+    resp = client.get("/discography/api/releases/")
     assert resp.status_code == 200
 
     body = resp.json()
@@ -94,7 +94,7 @@ def test_releases_list_is_paginated_and_excludes_unpublished(client, discography
 
 def test_release_detail_nests_editions_and_tracks(client, discography):
     release = discography["published"]
-    resp = client.get(f"/api/releases/{release.slug}/")
+    resp = client.get(f"/discography/api/releases/{release.slug}/")
     assert resp.status_code == 200
 
     body = resp.json()
@@ -109,34 +109,34 @@ def test_release_detail_nests_editions_and_tracks(client, discography):
 
 
 def test_release_detail_404_for_unpublished(client, discography):
-    resp = client.get(f"/api/releases/{discography['unpublished'].slug}/")
+    resp = client.get(f"/discography/api/releases/{discography['unpublished'].slug}/")
     assert resp.status_code == 404
 
 
 # --- Filtering --------------------------------------------------------------
 
 def test_releases_filter_by_artist_slug(client, discography):
-    resp = client.get(f"/api/releases/?artist={discography['fluke'].slug}")
+    resp = client.get(f"/discography/api/releases/?artist={discography['fluke'].slug}")
     assert resp.status_code == 200
     slugs = {item["slug"] for item in resp.json()["results"]}
     assert discography["published"].slug in slugs
 
 
 def test_releases_filter_by_artist_slug_no_match_is_empty(client, discography):
-    resp = client.get("/api/releases/?artist=no-such-artist")
+    resp = client.get("/discography/api/releases/?artist=no-such-artist")
     assert resp.status_code == 200
     assert resp.json()["results"] == []
 
 
 def test_releases_filter_by_year(client, discography):
-    resp = client.get("/api/releases/?year=1997")
+    resp = client.get("/discography/api/releases/?year=1997")
     assert resp.status_code == 200
     slugs = {item["slug"] for item in resp.json()["results"]}
     assert discography["published"].slug in slugs
 
 
 def test_releases_filter_by_year_no_match_is_empty(client, discography):
-    resp = client.get("/api/releases/?year=1066")
+    resp = client.get("/discography/api/releases/?year=1066")
     assert resp.status_code == 200
     assert resp.json()["results"] == []
 
@@ -144,7 +144,7 @@ def test_releases_filter_by_year_no_match_is_empty(client, discography):
 # --- Artists ----------------------------------------------------------------
 
 def test_artist_detail_by_slug(client, discography):
-    resp = client.get(f"/api/artists/{discography['fluke'].slug}/")
+    resp = client.get(f"/discography/api/artists/{discography['fluke'].slug}/")
     assert resp.status_code == 200
     body = resp.json()
     assert body["slug"] == discography["fluke"].slug
@@ -155,7 +155,7 @@ def test_artist_detail_by_slug(client, discography):
 
 def test_lyric_detail_by_slug_includes_text(client, discography):
     lyric = discography["lyric"]
-    resp = client.get(f"/api/lyrics/{lyric.slug}/")
+    resp = client.get(f"/discography/api/lyrics/{lyric.slug}/")
     assert resp.status_code == 200
     body = resp.json()
     assert body["slug"] == lyric.slug
@@ -165,7 +165,7 @@ def test_lyric_detail_by_slug_includes_text(client, discography):
 # --- Tracks search ----------------------------------------------------------
 
 def test_tracks_search_returns_matching_track(client, discography):
-    resp = client.get("/api/tracks/?search=Tosh")
+    resp = client.get("/discography/api/tracks/?search=Tosh")
     assert resp.status_code == 200
     names = {item["name"] for item in resp.json()["results"]}
     assert discography["track"].name in names
@@ -174,18 +174,36 @@ def test_tracks_search_returns_matching_track(client, discography):
 # --- Read-only guarantee ----------------------------------------------------
 
 def test_releases_post_is_not_allowed(client, discography):
-    resp = client.post("/api/releases/", {"name": "Hacked"}, format="json")
+    resp = client.post("/discography/api/releases/", {"name": "Hacked"}, format="json")
     assert resp.status_code == 405
 
 
 # --- OpenAPI schema + Swagger UI --------------------------------------------
 
 def test_openapi_schema_is_served(client):
-    resp = client.get("/api/schema/")
+    resp = client.get("/discography/api/schema/")
     assert resp.status_code == 200
 
 
 def test_swagger_ui_is_served(client):
-    resp = client.get("/api/docs/")
+    resp = client.get("/discography/api/docs/")
     assert resp.status_code == 200
     assert "swagger" in resp.content.decode().lower()
+
+
+# --- Browsable API root description -----------------------------------------
+
+def test_api_root_is_served(client):
+    resp = client.get("/discography/api/")
+    assert resp.status_code == 200
+
+
+def test_api_root_has_descriptive_text_not_default(client):
+    resp = client.get(
+        "/discography/api/", HTTP_ACCEPT="text/html"
+    )
+    assert resp.status_code == 200
+
+    html = resp.content.decode()
+    assert "The default basic root view" not in html
+    assert "Fluke discography API" in html
