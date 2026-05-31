@@ -25,7 +25,7 @@ def iter_routes() -> Iterator[Route]:
 
     from apps.blog.models import Post
     from apps.core.seo import blog_posting_jsonld, jsonld_dumps, music_album_jsonld
-    from apps.discography.models import Artist, Release, ReleaseType
+    from apps.discography.models import Artist, Lyric, Release, ReleaseType
     from apps.pages.models import Page
     from apps.resources.grouping import group_by_subcategory
     from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource
@@ -35,6 +35,9 @@ def iter_routes() -> Iterator[Route]:
     posts = list(Post.objects.published().prefetch_related("categories", "tags"))
     resources = list(Resource.objects.published().select_related("subcategory"))
     releases = list(Release.objects.published().select_related("artist", "type"))
+    # Only songs whose words we actually hold get a lyric page (the import
+    # recovered some titles with no body; those stay pageless until filled in).
+    lyrics = list(Lyric.objects.exclude(lyrics="").select_related("artist").order_by("title"))
 
     # Landing
     yield Route(
@@ -58,7 +61,11 @@ def iter_routes() -> Iterator[Route]:
         type_releases = [r for r in releases if r.type_id == release_type.id]
         if type_releases:
             sections.append({"type": release_type, "releases": type_releases})
-    yield Route("/discography/", "discography/index.html", {"sections": sections})
+    yield Route(
+        "/discography/",
+        "discography/index.html",
+        {"sections": sections, "has_lyrics": bool(lyrics)},
+    )
 
     artist_ids = {r.artist_id for r in releases}
     for artist in Artist.objects.filter(id__in=artist_ids):
@@ -74,6 +81,16 @@ def iter_routes() -> Iterator[Route]:
             "discography/release_detail.html",
             {"release": release, "jsonld": jsonld_dumps(music_album_jsonld(release, base_url))},
         )
+
+    # Lyrics
+    if lyrics:
+        yield Route("/lyrics/", "discography/lyric_index.html", {"lyrics": lyrics})
+        for lyric in lyrics:
+            yield Route(
+                lyric.get_absolute_url(),
+                "discography/lyric_detail.html",
+                {"lyric": lyric},
+            )
 
     # Resources
     yield Route(

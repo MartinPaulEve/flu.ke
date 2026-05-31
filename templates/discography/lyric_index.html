@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Lyrics — {{ site_name }}{% endblock %}
+{% block body_class %}discography{% endblock %}
+{% block content %}
+<section class="section wrap">
+  <p class="kicker">The words</p>
+  <h1 class="ruled-heading">Lyrics</h1>
+  <ul class="entries">
+    {% for lyric in lyrics %}
+      <li class="entry">
+        <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
+        <span class="entry__title"><a href="{{ lyric.get_absolute_url }}">{{ lyric.title }}</a></span>
+        <span class="entry__meta">{% if lyric.artist %}{{ lyric.artist.name }}{% endif %}</span>
+      </li>
+    {% empty %}
+      <li class="entry"><span class="entry__index">—</span><span class="entry__title">No lyrics yet.</span><span></span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

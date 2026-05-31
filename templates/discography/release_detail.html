@@ -39,6 +39,7 @@
             <span>{{ track.track_number }} {{ track.display_title }}</span>{% if track.length %} ({{ track.length }}){% endif %}
             {% if track.remixer %} · rmx {{ track.remixer.name }}{% endif %}
             {% if track.sample %} · <a href="{{ track.sample.url }}">sample</a>{% endif %}
+            {% if track.lyric and track.lyric.lyrics %} · <a href="{{ track.lyric.get_absolute_url }}">lyrics</a>{% endif %}
           </li>
         {% endfor %}
       </ol>

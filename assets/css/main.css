@@ -176,6 +176,10 @@ details.edition[open] > summary::before { content: "\2013"; }
 .covers img { width: clamp(80px, 16vw, 150px); aspect-ratio: 1; object-fit: cover; border: var(--rule) solid var(--hairline); filter: grayscale(0.2) contrast(1.05); }
 .covers img:hover { filter: none; }
 
+/* ---------- lyrics ---------- */
+.lyric-body { margin-top: 1.5rem; line-height: 1.7; }
+.lyric-source { margin-top: 1.5rem; font-style: italic; color: var(--muted); }
+
 /* ---------- article ---------- */
 .article-head { padding-block: clamp(2.5rem, 6vw, 5rem); }
 time { font-variant-numeric: tabular-nums; }

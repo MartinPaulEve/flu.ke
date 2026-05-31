@@ -4,7 +4,7 @@ import pytest
 from django.utils import timezone
 
 from apps.blog.models import Post
-from apps.discography.models import Artist, Release, ReleaseType
+from apps.discography.models import Artist, Lyric, Release, ReleaseType
 from apps.pages.models import Page
 from apps.resources.models import Resource
 from apps.staticgen.routes import iter_routes
@@ -49,6 +49,20 @@ def test_excludes_drafts(seeded):
     assert "/secret-draft/" not in paths
     assert not any(p.endswith("/draft-post/") for p in paths)
     assert "/resources/fan/hidden/" not in paths
+
+
+def test_lyric_pages_only_for_lyrics_with_text(seeded):
+    Lyric.objects.create(title="You Got Me", lyrics="You got me, baby")
+    Lyric.objects.create(title="Empty One", lyrics="")
+    paths = _paths()
+    assert "/lyrics/" in paths  # lyrics index
+    assert "/lyrics/you-got-me/" in paths
+    assert "/lyrics/empty-one/" not in paths  # no body -> no page
+
+
+def test_no_lyrics_index_when_no_lyrics_have_text(seeded):
+    Lyric.objects.create(title="Empty One", lyrics="")
+    assert "/lyrics/" not in _paths()
 
 
 def test_every_route_has_a_template(seeded):

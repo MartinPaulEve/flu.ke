@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ lyric.title }} — lyrics — {{ site_name }}{% endblock %}
+{% block body_class %}discography{% endblock %}
+{% block content %}
+<article class="section wrap">
+  <p class="kicker">Lyrics</p>
+  <h1>{{ lyric.title }}</h1>
+  {% if lyric.artist %}
+    <p class="prose byline"><a href="{{ lyric.artist.get_absolute_url }}">{{ lyric.artist.name }}</a></p>
+  {% endif %}
+
+  <div class="prose lyric-body">{{ lyric.lyrics|linebreaks }}</div>
+
+  {% if lyric.comments %}<p class="entry__meta lyric-source">{{ lyric.comments }}</p>{% endif %}
+
+  <p class="byline"><a class="prose" href="/lyrics/">All lyrics →</a></p>
+</article>
+{% endblock %}

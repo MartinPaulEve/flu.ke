@@ -132,8 +132,10 @@ class Edition(TimeStampedModel):
         return " – ".join(bits)
 
 
-class Lyric(TimeStampedModel):
+class Lyric(SluggedModel, TimeStampedModel):
     """Lyrics for a song, shared by every track that performs it (de-duplicated)."""
+
+    slug_source_field = "title"
 
     title = models.CharField(max_length=300)
     artist = models.ForeignKey(
@@ -147,6 +149,9 @@ class Lyric(TimeStampedModel):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return f"/lyrics/{self.slug}/"
 
 
 class Track(TimeStampedModel):
