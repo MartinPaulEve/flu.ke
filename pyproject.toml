@@ -20,6 +20,13 @@ dependencies = [
     "django-filter>=25.2",
 ]
 
+[project.optional-dependencies]
+# MySQL/MariaDB driver. NOT installed in the default (SQLite) environment — it
+# needs system build headers (libmysqlclient-dev / default-libmysqlclient-dev)
+# and is only used when DATABASE_URL points at MySQL. On the MySQL host install
+# it with `uv sync --extra mysql`. See docs/mysql-migration.md.
+mysql = ["mysqlclient>=2.2"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.2",

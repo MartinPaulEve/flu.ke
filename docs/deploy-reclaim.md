@@ -25,6 +25,11 @@ static files in `flu.ke`'s document root. The public site runs no application.
   `CSRF_TRUSTED_ORIGINS=https://cms.flu.ke`.
 - A `passenger_wsgi.py` (the cPanel entry point) and a `requirements.txt` (Reclaim
   uses `pip`, not `uv`) are included.
+- The CMS runs on **SQLite** by default, which is fine for a single editor. If you
+  ever need MySQL/MariaDB instead, see [docs/mysql-migration.md](mysql-migration.md)
+  — it covers the optional driver, utf8mb4, dumping/loading the data, copying the
+  media tree, and a local Docker dry-run. Only `DATABASE_URL` changes; SQLite stays
+  the default.
 
 ---
 
