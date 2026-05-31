@@ -79,6 +79,92 @@ def test_landing_page_renders_recent_posts_and_resources(client, seeded):
     assert "Live Set" in body
 
 
+@pytest.fixture
+def homepage_artists():
+    """Fluke (primary, unflagged) plus flagged and unflagged other artists."""
+    fluke = Artist.objects.create(name="Fluke", appears_on_homepage=False)
+    syntax = Artist.objects.create(
+        name="Syntax", is_alias=True, primary_artist=fluke, appears_on_homepage=True
+    )
+    yuki = Artist.objects.create(
+        name="Yuki", is_alias=True, primary_artist=fluke, appears_on_homepage=True
+    )
+    fatal = Artist.objects.create(
+        name="Fatal", is_alias=True, primary_artist=fluke, appears_on_homepage=True
+    )
+    hidden = Artist.objects.create(
+        name="Hidden Project", is_alias=True, primary_artist=fluke,
+        appears_on_homepage=False,
+    )
+    return {
+        "fluke": fluke,
+        "syntax": syntax,
+        "yuki": yuki,
+        "fatal": fatal,
+        "hidden": hidden,
+    }
+
+
+def test_hero_lists_flagged_other_artists(client, homepage_artists):
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.content.decode()
+    assert "Fatal" in body
+    assert "Syntax" in body
+    assert "Yuki" in body
+
+
+def test_hero_excludes_unflagged_artists(client, homepage_artists):
+    response = client.get("/")
+    body = response.content.decode()
+    assert "Hidden Project" not in body
+
+
+def test_hero_does_not_list_fluke_among_aliases(client, homepage_artists):
+    """Fluke is the subject ("Everything Fluke"), not an item in the alias list."""
+    response = client.get("/")
+    body = response.content.decode()
+    # The alias list ends with " & <last name>"; Fluke must not be the join tail
+    # nor appear in the comma-separated alias enumeration.
+    assert "& Fluke" not in body
+    assert ", Fluke" not in body
+    # Fluke is still the lead subject.
+    assert "Everything Fluke" in body
+
+
+def test_hero_joins_with_ampersand_before_last_name(client, homepage_artists):
+    """Flagged others ordered by name: Fatal, Syntax, Yuki -> "...Syntax & Yuki".
+
+    Django autoescapes the ampersand in HTML output, so it appears as ``&amp;``.
+    """
+    response = client.get("/")
+    body = response.content.decode()
+    assert "Fatal, Syntax &amp; Yuki" in body
+
+
+def test_hero_uses_aliases_and_other_projects_wording(client, homepage_artists):
+    response = client.get("/")
+    body = response.content.decode()
+    assert "aliases and other projects" in body
+
+
+def test_hero_second_sentence_has_four_destination_links(client, homepage_artists):
+    response = client.get("/")
+    body = response.content.decode()
+    assert 'href="/news/"' in body
+    assert 'href="/discography/"' in body
+    assert 'href="/resources/#official"' in body
+    assert 'href="/resources/#fan"' in body
+
+
+def test_footer_links_to_discography_api(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.content.decode()
+    assert 'href="/discography/api/"' in body
+    assert "Discography API" in body
+
+
 def test_news_list_shows_published_posts_only(client, seeded):
     response = client.get("/news/")
     assert response.status_code == 200

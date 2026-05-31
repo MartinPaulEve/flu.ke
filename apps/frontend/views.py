@@ -15,19 +15,49 @@ from django.shortcuts import get_object_or_404, render
 
 from apps.blog.models import Category, Post
 from apps.core.seo import blog_posting_jsonld, jsonld_dumps, music_album_jsonld
-from apps.discography.models import Artist, Lyric, Release, ReleaseType
+from apps.discography.models import (
+    PRIMARY_ARTIST_NAME,
+    Artist,
+    Lyric,
+    Release,
+    ReleaseType,
+)
 from apps.pages.models import Page
 from apps.resources.grouping import group_by_subcategory
 from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource
 
 
+def _join_names(names):
+    """Join names with commas and " & " before the final one.
+
+    ["A"] -> "A"; ["A", "B"] -> "A & B"; ["A", "B", "C"] -> "A, B & C".
+    """
+    if not names:
+        return ""
+    if len(names) == 1:
+        return names[0]
+    return f"{', '.join(names[:-1])} & {names[-1]}"
+
+
 def landing(request):
     recent_posts = list(Post.objects.published()[:6])
     latest_resources = list(Resource.objects.published()[:8])
+    other_homepage_artists = list(
+        Artist.objects.filter(appears_on_homepage=True)
+        .exclude(name=PRIMARY_ARTIST_NAME)
+        .order_by("name")
+    )
+    hero_aliases = _join_names([a.name for a in other_homepage_artists])
     return render(
         request,
         "landing.html",
-        {"recent_posts": recent_posts, "latest_resources": latest_resources},
+        {
+            "recent_posts": recent_posts,
+            "latest_resources": latest_resources,
+            "primary_artist_name": PRIMARY_ARTIST_NAME,
+            "other_homepage_artists": other_homepage_artists,
+            "hero_aliases": hero_aliases,
+        },
     )
 
 

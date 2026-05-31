@@ -1,5 +1,5 @@
 {# Renders one resource kind (official/fan) grouped by subcategory. #}
-<div class="disco-section" aria-labelledby="{{ anchor }}-title">
+<div class="disco-section" id="{{ anchor }}" aria-labelledby="{{ anchor }}-title">
   <h2 id="{{ anchor }}-title">{{ heading }}</h2>
   {% for group in groups %}
     {% if group.subcategory %}<h3>{{ group.subcategory.name }}</h3>{% endif %}
