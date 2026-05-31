@@ -6,6 +6,7 @@ published querysets, OG-image generation) lives on the concrete models and in
 ``apps.core.text`` / ``apps.core.seo``.
 """
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.text import unique_slug
@@ -28,15 +29,27 @@ class SluggedModel(models.Model):
 
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     slug_source_field = "title"
+    # Slugs that must never be assigned (e.g. they collide with a fixed URL such
+    # as /discography/api/). Auto-generation skips them; manual entry is rejected.
+    reserved_slugs = frozenset()
 
     class Meta:
         abstract = True
 
     def _slug_is_taken(self, candidate):
+        if candidate in self.reserved_slugs:
+            return True
         qs = type(self)._default_manager.filter(slug=candidate)
         if self.pk:
             qs = qs.exclude(pk=self.pk)
         return qs.exists()
+
+    def clean(self):
+        super().clean()
+        if self.slug and self.slug in self.reserved_slugs:
+            raise ValidationError(
+                {"slug": f"“{self.slug}” is a reserved slug and can’t be used."}
+            )
 
     def save(self, *args, **kwargs):
         if not self.slug:

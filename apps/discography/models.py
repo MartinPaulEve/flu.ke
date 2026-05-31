@@ -44,6 +44,7 @@ class ReleaseType(models.Model):
 
 class Artist(SluggedModel, TimeStampedModel):
     slug_source_field = "name"
+    reserved_slugs = frozenset({"api"})
 
     name = models.CharField(max_length=200)
     biography = models.TextField(blank=True)
@@ -57,6 +58,11 @@ class Artist(SluggedModel, TimeStampedModel):
         on_delete=models.SET_NULL,
         related_name="aliases",
         help_text="For an alias, the primary act it belongs to (usually Fluke).",
+    )
+    appears_on_homepage = models.BooleanField(
+        default=False,
+        help_text="Show in the homepage hero list of aliases & other projects "
+        "(Fluke always leads, regardless of this).",
     )
 
     class Meta:
@@ -78,6 +84,7 @@ class Artist(SluggedModel, TimeStampedModel):
 
 class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     slug_source_field = "name"
+    reserved_slugs = frozenset({"api"})
 
     name = models.CharField(max_length=200)
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name="releases")
