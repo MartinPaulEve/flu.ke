@@ -1,7 +1,7 @@
 /* Fluke design tokens — industrial techno / brutalist-editorial.
-   Warm paper ground, one deep red, near-black text by default; a black/electric-red
-   dark theme is opt-in via data-theme="dark". All colour pairings are verified for
-   WCAG AA by tests/test_design_tokens_contrast.py. */
+   Clean neutral near-white ground, one deep red, near-black text by default; a
+   black/electric-red dark theme is opt-in via data-theme="dark". All colour
+   pairings are verified for WCAG AA by tests/test_design_tokens_contrast.py. */
 
 @font-face {
   font-family: "Bricolage Grotesque";
@@ -22,17 +22,17 @@
 
 :root {
   /* Surfaces */
-  --bg: #f7f5f0;          /* warm paper ground */
-  --bg-raise: #ffffff;    /* raised panel */
-  --bg-inset: #ebe8e1;    /* recessed inset */
-  --hairline: #d4cfc5;    /* hairline rules / borders */
+  --bg: #fcfcfd;          /* clean neutral near-white ground */
+  --bg-raise: #ffffff;    /* raised panel (pure white, lifts off the bg) */
+  --bg-inset: #f1f2f4;    /* recessed inset, light neutral grey */
+  --hairline: #d9dbe0;    /* hairline rules / borders, neutral grey */
 
   /* Text (all >= 4.5:1 on --bg) */
-  --fg: #16140f;          /* near-black warm body */
-  --muted: #5c554a;       /* secondary text */
-  --link: #16140f;        /* links: dark text + red underline */
+  --fg: #15161a;          /* neutral near-black body */
+  --muted: #54585f;       /* secondary text, neutral grey */
+  --link: #15161a;        /* links: dark text + red underline */
 
-  /* Red — the single accent, deepened so it holds AA on light paper */
+  /* Red — the single accent, deepened so it holds AA on the near-white ground */
   --accent: #d4231a;      /* red: large display + UI (>= 3:1) */
   --accent-text: #c01c14; /* deeper red usable at normal text size (>= 4.5:1) */
   --accent-ink: #ffffff;  /* text on a solid red fill */
