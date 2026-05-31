@@ -15,3 +15,10 @@ __pycache__/
 .staticcollect/
 node_modules/
 .env
+# Env files (real secrets) and their templates — supplied at run time instead.
+.env.*
+# Tests aren't needed in the runtime image.
+tests/
+# Local virtualenv variants and editor/OS cruft.
+venv/
+.DS_Store

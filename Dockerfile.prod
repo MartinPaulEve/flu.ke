@@ -1,0 +1,76 @@
+# Production image for the Fluke CMS / live site.
+#
+# Serves the app with gunicorn (NOT runserver) under config.settings_production
+# (DEBUG=False). WhiteNoise serves the collected static files via middleware, so
+# no separate static server is required for the admin/app chrome. Designed to sit
+# behind Traefik, which itself sits behind Pangolin (Pangolin terminates TLS and
+# forwards plain HTTP) — see compose.prod.yaml and docs/deploy-docker.md.
+#
+# Secrets (DJANGO_SECRET_KEY, DATABASE_URL, …) are supplied at RUN time from the
+# environment — never baked into the image.
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/opt/venv/bin:$PATH" \
+    DJANGO_SETTINGS_MODULE=config.settings_production
+
+RUN pip install --no-cache-dir uv==0.11.11
+
+WORKDIR /app
+
+# Dependencies only (cached unless the lockfile changes). `--extra prod` pulls in
+# gunicorn; the venv lives at /opt/venv, outside /app.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --extra prod
+
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
+RUN chmod +x /usr/local/bin/entrypoint.prod.sh
+
+# The application source. .dockerignore keeps the dev DB, media/, Ingest/ and
+# dist/ out of the image.
+COPY . .
+
+# Finish installing the project itself into /opt/venv now that the source is in.
+RUN uv sync --frozen --extra prod
+
+# Collect static files at build time so WhiteNoise has them ready. DEBUG=False in
+# config.settings_production, so a throwaway key is passed purely so the command
+# can boot — collectstatic does not touch the database or use the real secret.
+# `|| true`: if the production settings' secret-key guard refuses to run any
+# command at build time, this is skipped harmlessly — the entrypoint re-runs
+# collectstatic at start-up (with the real env) before gunicorn launches.
+RUN DJANGO_SECRET_KEY="build-only-throwaway-not-used-at-runtime" \
+    DATABASE_URL="sqlite:////tmp/build.sqlite3" \
+    python manage.py collectstatic --noinput || true
+
+# Run as a non-root user. UID/GID are overridable at build time so files written
+# to mounted volumes (the SQLite /data dir, /app/media) carry the expected owner:
+#   docker compose -f compose.prod.yaml build --build-arg UID=$(id -u) --build-arg GID=$(id -g)
+ARG UID=1000
+ARG GID=1000
+# Create /data (SQLite DB volume) and /app/media owned by the app user *before*
+# the volumes mount: Docker seeds an empty named volume with the mount point's
+# ownership, so the non-root user can write db.sqlite3 (+ its WAL/SHM) and media.
+RUN groupadd --gid "$GID" app || true \
+ && useradd --uid "$UID" --gid "$GID" --create-home --shell /bin/bash app \
+ && chmod -R a+rX /opt/venv \
+ && mkdir -p /data /app/media \
+ && chown -R "$UID":"$GID" /app /data
+ENV HOME=/home/app
+USER app
+
+EXPOSE 8000
+
+ENTRYPOINT ["entrypoint.prod.sh"]
+# 3 sync workers is a sensible default for a small SQLite-backed site; logs to
+# stdout/stderr so `docker compose logs` and Pangolin/Traefik see them.
+CMD ["gunicorn", "config.wsgi:application", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers", "3", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]

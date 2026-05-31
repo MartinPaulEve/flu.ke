@@ -108,7 +108,7 @@ rsync -a media/ user@host:/path/to/media/
 ```
 
 Make sure the destination matches the target's `MEDIA_ROOT` (see
-`docs/deploy-reclaim.md` for how `MEDIA_ROOT` / `MEDIA_URL` are set on the host).
+`docs/deploy-docker.md` for how media is mounted on the host).
 
 ## 6. Point the live host at MySQL
 

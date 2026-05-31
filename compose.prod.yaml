@@ -1,0 +1,103 @@
+# Production stack for the Fluke CMS / live site.
+#
+#   docker compose -f compose.prod.yaml up -d --build
+#
+# Topology:
+#
+#   Internet ──HTTPS──> Pangolin (terminates TLS) ──HTTP──> Traefik :80 ──> web :8000
+#
+# Pangolin terminates SSL upstream and forwards plain HTTP, so this stack only
+# needs an HTTP listener. Traefik's `web` entrypoint trusts Pangolin's forwarded
+# headers (forwardedHeaders.insecure=true), so X-Forwarded-Proto reaches Django
+# and config.settings_production's SECURE_PROXY_SSL_HEADER correctly detects the
+# original HTTPS request (secure cookies, no redirect loop).
+#
+# Point Pangolin at the `traefik` service on port 80.
+#
+# Secrets/config come from the environment (see .env.prod.example). The `:?` form
+# makes compose refuse to start if a required value is missing — no insecure
+# fallbacks for the secret. Load them with `--env-file .env.prod` or export them.
+# See docs/deploy-docker.md.
+
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: fluke-traefik
+    command:
+      # Docker provider — only containers with traefik.enable=true are routed.
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # A single plain-HTTP entrypoint. No TLS, no certresolvers: Pangolin does
+      # TLS and forwards HTTP here.
+      - "--entrypoints.web.address=:80"
+      # Trust and pass through Pangolin's X-Forwarded-* headers (Proto/For/Host).
+      # This is what lets Django see the request as HTTPS via the proxy SSL header.
+      - "--entrypoints.web.forwardedHeaders.insecure=true"
+    ports:
+      # HTTP only — Pangolin handles 443 upstream.
+      - "80:80"
+    volumes:
+      # Read-only access to the Docker API so Traefik can discover the web service.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        # Match the container user to whoever owns the named volumes' backing
+        # files. Override for a non-1000 host:
+        #   UID=$(id -u) GID=$(id -g) docker compose -f compose.prod.yaml build
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
+    image: flukecms:prod
+    container_name: fluke-web
+    environment:
+      DJANGO_SETTINGS_MODULE: "config.settings_production"
+      # Required — no insecure fallback. Generate one and put it in .env.prod:
+      #   python -c "import secrets; print(secrets.token_urlsafe(50))"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env.prod}"
+      # SQLite on the persistent /data volume (WAL/SHM files live there too).
+      DATABASE_URL: "${DATABASE_URL:-sqlite:////data/db.sqlite3}"
+      SITE_NAME: "${SITE_NAME:-Fluke}"
+      # Test deploy: https://fluke.eve.gd — switch to https://flu.ke for production.
+      SITE_BASE_URL: "${SITE_BASE_URL:?set SITE_BASE_URL in .env.prod}"
+      # Optional. The router Host() rules below already gate traffic; set these to
+      # the deploy hostname(s) so Django's host/CSRF checks also accept them.
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-fluke.eve.gd,flu.ke}"
+      CSRF_TRUSTED_ORIGINS: "${CSRF_TRUSTED_ORIGINS:-https://fluke.eve.gd,https://flu.ke}"
+      MUSICBRAINZ_CONTACT: "${MUSICBRAINZ_CONTACT:-}"
+      # Optional one-shot admin creation (entrypoint). Leave the password unset on
+      # the long-running service; create the admin with a one-off run instead:
+      #   docker compose -f compose.prod.yaml run --rm \
+      #     -e DJANGO_SUPERUSER_USERNAME=admin -e DJANGO_SUPERUSER_PASSWORD=… web true
+    expose:
+      # Internal only — Traefik reaches it on the shared network. Never published.
+      - "8000"
+    volumes:
+      # Persist the SQLite database (and its -wal/-shm) across rebuilds. The path
+      # matches DATABASE_URL=sqlite:////data/db.sqlite3.
+      - sqlite-data:/data
+      # Uploaded media persists separately from the image.
+      - media:/app/media
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # Route both the test-deploy host and the eventual production host.
+      - "traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`flu.ke`)"
+      - "traefik.http.routers.fluke.entrypoints=web"
+      - "traefik.http.services.fluke.loadbalancer.server.port=8000"
+    restart: unless-stopped
+
+networks:
+  web:
+
+volumes:
+  # Backed up with a simple `sqlite3 .backup` (see docs/deploy-docker.md) — the
+  # whole reason for choosing SQLite here.
+  sqlite-data:
+  media:
