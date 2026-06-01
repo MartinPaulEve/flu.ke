@@ -21,9 +21,9 @@ class ResourceSubcategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Resource)
 class ResourceAdmin(admin.ModelAdmin):
-    list_display = ("title", "kind", "subcategory", "is_published", "uploaded_at")
+    list_display = ("title", "snippet", "kind", "subcategory", "is_published", "uploaded_at")
     list_filter = ("kind", "is_published", "subcategory")
-    search_fields = ("title", "description", "contributor")
+    search_fields = ("title", "snippet", "description", "contributor")
     prepopulated_fields = {"slug": ("title",)}
     autocomplete_fields = (
         "artist",
@@ -35,7 +35,7 @@ class ResourceAdmin(admin.ModelAdmin):
     date_hierarchy = "uploaded_at"
     inlines = [ResourceFileInline]
     fieldsets = (
-        (None, {"fields": ("title", "slug", "kind", "subcategory", "description")}),
+        (None, {"fields": ("title", "slug", "kind", "subcategory", "snippet", "description")}),
         (
             "Metadata",
             {

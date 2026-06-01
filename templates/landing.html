@@ -40,7 +40,10 @@
     {% for resource in latest_resources %}
       <li class="entry">
         <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
-        <span class="entry__title"><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></span>
+        <span class="entry__title">
+          <a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a>
+          {% if resource.display_snippet %}<span class="entry__snippet">{{ resource.display_snippet }}</span>{% endif %}
+        </span>
         <span class="entry__meta">{{ resource.get_kind_display }}</span>
       </li>
     {% empty %}

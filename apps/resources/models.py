@@ -6,6 +6,7 @@ records (the artist/alias vocabulary lives in the discography app).
 """
 
 from django.db import models
+from django.template.defaultfilters import filesizeformat
 from django.utils import timezone
 
 from apps.core.models import (
@@ -21,6 +22,100 @@ KIND_CHOICES = [
     (KIND_OFFICIAL, "Official Resources"),
     (KIND_FAN, "Fan Remixes & Resources"),
 ]
+
+
+_FILE_KIND_LABELS = {
+    "audio": "audio",
+    "archive": "archive",
+    "image": "image",
+    "video": "video",
+    "document": "document",
+}
+
+# Title fragments that tell us more than the bare metadata does.
+_LIVE_HINTS = ("live", "tribal gathering", "glastonbury", "festival", "tabernacle")
+_INTERVIEW_HINTS = ("interview", "interviewed", "radio")
+_REMIX_HINTS = ("remix", "rmx", "remixes", "bootleg", "rework")
+
+
+def _dominant_file_kind(files) -> str | None:
+    """Return the most common ``file_kind`` across a resource's files (or None)."""
+    counts: dict[str, int] = {}
+    for f in files:
+        counts[f.file_kind] = counts.get(f.file_kind, 0) + 1
+    if not counts:
+        return None
+    return max(counts, key=lambda k: (counts[k], k))
+
+
+def _content_phrase(resource, files, kind_word: str) -> str:
+    """A noun phrase for the content, blending the kind, title hints and file kind."""
+    title = (resource.title or "").lower()
+    dominant = _dominant_file_kind(files)
+
+    if any(hint in title for hint in _LIVE_HINTS):
+        return f"{kind_word} live recording"
+    if any(hint in title for hint in _INTERVIEW_HINTS):
+        return f"{kind_word} interview"
+    if any(hint in title for hint in _REMIX_HINTS) or resource.kind == KIND_FAN:
+        if dominant == "archive":
+            return f"{kind_word} remix archive"
+        if dominant == "audio":
+            return f"{kind_word} remix"
+    if dominant:
+        return f"{kind_word} {_FILE_KIND_LABELS.get(dominant, dominant)}"
+    return kind_word
+
+
+def build_snippet(resource) -> str:
+    """Derive a best-effort one-line snippet for a resource from its metadata.
+
+    The shape is roughly ``[supplied by X · ] <content phrase>[ · N files][ · size]
+    [ · subcategory][ · artist][ · source]``. Everything is derived from real
+    metadata — archive contents are never inspected, so track counts are never
+    invented.
+    """
+    files = list(resource.files.all())
+    kind_word = "Fan" if resource.kind == KIND_FAN else "Official"
+
+    parts: list[str] = []
+
+    contributor = (resource.contributor or "").strip()
+    if contributor:
+        parts.append(f"supplied by {contributor}")
+
+    parts.append(_content_phrase(resource, files, kind_word))
+
+    if files:
+        n = len(files)
+        dominant = _dominant_file_kind(files)
+        kind_label = _FILE_KIND_LABELS.get(dominant, "") if dominant else ""
+        # Only label the count with a file kind when the files are homogeneous,
+        # so "1 archive file" stays accurate.
+        homogeneous = len({f.file_kind for f in files}) == 1
+        noun = "file" if n == 1 else "files"
+        if kind_label and homogeneous:
+            parts.append(f"{n} {kind_label} {noun}")
+        else:
+            parts.append(f"{n} {noun}")
+        total = sum(f.byte_size or 0 for f in files)
+        if total:
+            parts.append(filesizeformat(total))
+
+    if resource.subcategory_id and resource.subcategory:
+        parts.append(resource.subcategory.name)
+
+    if resource.artist_id and resource.artist:
+        artist_name = resource.artist.name
+        if artist_name and artist_name not in contributor:
+            parts.append(artist_name)
+
+    source = (resource.source_attribution or "").strip()
+    if source:
+        parts.append(source)
+
+    snippet = " · ".join(p for p in parts if p)
+    return snippet[:255]
 
 
 class ResourceSubcategory(SluggedModel, TimeStampedModel):
@@ -49,6 +144,12 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         related_name="resources",
     )
     description = models.TextField(blank=True, help_text="Markdown.")
+    snippet = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Snippet explanation",
+        help_text="One-line description shown in resource listings.",
+    )
     # Optional links into the discography (shared artist/alias vocabulary).
     artist = models.ForeignKey(
         "discography.Artist",
@@ -102,6 +203,13 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     def get_absolute_url(self):
         return f"/resources/{self.kind}/{self.slug}/"
+
+    @property
+    def display_snippet(self) -> str:
+        """The snippet to show in listings: the stored one, else a derived fallback."""
+        if self.snippet:
+            return self.snippet
+        return build_snippet(self)
 
 
 class ResourceFile(TimeStampedModel):

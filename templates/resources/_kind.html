@@ -7,7 +7,10 @@
       {% for resource in group.resources %}
         <li class="entry">
           <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
-          <span class="entry__title"><a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a></span>
+          <span class="entry__title">
+            <a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a>
+            {% if resource.display_snippet %}<span class="entry__snippet">{{ resource.display_snippet }}</span>{% endif %}
+          </span>
           <span class="entry__meta">{% if resource.contributor %}{{ resource.contributor }}{% elif resource.released_date %}{{ resource.released_date|date:"Y" }}{% endif %}</span>
         </li>
       {% endfor %}
