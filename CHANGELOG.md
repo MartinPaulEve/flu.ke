@@ -1,0 +1,50 @@
+## 1.1.0 (2026-06-01)
+
+### Feat
+
+- **deploy**: bind-mount the data dir and make the Traefik port configurable
+- **resources**: import and publish the legacy album/live-set archives
+- **deploy**: production Docker stack (gunicorn + Traefik)
+- **settings**: add a production settings module
+- **frontend**: generate the homepage hero artist list and link its sections
+- **api**: move the API to /discography/api/ with a descriptive root
+- **discography**: add homepage flag and reserve the 'api' slug
+- serve the public site live with a documented REST API
+- **landing**: surface the discography above resources
+- **discography**: publish lyric pages and link them from releases
+- **discography**: recover lyric bodies from the Web Archive
+- **theme**: make the light theme the default, dark opt-in
+- **discography**: store track samples under uuid filenames
+- **theme**: add persisted light/dark theme toggle
+- **discography**: show alias artist in release titles
+- **blog**: regenerate_og command to refresh post OG images
+- **blog**: clean imported post bodies (share/related cruft + Files URL remap)
+- **admin**: rich-text editing for post Body and Excerpt via TinyMCE
+- **blog**: comprehensive Wayback post list + reconcile/dedupe
+- **blog**: backfill post publish dates/titles from a metadata file
+- **resources**: optional link to a blog post, rendered on the page
+- remove the homepage scrolling marquee
+- support hosting the CMS on a web server (Reclaim/cPanel)
+- deploy pipeline for the static site
+- SEO and accessibility polish (RSS, JSON-LD, pa11y gate)
+- MusicBrainz sync CLI (built now, snapshot stays primary)
+- publish flow with dirty-state tracking
+- group resources by subcategory and enrich detail metadata
+- blog Open Graph images, Wayback recovery and SEO meta
+- cinematic black/red design system and templates
+- add static site export engine (build_site)
+- import legacy media tree and link it to the discography
+- import discography from the archived snapshot
+- add content models and admin for all sections
+
+### Fix
+
+- **discography**: suffix release title for any non-Fluke artist
+- remove scroll-reveal effect and restore visible news titles
+- **admin**: stop seo_title help_text breaking admin change forms
+- **security**: harden Docker Compose for the local CMS
+- **security**: prevent JSON-LD script breakout (stored XSS)
+
+### Refactor
+
+- retire the static site generator
