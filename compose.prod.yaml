@@ -24,6 +24,12 @@ services:
   traefik:
     image: traefik:v3.3
     container_name: fluke-traefik
+    environment:
+      # Pin the Docker client API version Traefik talks to the daemon with.
+      # Newer Docker Engines reject the old default (1.24) with "client version
+      # 1.24 is too old. Minimum supported API version is 1.44". Override via
+      # .env.prod if your daemon needs a different floor.
+      DOCKER_API_VERSION: "${DOCKER_API_VERSION:-1.44}"
     command:
       # Docker provider — only containers with traefik.enable=true are routed.
       - "--providers.docker=true"
