@@ -31,25 +31,10 @@ RUN uv sync --frozen --no-install-project --extra prod
 COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
 RUN chmod +x /usr/local/bin/entrypoint.prod.sh
 
-# The application source. .dockerignore keeps the dev DB, media/, Ingest/ and
-# dist/ out of the image.
-COPY . .
-
-# Finish installing the project itself into /opt/venv now that the source is in.
-RUN uv sync --frozen --extra prod
-
-# Collect static files at build time so WhiteNoise has them ready. DEBUG=False in
-# config.settings_production, so a throwaway key is passed purely so the command
-# can boot — collectstatic does not touch the database or use the real secret.
-# `|| true`: if the production settings' secret-key guard refuses to run any
-# command at build time, this is skipped harmlessly — the entrypoint re-runs
-# collectstatic at start-up (with the real env) before gunicorn launches.
-RUN DJANGO_SECRET_KEY="build-only-throwaway-not-used-at-runtime" \
-    DATABASE_URL="sqlite:////tmp/build.sqlite3" \
-    python manage.py collectstatic --noinput || true
-
-# Run as a non-root user. UID/GID are overridable at build time so files written
-# to mounted volumes (the SQLite /data dir, /app/media) carry the expected owner:
+# Create the non-root user *before* the source is copied so we can hand ownership
+# to it as part of the COPY (no slow post-hoc `chown -R /app`). UID/GID are
+# overridable at build time so files written to mounted volumes (the SQLite /data
+# dir, /app/media) carry the expected owner:
 #   docker compose -f compose.prod.yaml build --build-arg UID=$(id -u) --build-arg GID=$(id -g)
 ARG UID=1000
 ARG GID=1000
@@ -58,9 +43,32 @@ ARG GID=1000
 # ownership, so the non-root user can write db.sqlite3 (+ its WAL/SHM) and media.
 RUN groupadd --gid "$GID" app || true \
  && useradd --uid "$UID" --gid "$GID" --create-home --shell /bin/bash app \
- && chmod -R a+rX /opt/venv \
- && mkdir -p /data /app/media \
- && chown -R "$UID":"$GID" /app /data
+ && mkdir -p /data /app/media /app/.staticcollect \
+ && chown "$UID":"$GID" /data /app /app/media /app/.staticcollect
+
+# The application source, owned by the app user as it lands (avoids a recursive
+# chown of the whole tree afterwards). .dockerignore keeps the dev DB, media/,
+# Ingest/ and dist/ out of the image.
+COPY --chown=${UID}:${GID} . .
+
+# Finish installing the project itself into /opt/venv now that the source is in.
+# uv-created venvs are world-readable, so the non-root user can read/exec it
+# without a recursive chmod of the (thousands of) dependency files.
+RUN uv sync --frozen --extra prod
+
+# Collect static files at build time so WhiteNoise has them ready. DEBUG=False in
+# config.settings_production, so a throwaway key is passed purely so the command
+# can boot — collectstatic does not touch the database or use the real secret.
+# `|| true`: if the production settings' secret-key guard refuses to run any
+# command at build time, this is skipped harmlessly — the entrypoint re-runs
+# collectstatic at start-up (with the real env) before gunicorn launches.
+# Runs as root, so afterwards hand only the few dirs the app user must write
+# (the SQLite /data dir, uploaded media, and the collected-static STATIC_ROOT)
+# to it — NOT a recursive chown of all of /app.
+RUN DJANGO_SECRET_KEY="build-only-throwaway-not-used-at-runtime" \
+    DATABASE_URL="sqlite:////tmp/build.sqlite3" \
+    python manage.py collectstatic --noinput || true \
+ && chown -R "$UID":"$GID" /data /app/media /app/.staticcollect
 ENV HOME=/home/app
 USER app
 
