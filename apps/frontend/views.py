@@ -62,19 +62,27 @@ def landing(request):
 
 def post_list(request):
     posts = list(Post.objects.published().prefetch_related("categories", "tags"))
-    return render(request, "blog/post_list.html", {"posts": posts})
+    return render(request, "blog/post_list.html", {"posts": posts, "edit_changelist": Post})
 
 
 def post_category(request, slug):
     category = get_object_or_404(Category, slug=slug)
     posts = list(category.posts.published().prefetch_related("categories", "tags"))
-    return render(request, "blog/post_list.html", {"posts": posts, "category": category})
+    return render(
+        request,
+        "blog/post_list.html",
+        {"posts": posts, "category": category, "edit_object": category},
+    )
 
 
 def post_detail(request, year, slug):
     post = get_object_or_404(Post.objects.published(), slug=slug)
     jsonld = jsonld_dumps(blog_posting_jsonld(post, settings.SITE_BASE_URL))
-    return render(request, "blog/post_detail.html", {"post": post, "jsonld": jsonld})
+    return render(
+        request,
+        "blog/post_detail.html",
+        {"post": post, "jsonld": jsonld, "edit_object": post},
+    )
 
 
 def discography_index(request):
@@ -88,7 +96,7 @@ def discography_index(request):
     return render(
         request,
         "discography/index.html",
-        {"sections": sections, "has_lyrics": has_lyrics},
+        {"sections": sections, "has_lyrics": has_lyrics, "edit_changelist": Release},
     )
 
 
@@ -100,7 +108,7 @@ def artist_detail(request, artist_slug):
     return render(
         request,
         "discography/artist_detail.html",
-        {"artist": artist, "releases": releases},
+        {"artist": artist, "releases": releases, "edit_object": artist},
     )
 
 
@@ -114,7 +122,7 @@ def release_detail(request, artist_slug, release_slug):
     return render(
         request,
         "discography/release_detail.html",
-        {"release": release, "jsonld": jsonld},
+        {"release": release, "jsonld": jsonld, "edit_object": release},
     )
 
 
@@ -122,12 +130,20 @@ def lyric_index(request):
     lyrics = list(
         Lyric.objects.exclude(lyrics="").select_related("artist").order_by("title")
     )
-    return render(request, "discography/lyric_index.html", {"lyrics": lyrics})
+    return render(
+        request,
+        "discography/lyric_index.html",
+        {"lyrics": lyrics, "edit_changelist": Lyric},
+    )
 
 
 def lyric_detail(request, slug):
     lyric = get_object_or_404(Lyric.objects.exclude(lyrics=""), slug=slug)
-    return render(request, "discography/lyric_detail.html", {"lyric": lyric})
+    return render(
+        request,
+        "discography/lyric_detail.html",
+        {"lyric": lyric, "edit_object": lyric},
+    )
 
 
 def resource_list(request):
@@ -148,17 +164,25 @@ def resource_list(request):
             ),
         },
     ]
-    return render(request, "resources/resource_list.html", {"sections": sections})
+    return render(
+        request,
+        "resources/resource_list.html",
+        {"sections": sections, "edit_changelist": Resource},
+    )
 
 
 def resource_detail(request, kind, slug):
     resource = get_object_or_404(Resource.objects.published(), kind=kind, slug=slug)
-    return render(request, "resources/resource_detail.html", {"resource": resource})
+    return render(
+        request,
+        "resources/resource_detail.html",
+        {"resource": resource, "edit_object": resource},
+    )
 
 
 def page_detail(request, slug):
     page = get_object_or_404(Page.objects.published(), slug=slug)
-    return render(request, "pages/page_detail.html", {"page": page})
+    return render(request, "pages/page_detail.html", {"page": page, "edit_object": page})
 
 
 def robots_txt(request):
