@@ -1,3 +1,9 @@
+## 1.1.1 (2026-06-01)
+
+### Fix
+
+- **deploy**: pin Traefik's Docker API version for newer daemons
+
 ## 1.1.0 (2026-06-01)
 
 ### Feat
