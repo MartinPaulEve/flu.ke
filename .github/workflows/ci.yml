@@ -66,3 +66,35 @@ jobs:
             --sitemap http://127.0.0.1:8080/sitemap.xml \
             --sitemap-find https://flu.ke \
             --sitemap-replace http://127.0.0.1:8080
+
+  bump-version:
+    runs-on: ubuntu-latest
+    name: "Bump version and create changelog with commitizen"
+    needs: [test, accessibility]
+    if: github.ref == 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'bump:')
+    permissions:
+      contents: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Create bump and changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          push: false
+
+      - name: Configure git for HTTPS push
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push using HTTPS
+        run: |
+          git push origin main --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
