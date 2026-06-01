@@ -148,3 +148,14 @@ admin is reflected immediately — there is no separate build step.
 The public site is served live by Django (`apps.frontend` + `apps.api`) in
 production. Deploy with Docker — full step-by-step:
 **[docs/deploy-docker.md](docs/deploy-docker.md)**.
+
+## Licence
+
+The project's own code is licensed under the **MIT Licence** — see
+[`LICENSE`](LICENSE).
+
+The bundled fonts under `assets/fonts/` are third-party and licensed separately
+under the **SIL Open Font License 1.1** — see
+[`assets/fonts/README.md`](assets/fonts/README.md). Imported band content (the
+discography, archived posts and media) belongs to its respective rights holders;
+this is a fan archive.
