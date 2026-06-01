@@ -1,3 +1,14 @@
+## 1.2.0 (2026-06-01)
+
+### Feat
+
+- **resources**: add a snippet explanation shown in resource listings
+- **frontend**: staff-only "Edit this page" footer link
+
+### Perf
+
+- **docker**: drop the recursive chown/chmod from the prod build
+
 ## 1.1.1 (2026-06-01)
 
 ### Fix
