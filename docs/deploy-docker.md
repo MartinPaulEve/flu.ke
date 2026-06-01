@@ -19,8 +19,10 @@ Internet ──HTTPS──> Pangolin ──HTTP──> Traefik :80 ──HTTP─
 ```
 
 **Pangolin terminates SSL** and forwards plain HTTP, so this stack only needs an
-HTTP listener — there is no `:443` and no certresolver. Point Pangolin at the
-**`traefik` service on port 80**.
+HTTP listener — there is no `:443` and no certresolver. Traefik's internal
+entrypoint stays `:80`, but the **host-published** port is configurable via
+`TRAEFIK_HTTP_PORT` (default **8001**). Point Pangolin at the **host on
+`TRAEFIK_HTTP_PORT`**.
 
 Traefik's `web` entrypoint is configured with
 `--entrypoints.web.forwardedHeaders.insecure=true`, so it trusts and passes
@@ -60,29 +62,29 @@ docker compose -f compose.prod.yaml run --rm \
 
 ## Seeding your existing data (first deploy)
 
-The production DB lives on the `sqlite-data` volume, not in the repo, so on the
-first deploy you copy your prepopulated `db.sqlite3` (and `media/`) into the
-volumes. Take a clean copy of the DB first (this checkpoints the WAL), then load
-it via a one-off container that mounts your local files alongside the volume:
+The production data lives in the host `$DATA_DIR` directory (bind-mounted into
+the container), not in the repo, so on the first deploy you copy your
+prepopulated `db.sqlite3` (and `media/`) straight into that directory — no
+helper container needed. Create and chown the dirs first (bind mounts keep the
+host's ownership, so they must be owned by the container UID/GID), take a clean
+snapshot of the DB into place (this checkpoints the WAL), and copy the media:
 
 ```sh
-# 1. A consistent snapshot of your local DB (run where you edit it):
-sqlite3 db.sqlite3 ".backup 'seed.sqlite3'"
+# 1. Create the data dirs and give them to the container user (1000:1000):
+mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media && sudo chown -R 1000:1000 "$DATA_DIR"
 
-# 2. Copy it onto the /data volume (runs as the app user, which owns /data):
-docker compose -f compose.prod.yaml run --rm --no-deps \
-  -v "$PWD/seed.sqlite3:/seed/db.sqlite3:ro" \
-  web sh -c "cp /seed/db.sqlite3 /data/db.sqlite3"
+# 2. A consistent snapshot of your local DB straight into place:
+sqlite3 db.sqlite3 ".backup '$DATA_DIR/db/db.sqlite3'"
 
-# 3. Media (~GBs) — copy your tree onto the media volume:
-docker compose -f compose.prod.yaml run --rm --no-deps \
-  -v "$PWD/media:/seed/media:ro" \
-  web sh -c "cp -a /seed/media/. /app/media/"
+# 3. Media (~GBs) — copy your tree into the media dir:
+rsync -a media/ "$DATA_DIR/media/"
+
+# 4. Re-assert ownership after copying (root may have written some files):
+sudo chown -R 1000:1000 "$DATA_DIR"
 ```
 
 Then `up -d` as usual — the entrypoint's `migrate` is a no-op on an
-already-migrated DB. (For the large media tree, `rsync` straight into the
-volume's host path, or `docker cp`, is faster than a copy container.)
+already-migrated DB.
 
 ## Environment
 
@@ -94,21 +96,26 @@ they are missing.
 |---|---|---|
 | `DJANGO_SECRET_KEY` | yes | `python -c "import secrets; print(secrets.token_urlsafe(50))"`. Use a fresh key, not the dev one. |
 | `SITE_BASE_URL` | yes | `https://fluke.eve.gd` for the test deploy; `https://flu.ke` for production. |
-| `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — the persistent volume. |
+| `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. |
+| `DATA_DIR` | no (default) | Host directory for the bind-mounted DB + media. Must live **outside the repo**. Defaults to `../fluke-data` (a sibling of the repo); recommend an absolute path like `/srv/fluke-data`. Create and `chown` it to the container UID/GID before the first `up` (see Volumes). |
+| `TRAEFIK_HTTP_PORT` | no (default) | Host port published to Traefik's `:80` entrypoint. Defaults to `8001`. Point Pangolin here. |
 | `SITE_NAME` | no | Defaults to `Fluke`. |
 | `DJANGO_ALLOWED_HOSTS` | no | Defaults to `fluke.eve.gd,flu.ke`. Django host check. |
 | `CSRF_TRUSTED_ORIGINS` | no | Defaults to `https://fluke.eve.gd,https://flu.ke`. |
 | `MUSICBRAINZ_CONTACT` | no | Descriptive contact for the MusicBrainz User-Agent. |
-| `UID` / `GID` | no | Build args; match the host owner of the volume files (default 1000). |
+| `UID` / `GID` | no | Build args; match the host owner of the `$DATA_DIR` files (default 1000). |
 
 `DATABASE_URL` is the database secret: it is read from the environment by
 `config.settings_production` (via django-environ) and is never written into the
-image. The default points at the SQLite file on the `/data` volume.
+image. The default points at the SQLite file under `/data`, which is the
+bind-mounted `$DATA_DIR/db` host directory.
 
 ## Routing
 
 The `web` service publishes **no host ports** (`expose: ["8000"]`) — only Traefik
-reaches it on the shared `web` network. The Traefik labels route both hosts:
+reaches it on the shared `web` network. Traefik itself publishes its `:80`
+entrypoint on the host at `TRAEFIK_HTTP_PORT` (default **8001**); point Pangolin
+at the host on that port. The Traefik labels route both hosts:
 
 ```
 traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`flu.ke`)
@@ -122,15 +129,34 @@ for the production cutover. The router already accepts both hostnames.
 
 ## Volumes
 
-Two named volumes hold all persistent state (the image is disposable):
+All persistent state lives in **host bind mounts** of `$DATA_DIR` — a directory
+**outside the git checkout** (the image is disposable). `$DATA_DIR` defaults to
+`../fluke-data`, a sibling of the repo (so a repo at `/srv/fluke` defaults its
+data to `/srv/fluke-data`); set it to an absolute path like `/srv/fluke-data` in
+`.env.prod`.
 
-- **`sqlite-data` → `/data`** — the SQLite database and its `-wal`/`-shm`
-  sidecar files. `DATABASE_URL=sqlite:////data/db.sqlite3` keeps everything on
-  this volume so it survives rebuilds.
-- **`media` → `/app/media`** — uploaded media, kept separate from the image.
+- **`$DATA_DIR/db` → `/data`** — the SQLite database and its `-wal`/`-shm`
+  sidecar files. `DATABASE_URL=sqlite:////data/db.sqlite3` keeps everything in
+  this directory so it survives rebuilds.
+- **`$DATA_DIR/media` → `/app/media`** — uploaded media, kept separate from the
+  image.
 
-Rebuilding (`up -d --build`) replaces the container but leaves both volumes
+Rebuilding (`up -d --build`) replaces the container but leaves `$DATA_DIR`
 intact.
+
+**Ownership (critical).** Unlike named volumes — which seed their ownership from
+the image — bind-mounted host directories keep the **host directory's real
+ownership**. The container runs as the non-root app user (UID/GID **1000** by
+default, set via the build args). So you **must create the directories and
+`chown` them to that UID/GID before the first `up`**, otherwise Docker
+auto-creates them as `root` and `migrate` cannot write the database:
+
+```sh
+mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media
+sudo chown -R 1000:1000 "$DATA_DIR"     # match the UID/GID the image was built with
+```
+
+If you build with a non-default `UID`/`GID`, `chown` to those values instead.
 
 ## SQLite specifics & backup
 
@@ -139,20 +165,23 @@ backups stay trivially simple, which is the whole reason for the choice. The DB
 runs in WAL mode (so `db.sqlite3-wal` / `db.sqlite3-shm` appear next to it on the
 volume).
 
-Back it up with SQLite's online backup, which is safe while the app is running:
+Because the data is a plain host directory now, back it up with ordinary
+host-file operations. SQLite's online backup is safe while the app is running:
 
 ```sh
-docker compose -f compose.prod.yaml exec web \
-  sqlite3 /data/db.sqlite3 ".backup '/data/backup.sqlite3'"
-# then copy /data/backup.sqlite3 off the host (it lands on the sqlite-data volume)
+# Consistent DB snapshot (checkpoints the WAL) straight from the host dir:
+sqlite3 "$DATA_DIR/db/db.sqlite3" ".backup '/backups/db-$(date +%F).sqlite3'"
+# Media:
+rsync -a "$DATA_DIR/media/" /backups/media/
 ```
 
-Alternatively, stop the stack and copy the whole `sqlite-data` volume.
+Alternatively, stop the stack and copy the whole `$DATA_DIR` directory.
 
 ## Media & future work
 
-Media lives on its own `media` volume and is currently served by Django (the
-app exposes it). For the large media tree, putting a dedicated static/media file
+Media lives in its own `$DATA_DIR/media` host directory and is currently served
+by Django (the app exposes it). For the large media tree, putting a dedicated
+static/media file
 server in front of the app is a sensible future optimization — it would offload
 those bytes from gunicorn. WhiteNoise already serves the app/admin static files
 (`/static/`) from within the image, so no extra server is needed for those.

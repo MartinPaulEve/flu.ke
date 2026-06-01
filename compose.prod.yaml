@@ -12,7 +12,8 @@
 # and config.settings_production's SECURE_PROXY_SSL_HEADER correctly detects the
 # original HTTPS request (secure cookies, no redirect loop).
 #
-# Point Pangolin at the `traefik` service on port 80.
+# Point Pangolin at the host on TRAEFIK_HTTP_PORT (default 8001), which is
+# published to Traefik's :80 entrypoint.
 #
 # Secrets/config come from the environment (see .env.prod.example). The `:?` form
 # makes compose refuse to start if a required value is missing — no insecure
@@ -34,8 +35,10 @@ services:
       # This is what lets Django see the request as HTTPS via the proxy SSL header.
       - "--entrypoints.web.forwardedHeaders.insecure=true"
     ports:
-      # HTTP only — Pangolin handles 443 upstream.
-      - "80:80"
+      # HTTP only — Pangolin handles 443 upstream. The container entrypoint stays
+      # :80; only the host-published port is configurable (default 8001). Point
+      # Pangolin at the host on TRAEFIK_HTTP_PORT.
+      - "${TRAEFIK_HTTP_PORT:-8001}:80"
     volumes:
       # Read-only access to the Docker API so Traefik can discover the web service.
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -48,8 +51,9 @@ services:
       context: .
       dockerfile: Dockerfile.prod
       args:
-        # Match the container user to whoever owns the named volumes' backing
-        # files. Override for a non-1000 host:
+        # The container runs as this non-root user. Bind-mounted host dirs keep
+        # the HOST's ownership, so $DATA_DIR/db and $DATA_DIR/media MUST be owned
+        # by this UID/GID on the host (see below). Override for a non-1000 host:
         #   UID=$(id -u) GID=$(id -g) docker compose -f compose.prod.yaml build
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
@@ -78,11 +82,20 @@ services:
       # Internal only — Traefik reaches it on the shared network. Never published.
       - "8000"
     volumes:
-      # Persist the SQLite database (and its -wal/-shm) across rebuilds. The path
-      # matches DATABASE_URL=sqlite:////data/db.sqlite3.
-      - sqlite-data:/data
-      # Uploaded media persists separately from the image.
-      - media:/app/media
+      # Host bind mounts of a data directory OUTSIDE the git checkout (default a
+      # sibling of the repo: /srv/fluke -> /srv/fluke-data). Override DATA_DIR
+      # with an absolute path in .env.prod. UNLIKE named volumes, bind mounts use
+      # the HOST dir's real ownership — create and chown these to the container's
+      # UID/GID (1000:1000 by default) BEFORE the first `up`, or Docker creates
+      # them as root and `migrate` cannot write the DB:
+      #   mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media
+      #   sudo chown -R 1000:1000 "$DATA_DIR"
+      #
+      # The SQLite db.sqlite3 (and its -wal/-shm) live at $DATA_DIR/db on the
+      # host; the path matches DATABASE_URL=sqlite:////data/db.sqlite3.
+      - "${DATA_DIR:-../fluke-data}/db:/data"
+      # Uploaded media persists on the host, separate from the image.
+      - "${DATA_DIR:-../fluke-data}/media:/app/media"
     networks:
       - web
     labels:
@@ -95,9 +108,3 @@ services:
 
 networks:
   web:
-
-volumes:
-  # Backed up with a simple `sqlite3 .backup` (see docs/deploy-docker.md) — the
-  # whole reason for choosing SQLite here.
-  sqlite-data:
-  media:
