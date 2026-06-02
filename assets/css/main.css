@@ -16,6 +16,9 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  /* Long unbreakable strings (filenames, URLs) wrap instead of forcing the page
+     wider than the viewport. Inherited, so it applies to all text by default. */
+  overflow-wrap: break-word;
 }
 img, svg, video { display: block; max-width: 100%; height: auto; }
 a { color: var(--link); text-decoration: none; }
@@ -137,7 +140,7 @@ h3 { font-size: var(--step-1); }
 .hero__mark {
   font-family: var(--font-display); font-weight: 800;
   font-size: var(--display); line-height: 0.82; letter-spacing: -0.04em;
-  text-transform: uppercase; margin: 0;
+  text-transform: uppercase; margin: 0; overflow-wrap: anywhere;
 }
 .hero__mark em { font-style: normal; color: var(--accent); }
 .hero__sub { margin-top: 1.4rem; max-width: 40ch; color: var(--muted); font-size: var(--step-1); }
@@ -146,15 +149,18 @@ h3 { font-size: var(--step-1); }
 /* ---------- entry rows (news / resources / releases) ---------- */
 .entries { list-style: none; padding: 0; }
 .entry {
-  display: grid; grid-template-columns: 4ch 1fr auto; gap: 1rem; align-items: baseline;
+  /* minmax(0, 1fr) lets the title column shrink below its content's intrinsic
+     width (grid items otherwise have min-width: auto), so long titles wrap
+     rather than widening the row past the viewport. */
+  display: grid; grid-template-columns: 4ch minmax(0, 1fr) auto; gap: 1rem; align-items: baseline;
   padding: clamp(0.9rem, 2vw, 1.4rem) 0; border-top: var(--rule) solid var(--hairline);
   position: relative;
 }
 .entry:last-child { border-bottom: var(--rule) solid var(--hairline); }
 .entry__index { font-size: var(--step--1); color: var(--accent-text); }
-.entry__title { font-family: var(--font-display); font-weight: 700; font-size: var(--step-1); letter-spacing: -0.01em; }
+.entry__title { font-family: var(--font-display); font-weight: 700; font-size: var(--step-1); letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; }
 .entry__title a { color: var(--fg); }
-.entry__meta { color: var(--muted); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.1em; }
+.entry__meta { color: var(--muted); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.1em; min-width: 0; overflow-wrap: anywhere; }
 /* One-line resource description under the title (resources list + homepage). */
 .entry__snippet { display: block; margin-top: 0.25rem; color: var(--muted); font-family: var(--font-mono); font-weight: 400; font-size: var(--step--1); letter-spacing: 0; }
 .entry::after { content: ""; position: absolute; left: 0; bottom: -1px; height: 2px; width: 0; background: var(--accent); transition: width 0.4s var(--ease); }
@@ -192,5 +198,12 @@ time { font-variant-numeric: tabular-nums; }
 
 /* ---------- footer ---------- */
 .site-footer { border-top: var(--rule) solid var(--hairline); padding: 2.5rem var(--gutter); color: var(--muted); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.14em; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 40rem) {
+  /* One tracklist column on narrow screens so long track names have full width
+     to wrap into rather than being squeezed (and overflowing) in two columns. */
+  .tracklist { columns: 1; }
+}
 
 @media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }
