@@ -7,7 +7,7 @@ from apps.discography.models import Artist, Edition, Release, ReleaseType, Track
 
 pytestmark = pytest.mark.django_db
 
-BASE = "https://flu.ke"
+BASE = "https://fluke.fm"
 
 
 def test_blog_posting_jsonld():

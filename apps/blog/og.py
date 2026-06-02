@@ -59,7 +59,7 @@ def render_og_image(
 
     # Red accent bar + brand mark, top-left.
     draw.rectangle([margin, margin, margin + round(width * 0.12), margin + 14], fill=accent)
-    draw.text((margin, margin + 30), "FLU.KE", font=_font(round(height * 0.05), 600), fill=accent)
+    draw.text((margin, margin + 30), "FLUKE.FM", font=_font(round(height * 0.05), 600), fill=accent)
     if subtitle:
         draw.text(
             (margin, margin + 80),

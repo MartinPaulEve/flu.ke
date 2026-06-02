@@ -1,7 +1,7 @@
-# Fluke — CMS & live fan site (flu.ke)
+# Fluke — CMS & live fan site (fluke.fm)
 
 A Django 5.2 content-management system and public website for the **Fluke** fan
-archive at [flu.ke](https://flu.ke). Fluke is an electronic band that has also
+archive at [fluke.fm](https://fluke.fm). Fluke is an electronic band that has also
 recorded as **2 Bit Pie**, **Lucky Monkeys**, **Syntax**, **Yuki** and **Fatal**.
 
 Content is written privately in the Django admin; the public site is rendered
@@ -139,7 +139,7 @@ secrets are never hard-coded. Copy `.env.example` (development) or
 | `DJANGO_SECURE` | `False` | Enables the HTTPS/HSTS/secure-cookie hardening in the base settings. |
 | `CSRF_TRUSTED_ORIGINS` | _(empty)_ | Comma-separated trusted CSRF origins. |
 | `DATABASE_URL` | `sqlite:///db.sqlite3` | Database URL (SQLite everywhere). |
-| `SITE_BASE_URL` | `https://flu.ke` | Canonical origin for absolute URLs, OG images, sitemap and feed. |
+| `SITE_BASE_URL` | `https://fluke.fm` | Canonical origin for absolute URLs, OG images, sitemap and feed. |
 | `SITE_NAME` | `Fluke` | Site name used in templates and feeds. |
 | `MEDIA_ROOT` | `media` | Directory holding uploaded media. |
 | `MEDIA_URL` | `/media/` | URL prefix for media. |

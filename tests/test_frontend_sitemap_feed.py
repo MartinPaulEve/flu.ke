@@ -11,6 +11,12 @@ from apps.resources.models import KIND_OFFICIAL, Resource
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _canonical_base_url(settings):
+    """Pin the canonical host so the domain assertions don't depend on a local .env."""
+    settings.SITE_BASE_URL = "https://fluke.fm"
+
+
 @pytest.fixture
 def seeded():
     fluke = Artist.objects.create(name="Fluke")
@@ -39,8 +45,8 @@ def test_sitemap_returns_xml_with_published_url(client, seeded):
     assert "xml" in response["Content-Type"]
     body = response.content.decode()
     # URLs are absolute and pinned to the canonical SITE_BASE_URL host.
-    assert f"https://flu.ke{seeded['post'].get_absolute_url()}" in body
-    assert f"https://flu.ke{seeded['release'].get_absolute_url()}" in body
+    assert f"https://fluke.fm{seeded['post'].get_absolute_url()}" in body
+    assert f"https://fluke.fm{seeded['release'].get_absolute_url()}" in body
     assert "testserver" not in body
 
 
@@ -55,7 +61,7 @@ def test_sitemap_excludes_draft_content(client, seeded):
 def test_sitemap_includes_section_indexes(client, seeded):
     response = client.get("/sitemap.xml")
     body = response.content.decode()
-    assert "https://flu.ke/" in body
+    assert "https://fluke.fm/" in body
     assert "/news/" in body
     assert "/discography/" in body
     assert "/resources/" in body
@@ -77,4 +83,4 @@ def test_robots_txt_is_plain_text_with_sitemap_line(client, seeded):
     assert response["Content-Type"].startswith("text/plain")
     body = response.content.decode()
     assert "User-agent: *" in body
-    assert "Sitemap: https://flu.ke/sitemap.xml" in body
+    assert "Sitemap: https://fluke.fm/sitemap.xml" in body

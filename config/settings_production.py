@@ -36,10 +36,10 @@ if not SECRET_KEY or SECRET_KEY == "insecure-dev-key-override-in-env":
 # --- Hosts / CSRF ----------------------------------------------------------
 # Allow both the canonical domain and the test/staging domain, merged with any
 # hosts/origins supplied via the environment (de-duplicated, order preserved).
-_DEFAULT_ALLOWED_HOSTS = ["flu.ke", "www.flu.ke", "fluke.eve.gd"]
+_DEFAULT_ALLOWED_HOSTS = ["fluke.fm", "www.fluke.fm", "fluke.eve.gd"]
 _DEFAULT_CSRF_TRUSTED_ORIGINS = [
-    "https://flu.ke",
-    "https://www.flu.ke",
+    "https://fluke.fm",
+    "https://www.fluke.fm",
     "https://fluke.eve.gd",
 ]
 

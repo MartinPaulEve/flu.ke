@@ -56,8 +56,8 @@ def test_production_debug_is_false(monkeypatch):
 
 def test_production_allowed_hosts_cover_test_and_real_domains(monkeypatch):
     prod = _load_production(monkeypatch)
-    assert "flu.ke" in prod.ALLOWED_HOSTS
-    assert "www.flu.ke" in prod.ALLOWED_HOSTS
+    assert "fluke.fm" in prod.ALLOWED_HOSTS
+    assert "www.fluke.fm" in prod.ALLOWED_HOSTS
     assert "fluke.eve.gd" in prod.ALLOWED_HOSTS
 
 
@@ -65,13 +65,13 @@ def test_production_allowed_hosts_merge_env_override(monkeypatch):
     monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "extra.example.com")
     prod = _load_production(monkeypatch)
     assert "extra.example.com" in prod.ALLOWED_HOSTS
-    assert "flu.ke" in prod.ALLOWED_HOSTS
+    assert "fluke.fm" in prod.ALLOWED_HOSTS
 
 
 def test_production_csrf_trusted_origins(monkeypatch):
     prod = _load_production(monkeypatch)
-    assert "https://flu.ke" in prod.CSRF_TRUSTED_ORIGINS
-    assert "https://www.flu.ke" in prod.CSRF_TRUSTED_ORIGINS
+    assert "https://fluke.fm" in prod.CSRF_TRUSTED_ORIGINS
+    assert "https://www.fluke.fm" in prod.CSRF_TRUSTED_ORIGINS
     assert "https://fluke.eve.gd" in prod.CSRF_TRUSTED_ORIGINS
 
 
@@ -79,7 +79,7 @@ def test_production_csrf_trusted_origins_merge_env_override(monkeypatch):
     monkeypatch.setenv("CSRF_TRUSTED_ORIGINS", "https://extra.example.com")
     prod = _load_production(monkeypatch)
     assert "https://extra.example.com" in prod.CSRF_TRUSTED_ORIGINS
-    assert "https://flu.ke" in prod.CSRF_TRUSTED_ORIGINS
+    assert "https://fluke.fm" in prod.CSRF_TRUSTED_ORIGINS
 
 
 def test_production_proxy_ssl_header(monkeypatch):

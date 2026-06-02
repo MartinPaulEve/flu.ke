@@ -1,7 +1,7 @@
 [project]
 name = "flukecms"
 version = "1.2.0"
-description = "Statically-generated fan site and Django CMS for the band Fluke (flu.ke)"
+description = "Django CMS and live fan site for the band Fluke (fluke.fm)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

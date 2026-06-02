@@ -27,7 +27,7 @@ CDX_URL = (
     "&output=json&collapse=urlkey&fl=original,timestamp,statuscode"
 )
 RAW_SNAPSHOT = "https://web.archive.org/web/{timestamp}id_/{url}"
-USER_AGENT = "flu.ke-lyric-recovery/1.0 (Fluke fan archive; content recovery)"
+USER_AGENT = "fluke.fm-lyric-recovery/1.0 (Fluke fan archive; content recovery)"
 
 
 def title_from_lyric_url(url: str) -> str:

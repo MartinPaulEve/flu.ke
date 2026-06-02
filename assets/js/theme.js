@@ -1,4 +1,4 @@
-/* Light/dark theme toggle for flu.ke.
+/* Light/dark theme toggle for fluke.fm.
    Light is the default; dark is opt-in via data-theme="dark" on <html>.
    The no-flash inline script in <head> applies the stored choice before paint;
    this file wires up the toggle button and keeps its ARIA state in sync. */

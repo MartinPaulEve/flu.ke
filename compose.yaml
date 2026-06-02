@@ -1,4 +1,4 @@
-# Local CMS for flu.ke — the private editing tool for the live Django site.
+# Local CMS for fluke.fm — the private editing tool for the live Django site.
 #
 #   docker compose up --build            # admin at http://localhost:8000/admin/
 #   docker compose exec cms python manage.py import_discography
@@ -38,7 +38,7 @@ services:
       DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
       DATABASE_URL: "${DATABASE_URL:-sqlite:////app/db.sqlite3}"
       SITE_NAME: "${SITE_NAME:-Fluke}"
-      SITE_BASE_URL: "${SITE_BASE_URL:-https://flu.ke}"
+      SITE_BASE_URL: "${SITE_BASE_URL:-https://fluke.fm}"
       MUSICBRAINZ_CONTACT: "${MUSICBRAINZ_CONTACT:-}"
       # Create the admin yourself (keeps no password in the long-running env):
       #   docker compose exec cms python manage.py createsuperuser

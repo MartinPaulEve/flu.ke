@@ -95,13 +95,13 @@ they are missing.
 | Variable | Required | Notes |
 |---|---|---|
 | `DJANGO_SECRET_KEY` | yes | `python -c "import secrets; print(secrets.token_urlsafe(50))"`. Use a fresh key, not the dev one. |
-| `SITE_BASE_URL` | yes | `https://fluke.eve.gd` for the test deploy; `https://flu.ke` for production. |
+| `SITE_BASE_URL` | yes | `https://fluke.eve.gd` for the test deploy; `https://fluke.fm` for production. |
 | `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. |
 | `DATA_DIR` | no (default) | Host directory for the bind-mounted DB + media. Must live **outside the repo**. Defaults to `../fluke-data` (a sibling of the repo); recommend an absolute path like `/srv/fluke-data`. Create and `chown` it to the container UID/GID before the first `up` (see Volumes). |
 | `TRAEFIK_HTTP_PORT` | no (default) | Host port published to Traefik's `:80` entrypoint. Defaults to `8001`. Point Pangolin here. |
 | `SITE_NAME` | no | Defaults to `Fluke`. |
-| `DJANGO_ALLOWED_HOSTS` | no | Defaults to `fluke.eve.gd,flu.ke`. Django host check. |
-| `CSRF_TRUSTED_ORIGINS` | no | Defaults to `https://fluke.eve.gd,https://flu.ke`. |
+| `DJANGO_ALLOWED_HOSTS` | no | Defaults to `fluke.eve.gd,fluke.fm`. Django host check. |
+| `CSRF_TRUSTED_ORIGINS` | no | Defaults to `https://fluke.eve.gd,https://fluke.fm`. |
 | `MUSICBRAINZ_CONTACT` | no | Descriptive contact for the MusicBrainz User-Agent. |
 | `UID` / `GID` | no | Build args; match the host owner of the `$DATA_DIR` files (default 1000). |
 
@@ -118,13 +118,13 @@ entrypoint on the host at `TRAEFIK_HTTP_PORT` (default **8001**); point Pangolin
 at the host on that port. The Traefik labels route both hosts:
 
 ```
-traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`flu.ke`)
+traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`fluke.fm`)
 traefik.http.routers.fluke.entrypoints=web
 traefik.http.services.fluke.loadbalancer.server.port=8000
 ```
 
 Test deploy first against **fluke.eve.gd**, then switch `SITE_BASE_URL` (and, if
-you narrow them, `DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS`) to **flu.ke**
+you narrow them, `DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS`) to **fluke.fm**
 for the production cutover. The router already accepts both hostnames.
 
 ## Volumes

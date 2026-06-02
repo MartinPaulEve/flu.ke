@@ -1,4 +1,4 @@
-/* Cinematic scroll enhancements for flu.ke.
+/* Cinematic scroll enhancements for fluke.fm.
    Progressive enhancement: content is fully visible without JS. Motion is applied
    only when the user has not asked to reduce it. */
 (function () {

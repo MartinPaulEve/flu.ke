@@ -64,7 +64,7 @@ jobs:
           npx --yes wait-on http://127.0.0.1:8080/
           npx --yes pa11y-ci \
             --sitemap http://127.0.0.1:8080/sitemap.xml \
-            --sitemap-find https://flu.ke \
+            --sitemap-find https://fluke.fm \
             --sitemap-replace http://127.0.0.1:8080
 
   bump-version:

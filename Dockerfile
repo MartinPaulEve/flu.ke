@@ -1,4 +1,4 @@
-# Local CMS image for flu.ke.
+# Local CMS image for fluke.fm.
 # This image runs the PRIVATE editing environment (Django admin + management
 # commands) for local content editing. The public site is served live by the
 # Django app (apps.frontend + apps.api); see docs/deploy-docker.md for the
