@@ -1,3 +1,9 @@
+## 1.2.1 (2026-06-02)
+
+### Fix
+
+- **css**: wrap long titles/filenames instead of overflowing on mobile
+
 ## 1.2.0 (2026-06-01)
 
 ### Feat
