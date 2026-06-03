@@ -1,3 +1,9 @@
+## 1.2.2 (2026-06-03)
+
+### Fix
+
+- **static**: cache-bust CSS/JS with the release version
+
 ## 1.2.1 (2026-06-02)
 
 ### Fix
