@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ site_name }} — the fan source{% endblock %}</title>
   <script>
+    // Mark JS available before paint so the mobile nav can collapse into a
+    // hamburger only when it can actually be toggled (no-JS keeps the links).
+    document.documentElement.classList.add("js");
     // No-flash theme init: apply the stored choice before first paint.
     // Default (nothing stored) is light, the design default; dark is opt-in.
     try {
@@ -34,15 +37,20 @@
   <header class="site-header">
     {% block header %}
     <a class="brand" href="/">{{ site_name }}</a>
-    <nav class="site-nav" aria-label="Primary">
-      <a href="/news/">News</a>
-      <a href="/discography/">Discography</a>
-      <a href="/resources/">Resources</a>
-    </nav>
-    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false">
-      <span class="theme-toggle__glyph" aria-hidden="true"></span>
-      <span class="theme-toggle__label">Theme</span>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-controls="nav-group" aria-expanded="false">
+      <span class="nav-toggle__bars" aria-hidden="true"></span>
     </button>
+    <div class="nav-group" id="nav-group">
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/news/">News</a>
+        <a href="/discography/">Discography</a>
+        <a href="/resources/">Resources</a>
+      </nav>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false">
+        <span class="theme-toggle__glyph" aria-hidden="true"></span>
+        <span class="theme-toggle__label">Theme</span>
+      </button>
+    </div>
     {% endblock %}
   </header>
   <main id="main">
@@ -55,6 +63,7 @@
     {% endblock %}
   </footer>
   <script src="{% static 'js/theme.js' %}?v={{ static_version }}" defer></script>
+  <script src="{% static 'js/nav.js' %}?v={{ static_version }}" defer></script>
   <script src="{% static 'js/scroll.js' %}?v={{ static_version }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>

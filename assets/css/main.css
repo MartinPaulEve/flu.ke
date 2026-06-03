@@ -69,12 +69,37 @@ body::after {
 /* ---------- header ---------- */
 .site-header {
   position: sticky; top: 0; z-index: 100;
-  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
   padding: 0.8rem var(--gutter);
   border-bottom: var(--rule) solid var(--hairline);
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(8px);
 }
+/* The nav links + theme switcher; inline on desktop, a dropdown on mobile. */
+.nav-group { display: flex; align-items: center; gap: clamp(0.8rem, 2vw, 2rem); flex-wrap: wrap; justify-content: flex-end; }
+
+/* Hamburger button — hidden unless JS is available AND the viewport is narrow. */
+.nav-toggle {
+  display: none; align-self: center;
+  width: 2.7rem; height: 2.3rem;
+  align-items: center; justify-content: center;
+  background: transparent; color: var(--fg);
+  border: var(--rule) solid var(--hairline); border-radius: var(--radius);
+  cursor: pointer;
+}
+.nav-toggle:hover { border-color: var(--accent); }
+.nav-toggle__bars { position: relative; }
+.nav-toggle__bars, .nav-toggle__bars::before, .nav-toggle__bars::after {
+  display: block; width: 1.2rem; height: 2px; background: currentColor;
+  transition: transform 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+.nav-toggle__bars::before, .nav-toggle__bars::after { content: ""; position: absolute; left: 0; }
+.nav-toggle__bars::before { top: -6px; }
+.nav-toggle__bars::after { top: 6px; }
+/* Morph into an X when the menu is open. */
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars { background: transparent; }
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::before { top: 0; transform: rotate(45deg); }
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::after { top: 0; transform: rotate(-45deg); }
 .site-header .brand {
   font-family: var(--font-display);
   font-weight: 800;
@@ -108,8 +133,23 @@ body::after {
 /* Sun while light (the default); moon while dark. */
 .theme-toggle__glyph::before { content: "\2600"; } /* ☀ */
 :root[data-theme="dark"] .theme-toggle__glyph::before { content: "\263E"; } /* ☾ */
-@media (max-width: 30rem) {
-  .theme-toggle__label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Mobile: collapse the nav links + theme switcher into the hamburger dropdown so
+   the header can never overflow the viewport. (.js gates this so no-JS visitors
+   keep visible, wrapping links rather than an untoggleable hidden menu.) */
+@media (max-width: 40rem) {
+  .js .nav-toggle { display: inline-flex; }
+  .js .nav-group {
+    position: absolute; top: 100%; left: 0; right: 0;
+    flex-direction: column; align-items: stretch; gap: 0;
+    padding: 0.4rem var(--gutter) 1.2rem;
+    background: var(--bg); border-bottom: var(--rule) solid var(--hairline);
+    display: none;
+  }
+  .js .nav-group.open { display: flex; }
+  .js .site-nav { flex-direction: column; align-items: stretch; gap: 0; }
+  .js .site-nav a { padding-block: 0.8rem; border-top: var(--rule) solid var(--hairline); }
+  .js .site-nav a::after { display: none; }
+  .js .theme-toggle { align-self: flex-start; margin-top: 0.9rem; }
 }
 
 /* ---------- section heading: numbered mono kicker + big display title ---------- */
