@@ -143,6 +143,24 @@ if env("DJANGO_SECURE"):
 SITE_BASE_URL = env("SITE_BASE_URL").rstrip("/")
 SITE_NAME = env("SITE_NAME")
 
+
+def _read_version():
+    """Read the project version from __version__.py for static cache-busting."""
+    try:
+        text = (BASE_DIR / "__version__.py").read_text()
+    except OSError:
+        return "dev"
+    for line in text.splitlines():
+        if line.strip().startswith("__version__"):
+            return line.split("=", 1)[1].strip().strip("\"'")
+    return "dev"
+
+
+# Cache-busting token for the site's own CSS/JS. Tied to the release version so
+# each deployed build serves fresh assets, without hashing every static filename
+# (which would break editors like TinyMCE that load assets by unhashed path).
+STATIC_VERSION = _read_version()
+
 # Source archive of the legacy site (used by the import_* management commands).
 INGEST_DIR = BASE_DIR / "Ingest"
 

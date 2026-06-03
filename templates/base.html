@@ -15,7 +15,7 @@
   </script>
   {% load static %}
   <link rel="preload" href="{% static 'fonts/bricolage-grotesque.woff2' %}" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}?v={{ static_version }}">
   <meta name="theme-color" content="#fcfcfd">
   <link rel="alternate" type="application/rss+xml" title="{{ site_name }} news" href="/feed.xml">
   {% block meta %}
@@ -54,8 +54,8 @@
     <p>{{ site_name }} — independent fan archive. Black &amp; red since the rave. <a href="/discography/api/">Discography API</a>{% if request.user.is_staff %}{% if edit_object %} · <a href="{% admin_change_url edit_object %}">Edit this page</a>{% elif edit_changelist %} · <a href="{% admin_changelist_url edit_changelist %}">Edit this page</a>{% else %} · <a href="/admin/">Edit in admin</a>{% endif %}{% endif %}</p>
     {% endblock %}
   </footer>
-  <script src="{% static 'js/theme.js' %}" defer></script>
-  <script src="{% static 'js/scroll.js' %}" defer></script>
+  <script src="{% static 'js/theme.js' %}?v={{ static_version }}" defer></script>
+  <script src="{% static 'js/scroll.js' %}?v={{ static_version }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

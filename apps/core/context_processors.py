@@ -8,4 +8,5 @@ def site(request):
     return {
         "site_name": settings.SITE_NAME,
         "site_base_url": settings.SITE_BASE_URL,
+        "static_version": settings.STATIC_VERSION,
     }
