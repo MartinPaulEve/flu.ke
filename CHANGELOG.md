@@ -1,3 +1,9 @@
+## 1.2.3 (2026-06-03)
+
+### Fix
+
+- **nav**: collapse the header into a hamburger menu on mobile
+
 ## 1.2.2 (2026-06-03)
 
 ### Fix
