@@ -49,6 +49,23 @@ gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 \
 
 Logs go to stdout/stderr — `docker compose -f compose.prod.yaml logs -f web`.
 
+## Redeploying
+
+To ship new code, just **pull and rebuild** — there is no `down` step (that only
+adds downtime). `up -d --build` builds the new image while the old container
+keeps serving, then swaps it in:
+
+```sh
+git pull
+docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+```
+
+The entrypoint re-runs `migrate` and `collectstatic` automatically on the new
+container, so that single command is the whole deploy. `scripts/deploy.sh` wraps
+it (pull → build → recreate → prune old image layers) into `./scripts/deploy.sh`.
+The code is baked into the image (immutable build), so a `git pull` is only
+reflected after the rebuild — by design.
+
 Create the admin user with a one-off run (keeps the password out of the
 long-running service environment):
 
