@@ -1,3 +1,9 @@
+## 1.3.0 (2026-06-04)
+
+### Feat
+
+- **deploy**: terminate TLS at Traefik with Let's Encrypt
+
 ## 1.2.4 (2026-06-04)
 
 ### Fix
