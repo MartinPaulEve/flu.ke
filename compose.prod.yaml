@@ -106,8 +106,8 @@ services:
       - web
     labels:
       - "traefik.enable=true"
-      # Route both the test-deploy host and the eventual production host.
-      - "traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`fluke.fm`)"
+      # Route the production host (apex + www) and the test-deploy host.
+      - "traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`fluke.fm`) || Host(`www.fluke.fm`)"
       - "traefik.http.routers.fluke.entrypoints=web"
       - "traefik.http.services.fluke.loadbalancer.server.port=8000"
     restart: unless-stopped
