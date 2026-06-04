@@ -1,3 +1,9 @@
+## 1.2.4 (2026-06-04)
+
+### Fix
+
+- **deploy**: route www.fluke.fm through Traefik
+
 ## 1.2.3 (2026-06-03)
 
 ### Fix
