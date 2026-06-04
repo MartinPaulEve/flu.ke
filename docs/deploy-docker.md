@@ -2,7 +2,7 @@
 
 This is the production deployment for the Fluke CMS / live site. It runs the app
 with **gunicorn** under `config.settings_production` (`DEBUG=False`), behind a
-**Traefik** reverse proxy, which in turn sits behind **Pangolin**.
+**Traefik** reverse proxy that terminates TLS with a **Let's Encrypt** certificate.
 
 Files:
 
@@ -14,23 +14,26 @@ Files:
 ## Topology
 
 ```
-Internet ──HTTPS──> Pangolin ──HTTP──> Traefik :80 ──HTTP──> web :8000 (gunicorn)
-           (TLS terminated here)                              WhiteNoise serves /static/
+Internet ──HTTPS──> Traefik :443 (TLS, Let's Encrypt) ──HTTP──> web :8000 (gunicorn)
+                    :80 → 301 to HTTPS                           WhiteNoise serves /static/
 ```
 
-**Pangolin terminates SSL** and forwards plain HTTP, so this stack only needs an
-HTTP listener — there is no `:443` and no certresolver. Traefik's internal
-entrypoint stays `:80`, but the **host-published** port is configurable via
-`TRAEFIK_HTTP_PORT` (default **8001**). Point Pangolin at the **host on
-`TRAEFIK_HTTP_PORT`**.
+**Traefik is the edge and terminates TLS.** It obtains and renews the certificate
+from **Let's Encrypt** (HTTP-01 challenge on `:80`), serves the site on `:443`, and
+redirects all plain HTTP to HTTPS. It forwards to gunicorn over the internal
+network with `X-Forwarded-Proto=https`, which `config.settings_production`'s
+`SECURE_PROXY_SSL_HEADER` reads — so Django sets secure cookies, builds correct
+absolute URLs, and has no redirect loop.
 
-Traefik's `web` entrypoint is configured with
-`--entrypoints.web.forwardedHeaders.insecure=true`, so it trusts and passes
-through Pangolin's `X-Forwarded-Proto` / `X-Forwarded-For` / `X-Forwarded-Host`
-headers. That is what lets `config.settings_production`'s
-`SECURE_PROXY_SSL_HEADER` see the original request as HTTPS — so secure cookies
-are set and there is no redirect loop, even though the hop into the stack is
-plain HTTP.
+**Requirements for certificate issuance:**
+
+- Ports **80 and 443** must be open to the internet on the host.
+- DNS A/AAAA records for **`fluke.fm`** and **`www.fluke.fm`** must point at this
+  host (the ACME HTTP-01 challenge is served on port 80 at those names).
+- Set **`ACME_EMAIL`** in `.env.prod` (the Let's Encrypt account email).
+
+The issued certificate (`acme.json`) is stored in the `letsencrypt` Docker volume,
+so it survives rebuilds; on a brand-new host it's re-issued automatically.
 
 ## Quick start
 
@@ -112,13 +115,13 @@ they are missing.
 | Variable | Required | Notes |
 |---|---|---|
 | `DJANGO_SECRET_KEY` | yes | `python -c "import secrets; print(secrets.token_urlsafe(50))"`. Use a fresh key, not the dev one. |
-| `SITE_BASE_URL` | yes | `https://fluke.eve.gd` for the test deploy; `https://fluke.fm` for production. |
+| `SITE_BASE_URL` | yes | The canonical origin, `https://fluke.fm`. |
+| `ACME_EMAIL` | yes | Let's Encrypt account email (certificate expiry notices). Issuance needs ports 80/443 open and DNS pointing at this host. |
 | `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. |
 | `DATA_DIR` | no (default) | Host directory for the bind-mounted DB + media. Must live **outside the repo**. Defaults to `../fluke-data` (a sibling of the repo); recommend an absolute path like `/srv/fluke-data`. Create and `chown` it to the container UID/GID before the first `up` (see Volumes). |
-| `TRAEFIK_HTTP_PORT` | no (default) | Host port published to Traefik's `:80` entrypoint. Defaults to `8001`. Point Pangolin here. |
 | `SITE_NAME` | no | Defaults to `Fluke`. |
-| `DJANGO_ALLOWED_HOSTS` | no | Defaults to `fluke.eve.gd,fluke.fm`. Django host check. |
-| `CSRF_TRUSTED_ORIGINS` | no | Defaults to `https://fluke.eve.gd,https://fluke.fm`. |
+| `DJANGO_ALLOWED_HOSTS` | no | Defaults to `fluke.fm,www.fluke.fm`. Django host check. |
+| `CSRF_TRUSTED_ORIGINS` | no | Defaults to `https://fluke.fm,https://www.fluke.fm`. |
 | `MUSICBRAINZ_CONTACT` | no | Descriptive contact for the MusicBrainz User-Agent. |
 | `UID` / `GID` | no | Build args; match the host owner of the `$DATA_DIR` files (default 1000). |
 
@@ -130,19 +133,19 @@ bind-mounted `$DATA_DIR/db` host directory.
 ## Routing
 
 The `web` service publishes **no host ports** (`expose: ["8000"]`) — only Traefik
-reaches it on the shared `web` network. Traefik itself publishes its `:80`
-entrypoint on the host at `TRAEFIK_HTTP_PORT` (default **8001**); point Pangolin
-at the host on that port. The Traefik labels route both hosts:
+reaches it on the shared `web` network. **Traefik** publishes the host's `:80` and
+`:443`. The labels route the apex and www over HTTPS with a Let's Encrypt cert:
 
 ```
-traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`fluke.fm`)
-traefik.http.routers.fluke.entrypoints=web
+traefik.http.routers.fluke.rule=Host(`fluke.fm`) || Host(`www.fluke.fm`)
+traefik.http.routers.fluke.entrypoints=websecure
+traefik.http.routers.fluke.tls.certresolver=le
 traefik.http.services.fluke.loadbalancer.server.port=8000
 ```
 
-Test deploy first against **fluke.eve.gd**, then switch `SITE_BASE_URL` (and, if
-you narrow them, `DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS`) to **fluke.fm**
-for the production cutover. The router already accepts both hostnames.
+To add another hostname, extend the `Host(...)` rule (and `DJANGO_ALLOWED_HOSTS`
+/ `CSRF_TRUSTED_ORIGINS`); Traefik will request a certificate for it once DNS
+points at the host.
 
 ## Volumes
 

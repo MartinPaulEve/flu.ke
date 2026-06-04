@@ -1,53 +1,58 @@
 # Production stack for the Fluke CMS / live site.
 #
-#   docker compose -f compose.prod.yaml up -d --build
+#   docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
 #
-# Topology:
+# Topology — Traefik is the edge and terminates TLS itself:
 #
-#   Internet ──HTTPS──> Pangolin (terminates TLS) ──HTTP──> Traefik :80 ──> web :8000
+#   Internet ──HTTPS──> Traefik :443 (TLS, Let's Encrypt) ──HTTP──> web :8000 (gunicorn)
+#                       :80 → 301 redirect to HTTPS (and the ACME challenge)
 #
-# Pangolin terminates SSL upstream and forwards plain HTTP, so this stack only
-# needs an HTTP listener. Traefik's `web` entrypoint trusts Pangolin's forwarded
-# headers (forwardedHeaders.insecure=true), so X-Forwarded-Proto reaches Django
-# and config.settings_production's SECURE_PROXY_SSL_HEADER correctly detects the
-# original HTTPS request (secure cookies, no redirect loop).
+# Traefik obtains/renews certificates from Let's Encrypt (HTTP-01 challenge on
+# :80) and terminates TLS, then forwards to gunicorn on the internal network with
+# X-Forwarded-Proto=https — which config.settings_production's
+# SECURE_PROXY_SSL_HEADER reads (secure cookies, correct absolute URLs).
 #
-# Point Pangolin at the host on TRAEFIK_HTTP_PORT (default 8001), which is
-# published to Traefik's :80 entrypoint.
+# REQUIREMENTS: ports 80 AND 443 must be open to the internet, and DNS A/AAAA
+# records for fluke.fm and www.fluke.fm must point at this host (the HTTP-01
+# challenge and cert issuance need that before HTTPS will work).
 #
 # Secrets/config come from the environment (see .env.prod.example). The `:?` form
-# makes compose refuse to start if a required value is missing — no insecure
-# fallbacks for the secret. Load them with `--env-file .env.prod` or export them.
-# See docs/deploy-docker.md.
+# makes compose refuse to start if a required value is missing. Load them with
+# `--env-file .env.prod`. See docs/deploy-docker.md.
 
 services:
   traefik:
     image: traefik:v3.6.1
     container_name: fluke-traefik
     environment:
-      # Pin the Docker client API version Traefik talks to the daemon with.
-      # Newer Docker Engines reject the old default (1.24) with "client version
-      # 1.24 is too old. Minimum supported API version is 1.44". Override via
-      # .env.prod if your daemon needs a different floor.
+      # Pin the Docker client API version Traefik talks to the daemon with (newer
+      # Docker Engines reject the old 1.24 default). Override via .env.prod if needed.
       DOCKER_API_VERSION: "${DOCKER_API_VERSION:-1.44}"
     command:
       # Docker provider — only containers with traefik.enable=true are routed.
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      # A single plain-HTTP entrypoint. No TLS, no certresolvers: Pangolin does
-      # TLS and forwards HTTP here.
+      # HTTP entrypoint: serves the ACME challenge, and redirects everything else
+      # to HTTPS (the site does not serve plain HTTP).
       - "--entrypoints.web.address=:80"
-      # Trust and pass through Pangolin's X-Forwarded-* headers (Proto/For/Host).
-      # This is what lets Django see the request as HTTPS via the proxy SSL header.
-      - "--entrypoints.web.forwardedHeaders.insecure=true"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # HTTPS entrypoint — TLS is terminated here.
+      - "--entrypoints.websecure.address=:443"
+      # Let's Encrypt via the HTTP-01 challenge on the web entrypoint; the issued
+      # certificates (acme.json) persist on the `letsencrypt` volume.
+      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL:?set ACME_EMAIL in .env.prod}"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
     ports:
-      # HTTP only — Pangolin handles 443 upstream. The container entrypoint stays
-      # :80; only the host-published port is configurable (default 8001). Point
-      # Pangolin at the host on TRAEFIK_HTTP_PORT.
-      - "${TRAEFIK_HTTP_PORT:-8001}:80"
+      - "80:80"
+      - "443:443"
     volumes:
       # Read-only access to the Docker API so Traefik can discover the web service.
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Persist issued certificates (acme.json) across restarts/rebuilds.
+      - letsencrypt:/letsencrypt
     networks:
       - web
     restart: unless-stopped
@@ -73,12 +78,12 @@ services:
       # SQLite on the persistent /data volume (WAL/SHM files live there too).
       DATABASE_URL: "${DATABASE_URL:-sqlite:////data/db.sqlite3}"
       SITE_NAME: "${SITE_NAME:-Fluke}"
-      # Test deploy: https://fluke.eve.gd — switch to https://fluke.fm for production.
+      # The canonical origin — https://fluke.fm in production.
       SITE_BASE_URL: "${SITE_BASE_URL:?set SITE_BASE_URL in .env.prod}"
-      # Optional. The router Host() rules below already gate traffic; set these to
-      # the deploy hostname(s) so Django's host/CSRF checks also accept them.
-      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-fluke.eve.gd,fluke.fm}"
-      CSRF_TRUSTED_ORIGINS: "${CSRF_TRUSTED_ORIGINS:-https://fluke.eve.gd,https://fluke.fm}"
+      # Optional. The router Host() rules below already gate traffic; these make
+      # Django's host/CSRF checks accept the same hostnames.
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-fluke.fm,www.fluke.fm}"
+      CSRF_TRUSTED_ORIGINS: "${CSRF_TRUSTED_ORIGINS:-https://fluke.fm,https://www.fluke.fm}"
       MUSICBRAINZ_CONTACT: "${MUSICBRAINZ_CONTACT:-}"
       # Optional one-shot admin creation (entrypoint). Leave the password unset on
       # the long-running service; create the admin with a one-off run instead:
@@ -106,11 +111,18 @@ services:
       - web
     labels:
       - "traefik.enable=true"
-      # Route the production host (apex + www) and the test-deploy host.
-      - "traefik.http.routers.fluke.rule=Host(`fluke.eve.gd`) || Host(`fluke.fm`) || Host(`www.fluke.fm`)"
-      - "traefik.http.routers.fluke.entrypoints=web"
+      # Route the apex and www over HTTPS, with a Let's Encrypt certificate.
+      - "traefik.http.routers.fluke.rule=Host(`fluke.fm`) || Host(`www.fluke.fm`)"
+      - "traefik.http.routers.fluke.entrypoints=websecure"
+      - "traefik.http.routers.fluke.tls=true"
+      - "traefik.http.routers.fluke.tls.certresolver=le"
       - "traefik.http.services.fluke.loadbalancer.server.port=8000"
     restart: unless-stopped
 
 networks:
   web:
+
+volumes:
+  # Let's Encrypt certificate storage (acme.json). Ephemeral — re-issued on a new
+  # host — so a Docker-managed named volume rather than the $DATA_DIR bind mount.
+  letsencrypt:
