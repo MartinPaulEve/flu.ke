@@ -1,3 +1,9 @@
+## 1.5.1 (2026-06-06)
+
+### Fix
+
+- **discography**: avoid duplicate _like index in lyric slug migration on Postgres
+
 ## 1.5.0 (2026-06-06)
 
 ### Feat
