@@ -1,3 +1,12 @@
+## 1.6.0 (2026-06-06)
+
+### Feat
+
+- **admin**: regenerate OG image and invalidate cache actions
+- **cache**: page caching via Redis/Valkey with site + per-page invalidation
+- **frontend**: Open Graph meta on every page
+- **seo**: generate cover-composited Open Graph images for all content
+
 ## 1.5.2 (2026-06-06)
 
 ### Fix
