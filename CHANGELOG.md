@@ -1,3 +1,9 @@
+## 1.7.0 (2026-06-06)
+
+### Feat
+
+- **admin**: per-object buttons to regenerate OG image and clear page cache
+
 ## 1.6.0 (2026-06-06)
 
 ### Feat
