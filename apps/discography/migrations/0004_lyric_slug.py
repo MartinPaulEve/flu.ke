@@ -33,7 +33,14 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="lyric",
             name="slug",
-            field=models.SlugField(blank=True, default="", max_length=200),
+            # db_index=False on this intermediate field is deliberate: SlugField
+            # indexes by default, and on PostgreSQL an indexed varchar also gets a
+            # `*_like` (varchar_pattern_ops) index. The AlterField below makes the
+            # column unique, which rebuilds that same `*_like` index -- so leaving
+            # the index on here would create it twice and fail with
+            # 'relation ..._like already exists' (SQLite has no such index, so the
+            # bug only surfaced on Postgres). The unique AlterField adds it once.
+            field=models.SlugField(blank=True, db_index=False, default="", max_length=200),
             preserve_default=False,
         ),
         migrations.RunPython(populate_slugs, migrations.RunPython.noop),
