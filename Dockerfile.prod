@@ -54,7 +54,7 @@ COPY --chown=${UID}:${GID} . .
 # Finish installing the project itself into /opt/venv now that the source is in.
 # uv-created venvs are world-readable, so the non-root user can read/exec it
 # without a recursive chmod of the (thousands of) dependency files.
-RUN uv sync --frozen --extra prod
+RUN uv sync --frozen --extra prod --extra postgres
 
 # Collect static files at build time so WhiteNoise has them ready. DEBUG=False in
 # config.settings_production, so a throwaway key is passed purely so the command
