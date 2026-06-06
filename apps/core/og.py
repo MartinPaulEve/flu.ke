@@ -1,8 +1,10 @@
 """Generate branded Open Graph card images with Pillow.
 
-Produces a 1200x630 PNG in the site's black/red identity for a post/page/release,
-so social shares look intentional. Pure function (returns bytes) — no model or
-filesystem coupling — which keeps it deterministic and unit-testable.
+Produces a 1200x630 PNG in the site's black/red identity for any content type,
+optionally compositing a cover image (e.g. album art) on the right edge. Pure
+function (returns bytes) — no model or filesystem coupling — so it stays
+deterministic and unit-testable. Lives in ``core`` because every content app's
+models generate cards from it.
 """
 
 from __future__ import annotations
@@ -42,20 +44,51 @@ def _wrap(draw, text, font, max_width):
     return lines or [""]
 
 
+def _square_cover(data: bytes, side: int) -> Image.Image:
+    """Center-crop cover image bytes to a square and resize to ``side`` px (RGB)."""
+    cover = Image.open(BytesIO(data)).convert("RGB")
+    width, height = cover.size
+    edge = min(width, height)
+    left = (width - edge) // 2
+    top = (height - edge) // 2
+    cover = cover.crop((left, top, left + edge, top + edge))
+    return cover.resize((side, side), Image.LANCZOS)
+
+
 def render_og_image(
     title: str,
     subtitle: str = "",
     *,
+    cover: bytes | None = None,
     bg: str = "#0a0a0a",
     fg: str = "#f4f1ea",
     accent: str = "#ff2e1f",
     size: tuple[int, int] = OG_SIZE,
 ) -> bytes:
-    """Render an Open Graph card and return PNG bytes."""
+    """Render an Open Graph card and return PNG bytes.
+
+    When ``cover`` (image bytes) is given, it is composited as a full-height
+    square on the right and the text is laid out in the remaining space.
+    """
     width, height = size
     margin = round(width * 0.066)
     image = Image.new("RGB", size, bg)
     draw = ImageDraw.Draw(image)
+
+    # Text occupies the full width unless a cover takes the right-hand square.
+    text_right = width - margin
+    if cover is not None:
+        try:
+            panel = _square_cover(cover, height)
+            image.paste(panel, (width - height, 0))
+            # Thin accent seam between the text and the cover.
+            draw.rectangle([width - height - 8, 0, width - height, height], fill=accent)
+            text_right = width - height - margin
+        except (OSError, ValueError):
+            # Unreadable/blank cover: silently fall back to a text-only card.
+            text_right = width - margin
+
+    text_width = text_right - margin
 
     # Red accent bar + brand mark, top-left.
     draw.rectangle([margin, margin, margin + round(width * 0.12), margin + 14], fill=accent)
@@ -70,10 +103,10 @@ def render_og_image(
 
     # Title: fill from the bottom, shrinking until it fits in <= 4 lines.
     title_px = round(height * 0.16)
-    lines = _wrap(draw, title, _font(title_px), width - 2 * margin)
+    lines = _wrap(draw, title, _font(title_px), text_width)
     while len(lines) > 4 and title_px > round(height * 0.07):
         title_px -= round(height * 0.012) or 1
-        lines = _wrap(draw, title, _font(title_px), width - 2 * margin)
+        lines = _wrap(draw, title, _font(title_px), text_width)
 
     title_font = _font(title_px)
     line_height = title_px * 1.04

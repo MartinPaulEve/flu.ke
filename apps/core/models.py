@@ -7,6 +7,7 @@ published querysets, OG-image generation) lives on the concrete models and in
 """
 
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models
 
 from apps.core.text import unique_slug
@@ -99,10 +100,38 @@ class SeoFieldsMixin(models.Model):
         abstract = True
 
     def resolved_seo_title(self):
-        return self.seo_title or getattr(self, "title", "") or ""
+        # Content models use either `title` (posts, pages, resources, lyrics) or
+        # `name` (releases, artists); fall back through both.
+        return self.seo_title or getattr(self, "title", "") or getattr(self, "name", "") or ""
 
     def resolved_og_title(self):
         return self.og_title or self.resolved_seo_title()
 
     def resolved_og_description(self):
         return self.og_description or self.meta_description
+
+    def og_card(self):
+        """Return ``(title, subtitle, cover_bytes)`` for the generated OG image.
+
+        Subclasses override to add a subtitle (e.g. the artist) or composite a
+        cover (e.g. album art). Default is a plain branded card of the title.
+        """
+        return (self.resolved_og_title(), "", None)
+
+    def ensure_og_image(self):
+        """Generate and attach an OG image from :meth:`og_card` when blank.
+
+        Returns ``True`` if it set one (so the caller can persist it). The image
+        is built in memory and saved with ``save=False`` so the caller controls
+        the database write. Requires a saved instance (uses ``pk`` in the name).
+        """
+        if self.og_image:
+            return False
+        title, subtitle, cover = self.og_card()
+        if not title:
+            return False
+        from apps.core.og import render_og_image
+
+        data = render_og_image(title, subtitle, cover=cover)
+        self.og_image.save(f"{self._meta.model_name}-{self.pk}.png", ContentFile(data), save=False)
+        return True

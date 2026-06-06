@@ -37,3 +37,8 @@ class Page(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     def get_absolute_url(self):
         return f"/{self.slug}/"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.ensure_og_image():
+            super().save(update_fields=["og_image"])

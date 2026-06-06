@@ -42,7 +42,7 @@ class ReleaseType(models.Model):
         return self.name
 
 
-class Artist(SluggedModel, TimeStampedModel):
+class Artist(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     slug_source_field = "name"
     reserved_slugs = frozenset({"api"})
 
@@ -81,6 +81,14 @@ class Artist(SluggedModel, TimeStampedModel):
     def get_absolute_url(self):
         return f"/discography/{self.slug}/"
 
+    def og_card(self):
+        return (self.name, "Alias" if self.is_alias else "Artist", None)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.ensure_og_image():
+            super().save(update_fields=["og_image"])
+
 
 class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     slug_source_field = "name"
@@ -115,6 +123,29 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
             else self.name
         )
 
+    def og_card(self):
+        subtitle = self.artist.name if self.artist_id else ""
+        if self.year:
+            subtitle = f"{subtitle} · {self.year}".strip(" ·")
+        return (self.name, subtitle, self._og_cover_bytes())
+
+    def _og_cover_bytes(self):
+        """Front cover image bytes for the OG card (any cover if no front), or None."""
+        covers = CoverImage.objects.filter(edition__release=self).exclude(image="")
+        cover = covers.filter(kind=CoverImage.KIND_FRONT).first() or covers.first()
+        if not cover or not cover.image:
+            return None
+        try:
+            with cover.image.open("rb") as fh:
+                return fh.read()
+        except (FileNotFoundError, OSError, ValueError):
+            return None
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.ensure_og_image():
+            super().save(update_fields=["og_image"])
+
 
 class Edition(TimeStampedModel):
     """A specific physical/digital version of a release (CD, vinyl, promo, …)."""
@@ -139,7 +170,7 @@ class Edition(TimeStampedModel):
         return " – ".join(bits)
 
 
-class Lyric(SluggedModel, TimeStampedModel):
+class Lyric(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     """Lyrics for a song, shared by every track that performs it (de-duplicated)."""
 
     slug_source_field = "title"
@@ -159,6 +190,15 @@ class Lyric(SluggedModel, TimeStampedModel):
 
     def get_absolute_url(self):
         return f"/lyrics/{self.slug}/"
+
+    def og_card(self):
+        subtitle = f"Lyrics · {self.artist.name}" if self.artist_id else "Lyrics"
+        return (self.title, subtitle, None)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.ensure_og_image():
+            super().save(update_fields=["og_image"])
 
 
 class Track(TimeStampedModel):

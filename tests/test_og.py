@@ -4,7 +4,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from apps.blog.og import render_og_image
+from apps.core.og import render_og_image
 
 
 def _open(data):
@@ -33,3 +33,19 @@ def test_handles_very_long_title():
 def test_respects_custom_size():
     img = _open(render_og_image("Hi", size=(600, 315)))
     assert img.size == (600, 315)
+
+
+def _solid_png(color=(0, 120, 200), size=(600, 600)):
+    buffer = BytesIO()
+    Image.new("RGB", size, color).save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def test_cover_is_composited_at_card_dimensions():
+    img = _open(render_og_image("Atom Bomb", "Fluke · 2003", cover=_solid_png()))
+    assert img.format == "PNG"
+    assert img.size == (1200, 630)
+
+
+def test_cover_card_differs_from_plain_card():
+    assert render_og_image("X", cover=_solid_png()) != render_og_image("X")

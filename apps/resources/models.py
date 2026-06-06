@@ -211,6 +211,15 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
             return self.snippet
         return build_snippet(self)
 
+    def og_card(self):
+        subtitle = "Fan" if self.kind == KIND_FAN else "Official"
+        return (self.resolved_og_title(), subtitle, None)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.ensure_og_image():
+            super().save(update_fields=["og_image"])
+
 
 class ResourceFile(TimeStampedModel):
     KIND_CHOICES = [
