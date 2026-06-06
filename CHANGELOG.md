@@ -1,3 +1,9 @@
+## 1.5.2 (2026-06-06)
+
+### Fix
+
+- **pages**: render published pages in the main nav by menu_order
+
 ## 1.5.1 (2026-06-06)
 
 ### Fix
