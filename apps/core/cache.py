@@ -48,10 +48,19 @@ def invalidate_path(path):
     cache.delete(page_cache_key(path))
 
 
-def invalidate_on_content_change(sender, **kwargs):
-    """post_save/post_delete receiver: any content change clears the site cache."""
-    if getattr(sender._meta, "app_label", None) in CONTENT_APPS:
-        invalidate_site_cache()
+def invalidate_on_content_change(sender, update_fields=None, **kwargs):
+    """post_save/post_delete receiver: any content change clears the site cache.
+
+    Skips OG-image-only saves: those come from auto/lazy image generation, which
+    doesn't change page content meaningfully, and the rendering view caches the
+    correct HTML itself — so flushing the whole site each time would only churn the
+    cache while images backfill. (Admin OG actions invalidate explicitly.)
+    """
+    if getattr(sender._meta, "app_label", None) not in CONTENT_APPS:
+        return
+    if update_fields is not None and set(update_fields) == {"og_image"}:
+        return
+    invalidate_site_cache()
 
 
 def cached_page(view):

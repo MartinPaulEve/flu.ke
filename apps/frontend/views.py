@@ -39,6 +39,16 @@ def _join_names(names):
     return f"{', '.join(names[:-1])} & {names[-1]}"
 
 
+def _ensure_og(obj):
+    """Generate an object's OG image on first visit if it's missing (e.g. legacy
+    content imported before OG generation). The OG-image-only save does not flush
+    the page cache (see invalidate_on_content_change), and the response rendered
+    here already carries the new image, so the cached page stays correct."""
+    if obj.ensure_og_image():
+        obj.save(update_fields=["og_image"])
+    return obj
+
+
 @cached_page
 def landing(request):
     recent_posts = list(Post.objects.published()[:6])
@@ -82,6 +92,7 @@ def post_category(request, slug):
 @cached_page
 def post_detail(request, year, slug):
     post = get_object_or_404(Post.objects.published(), slug=slug)
+    _ensure_og(post)
     jsonld = jsonld_dumps(blog_posting_jsonld(post, settings.SITE_BASE_URL))
     return render(
         request,
@@ -109,6 +120,7 @@ def discography_index(request):
 @cached_page
 def artist_detail(request, artist_slug):
     artist = get_object_or_404(Artist, slug=artist_slug)
+    _ensure_og(artist)
     releases = list(
         artist.releases.published().select_related("artist", "type")
     )
@@ -126,6 +138,7 @@ def release_detail(request, artist_slug, release_slug):
         artist__slug=artist_slug,
         slug=release_slug,
     )
+    _ensure_og(release)
     jsonld = jsonld_dumps(music_album_jsonld(release, settings.SITE_BASE_URL))
     return render(
         request,
@@ -149,6 +162,7 @@ def lyric_index(request):
 @cached_page
 def lyric_detail(request, slug):
     lyric = get_object_or_404(Lyric.objects.exclude(lyrics=""), slug=slug)
+    _ensure_og(lyric)
     return render(
         request,
         "discography/lyric_detail.html",
@@ -185,6 +199,7 @@ def resource_list(request):
 @cached_page
 def resource_detail(request, kind, slug):
     resource = get_object_or_404(Resource.objects.published(), kind=kind, slug=slug)
+    _ensure_og(resource)
     return render(
         request,
         "resources/resource_detail.html",
@@ -195,6 +210,7 @@ def resource_detail(request, kind, slug):
 @cached_page
 def page_detail(request, slug):
     page = get_object_or_404(Page.objects.published(), slug=slug)
+    _ensure_og(page)
     return render(request, "pages/page_detail.html", {"page": page, "edit_object": page})
 
 

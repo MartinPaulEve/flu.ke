@@ -50,7 +50,10 @@ class OgCacheAdminMixin:
         obj.og_image.delete(save=False)  # force a fresh card even if one exists
         obj.og_image = ""
         if obj.ensure_og_image():
-            obj.save(update_fields=["og_image"])  # post_save invalidates the page cache
+            obj.save(update_fields=["og_image"])
+            getter = getattr(obj, "get_absolute_url", None)
+            if callable(getter):
+                invalidate_path(getter())  # so the new card shows on the next visit
             self.message_user(request, "Regenerated the Open Graph image.")
         else:
             self.message_user(
@@ -79,6 +82,8 @@ class OgCacheAdminMixin:
             if obj.ensure_og_image():
                 obj.save(update_fields=["og_image"])
                 count += 1
+        if count:
+            invalidate_site_cache()  # refresh the affected cached pages
         self.message_user(request, f"Regenerated {count} Open Graph image(s).")
 
     @admin.action(description="Invalidate cached page for selected")

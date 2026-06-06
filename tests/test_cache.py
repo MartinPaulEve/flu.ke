@@ -72,3 +72,19 @@ def test_saving_content_invalidates_the_site_cache():
     Page.objects.create(title="A brand new page")   # post_save -> invalidate
     _get(view)
     assert calls["n"] == 2
+
+
+def test_og_image_only_save_does_not_invalidate_the_cache():
+    from apps.pages.models import Page
+
+    page = Page.objects.create(title="Lazy page")
+    view, calls = _counter_view()
+    _get(view)                                       # warm the cache
+    assert calls["n"] == 1
+    # An OG-image-only save (lazy/auto generation) must not flush the cache.
+    page.og_image.delete(save=False)
+    page.og_image = ""
+    page.ensure_og_image()
+    page.save(update_fields=["og_image"])
+    _get(view)
+    assert calls["n"] == 1                           # still served from cache
