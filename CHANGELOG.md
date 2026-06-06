@@ -1,3 +1,9 @@
+## 1.5.0 (2026-06-06)
+
+### Feat
+
+- **deploy**: drop TLS labels and redirect www to apex at Traefik
+
 ## 1.4.0 (2026-06-06)
 
 ### Feat
