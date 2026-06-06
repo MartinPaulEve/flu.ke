@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from apps.core.admin import OgCacheAdminMixin
+
 from .models import (
     Artist,
     CoverImage,
@@ -38,7 +40,7 @@ class ReleaseTypeAdmin(admin.ModelAdmin):
 
 
 @admin.register(Artist)
-class ArtistAdmin(admin.ModelAdmin):
+class ArtistAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     list_display = ("name", "is_alias", "primary_artist")
     list_filter = ("is_alias",)
     search_fields = ("name",)
@@ -47,7 +49,7 @@ class ArtistAdmin(admin.ModelAdmin):
 
 
 @admin.register(Release)
-class ReleaseAdmin(admin.ModelAdmin):
+class ReleaseAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     list_display = ("name", "artist", "year", "type", "is_published")
     list_filter = ("type", "is_published", "artist")
     search_fields = ("name",)
@@ -65,7 +67,7 @@ class EditionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Lyric)
-class LyricAdmin(admin.ModelAdmin):
+class LyricAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     list_display = ("title", "artist")
     search_fields = ("title", "lyrics")
     autocomplete_fields = ("artist",)

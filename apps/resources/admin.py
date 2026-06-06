@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from apps.core.admin import OgCacheAdminMixin
+
 from .models import Resource, ResourceFile, ResourceSubcategory
 
 
@@ -20,7 +22,7 @@ class ResourceSubcategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Resource)
-class ResourceAdmin(admin.ModelAdmin):
+class ResourceAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     list_display = ("title", "snippet", "kind", "subcategory", "is_published", "uploaded_at")
     list_filter = ("kind", "is_published", "subcategory")
     search_fields = ("title", "snippet", "description", "contributor")

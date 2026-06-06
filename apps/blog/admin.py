@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.db import models
 from tinymce.widgets import TinyMCE
 
+from apps.core.admin import OgCacheAdminMixin
+
 from .models import Category, Post, Tag
 
 
@@ -20,7 +22,7 @@ class TagAdmin(admin.ModelAdmin):
 
 
 @admin.register(Post)
-class PostAdmin(admin.ModelAdmin):
+class PostAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     list_display = ("title", "published_at", "is_published", "import_confidence")
     list_filter = ("is_published", "import_confidence", "categories")
     search_fields = ("title", "excerpt", "body")
