@@ -25,6 +25,8 @@ env = environ.Env(
     MUSICBRAINZ_APP=(str, "flukecms"),
     MUSICBRAINZ_VERSION=(str, "1.0"),
     MUSICBRAINZ_CONTACT=(str, ""),
+    REDIS_URL=(str, ""),
+    PAGE_CACHE_SECONDS=(int, 600),
 )
 
 # Read .env if present (not required in CI/tests, which set sensible defaults).
@@ -97,6 +99,25 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
+
+# --- Cache (Redis/Valkey via django-redis in production; in-memory otherwise) -
+# Set REDIS_URL (e.g. redis://valkey:6379/0) to use the shared server; without it
+# (dev/tests/CI) an in-process cache is used so nothing external is required.
+REDIS_URL = env("REDIS_URL")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        }
+    }
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
+# Seconds a public page stays cached. Any content change invalidates the whole
+# site cache immediately, so this can be generous.
+PAGE_CACHE_SECONDS = env("PAGE_CACHE_SECONDS")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

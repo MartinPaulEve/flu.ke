@@ -13,6 +13,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 
 from apps.blog.models import Category, Post
+from apps.core.cache import cached_page
 from apps.core.seo import blog_posting_jsonld, jsonld_dumps, music_album_jsonld
 from apps.discography.models import (
     PRIMARY_ARTIST_NAME,
@@ -38,6 +39,7 @@ def _join_names(names):
     return f"{', '.join(names[:-1])} & {names[-1]}"
 
 
+@cached_page
 def landing(request):
     recent_posts = list(Post.objects.published()[:6])
     latest_resources = list(Resource.objects.published()[:8])
@@ -60,11 +62,13 @@ def landing(request):
     )
 
 
+@cached_page
 def post_list(request):
     posts = list(Post.objects.published().prefetch_related("categories", "tags"))
     return render(request, "blog/post_list.html", {"posts": posts, "edit_changelist": Post})
 
 
+@cached_page
 def post_category(request, slug):
     category = get_object_or_404(Category, slug=slug)
     posts = list(category.posts.published().prefetch_related("categories", "tags"))
@@ -75,6 +79,7 @@ def post_category(request, slug):
     )
 
 
+@cached_page
 def post_detail(request, year, slug):
     post = get_object_or_404(Post.objects.published(), slug=slug)
     jsonld = jsonld_dumps(blog_posting_jsonld(post, settings.SITE_BASE_URL))
@@ -85,6 +90,7 @@ def post_detail(request, year, slug):
     )
 
 
+@cached_page
 def discography_index(request):
     releases = list(Release.objects.published().select_related("artist", "type"))
     sections = []
@@ -100,6 +106,7 @@ def discography_index(request):
     )
 
 
+@cached_page
 def artist_detail(request, artist_slug):
     artist = get_object_or_404(Artist, slug=artist_slug)
     releases = list(
@@ -112,6 +119,7 @@ def artist_detail(request, artist_slug):
     )
 
 
+@cached_page
 def release_detail(request, artist_slug, release_slug):
     release = get_object_or_404(
         Release.objects.published().select_related("artist", "type"),
@@ -126,6 +134,7 @@ def release_detail(request, artist_slug, release_slug):
     )
 
 
+@cached_page
 def lyric_index(request):
     lyrics = list(
         Lyric.objects.exclude(lyrics="").select_related("artist").order_by("title")
@@ -137,6 +146,7 @@ def lyric_index(request):
     )
 
 
+@cached_page
 def lyric_detail(request, slug):
     lyric = get_object_or_404(Lyric.objects.exclude(lyrics=""), slug=slug)
     return render(
@@ -146,6 +156,7 @@ def lyric_detail(request, slug):
     )
 
 
+@cached_page
 def resource_list(request):
     resources = list(Resource.objects.published().select_related("subcategory"))
     sections = [
@@ -171,6 +182,7 @@ def resource_list(request):
     )
 
 
+@cached_page
 def resource_detail(request, kind, slug):
     resource = get_object_or_404(Resource.objects.published(), kind=kind, slug=slug)
     return render(
@@ -180,6 +192,7 @@ def resource_detail(request, kind, slug):
     )
 
 
+@cached_page
 def page_detail(request, slug):
     page = get_object_or_404(Page.objects.published(), slug=slug)
     return render(request, "pages/page_detail.html", {"page": page, "edit_object": page})

@@ -121,6 +121,8 @@ they are missing.
 | `TRAEFIK_NETWORK` | no (default) | The shared Docker network your Traefik watches (must already exist). Defaults to `traefik`. |
 | `TRAEFIK_ENTRYPOINT` | no (default) | Your Traefik's HTTPS entrypoint name. Defaults to `websecure`. |
 | `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. |
+| `REDIS_URL` | no (default) | Redis/Valkey URL for page caching via `django_redis` (e.g. `redis://valkey:6379/0`). Unset falls back to an in-process cache. |
+| `PAGE_CACHE_SECONDS` | no (default) | Page cache lifetime in seconds (default 600); content changes invalidate the whole site cache. |
 | `DATA_DIR` | no (default) | Host directory for the bind-mounted DB + media. Must live **outside the repo**. Defaults to `../fluke-data` (a sibling of the repo); recommend an absolute path like `/srv/fluke-data`. Create and `chown` it to the container UID/GID before the first `up` (see Volumes). |
 | `SITE_NAME` | no | Defaults to `Fluke`. |
 | `DJANGO_ALLOWED_HOSTS` | no | Defaults to `fluke.fm,www.fluke.fm`. Django host check. |

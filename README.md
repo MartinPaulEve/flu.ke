@@ -139,6 +139,8 @@ secrets are never hard-coded. Copy `.env.example` (development) or
 | `DJANGO_SECURE` | `False` | Enables the HTTPS/HSTS/secure-cookie hardening in the base settings. |
 | `CSRF_TRUSTED_ORIGINS` | _(empty)_ | Comma-separated trusted CSRF origins. |
 | `DATABASE_URL` | `sqlite:///db.sqlite3` | Database URL (SQLite everywhere). |
+| `REDIS_URL` | _(empty → in-process cache)_ | Redis/Valkey URL for page caching via `django_redis` (e.g. `redis://valkey:6379/0`). |
+| `PAGE_CACHE_SECONDS` | `600` | How long a public page stays cached (content changes invalidate the whole site cache). |
 | `SITE_BASE_URL` | `https://fluke.fm` | Canonical origin for absolute URLs, OG images, sitemap and feed. |
 | `SITE_NAME` | `Fluke` | Site name used in templates and feeds. |
 | `MEDIA_ROOT` | `media` | Directory holding uploaded media. |
