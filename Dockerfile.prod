@@ -26,7 +26,7 @@ WORKDIR /app
 # Dependencies only (cached unless the lockfile changes). `--extra prod` pulls in
 # gunicorn; the venv lives at /opt/venv, outside /app.
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-install-project --extra prod
+RUN uv sync --frozen --no-install-project --extra prod --extra postgres
 
 COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
 RUN chmod +x /usr/local/bin/entrypoint.prod.sh
