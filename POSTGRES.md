@@ -25,9 +25,21 @@ uv sync --extra postgres          # local
 # or, ad hoc:  uv add "psycopg[binary]>=3.1"
 ```
 
-For the Docker image, install it in the build by adding the extra to the prod
-dependency install in `Dockerfile.prod` (e.g. `uv sync --extra prod --extra
-postgres`), then rebuild.
+For the Docker image, add `--extra postgres` to **both** `uv sync` lines in
+`Dockerfile.prod` — the `--no-install-project` deps layer *and* the final sync —
+then rebuild. `uv sync` is *exact*: it removes anything not in the requested
+extras, so the final sync must include `--extra postgres` or it will uninstall the
+psycopg the earlier layer added (giving a runtime `ImproperlyConfigured: Error
+loading psycopg ...`, not a build failure):
+
+```dockerfile
+RUN uv sync --frozen --no-install-project --extra prod --extra postgres
+# ...
+RUN uv sync --frozen --extra prod --extra postgres
+```
+
+Verify after building:
+`docker compose -f compose.prod.yaml --env-file .env.prod exec web python -c "import psycopg"`.
 
 No settings change is needed: `config/settings.py` reads the database from
 `DATABASE_URL` via django-environ, and the SQLite-specific tuning in
