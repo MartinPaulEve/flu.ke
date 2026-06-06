@@ -1,39 +1,41 @@
 # Deploying with Docker (production)
 
 This is the production deployment for the Fluke CMS / live site. It runs the app
-with **gunicorn** under `config.settings_production` (`DEBUG=False`), behind a
-**Traefik** reverse proxy that terminates TLS with a **Let's Encrypt** certificate.
+with **gunicorn** under `config.settings_production` (`DEBUG=False`). TLS and
+routing are handled by a **separate, shared Traefik** instance that discovers this
+container via Docker labels — this stack runs only gunicorn.
 
 Files:
 
 - `Dockerfile.prod` — the production image (gunicorn, not runserver).
-- `compose.prod.yaml` — the Traefik + web stack.
+- `compose.prod.yaml` — the gunicorn (`web`) service, labelled for a shared Traefik.
 - `docker/entrypoint.prod.sh` — migrate, collectstatic, optional admin, then exec gunicorn.
 - `.env.prod.example` — the environment template (copy to `.env.prod`).
 
 ## Topology
 
 ```
-Internet ──HTTPS──> Traefik :443 (TLS, Let's Encrypt) ──HTTP──> web :8000 (gunicorn)
-                    :80 → 301 to HTTPS                           WhiteNoise serves /static/
+Internet ──HTTPS──> (shared) Traefik ──HTTP──> fluke-web :8000 (gunicorn)
+                    (TLS terminated there)      WhiteNoise serves /static/
 ```
 
-**Traefik is the edge and terminates TLS.** It obtains and renews the certificate
-from **Let's Encrypt** (HTTP-01 challenge on `:80`), serves the site on `:443`, and
-redirects all plain HTTP to HTTPS. It forwards to gunicorn over the internal
-network with `X-Forwarded-Proto=https`, which `config.settings_production`'s
-`SECURE_PROXY_SSL_HEADER` reads — so Django sets secure cookies, builds correct
-absolute URLs, and has no redirect loop.
+A **shared Traefik instance** (the one running your other sites) terminates TLS and
+routes to this container. It discovers the container through the Docker labels on
+the `web` service and reaches it over a **shared Docker network** — so this stack
+publishes **no host ports**. Traefik forwards `X-Forwarded-Proto=https`, which
+`config.settings_production`'s `SECURE_PROXY_SSL_HEADER` reads (secure cookies,
+correct absolute URLs, no redirect loop).
 
-**Requirements for certificate issuance:**
+**To wire it to your Traefik**, set these in `.env.prod` (or edit the labels):
 
-- Ports **80 and 443** must be open to the internet on the host.
-- DNS A/AAAA records for **`fluke.fm`** and **`www.fluke.fm`** must point at this
-  host (the ACME HTTP-01 challenge is served on port 80 at those names).
-- Set **`ACME_EMAIL`** in `.env.prod` (the Let's Encrypt account email).
+- **`TRAEFIK_NETWORK`** — the Docker network your Traefik watches. It must already
+  exist (created by the Traefik stack); this compose joins it as `external`.
+- **`TRAEFIK_ENTRYPOINT`** — the HTTPS entrypoint name (default `websecure`).
+- **`TRAEFIK_CERTRESOLVER`** — the certificate resolver name (default `le`); drop
+  the `tls.certresolver` label if your Traefik uses a default resolver instead.
 
-The issued certificate (`acme.json`) is stored in the `letsencrypt` Docker volume,
-so it survives rebuilds; on a brand-new host it's re-issued automatically.
+The labels route `fluke.fm` + `www.fluke.fm`; extend the `Host(...)` rule (and
+`DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS`) to add more hostnames.
 
 ## Quick start
 
@@ -116,7 +118,9 @@ they are missing.
 |---|---|---|
 | `DJANGO_SECRET_KEY` | yes | `python -c "import secrets; print(secrets.token_urlsafe(50))"`. Use a fresh key, not the dev one. |
 | `SITE_BASE_URL` | yes | The canonical origin, `https://fluke.fm`. |
-| `ACME_EMAIL` | yes | Let's Encrypt account email (certificate expiry notices). Issuance needs ports 80/443 open and DNS pointing at this host. |
+| `TRAEFIK_NETWORK` | no (default) | The shared Docker network your Traefik watches (must already exist). Defaults to `traefik`. |
+| `TRAEFIK_ENTRYPOINT` | no (default) | Your Traefik's HTTPS entrypoint name. Defaults to `websecure`. |
+| `TRAEFIK_CERTRESOLVER` | no (default) | Your Traefik's certificate resolver name. Defaults to `le`. |
 | `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. |
 | `DATA_DIR` | no (default) | Host directory for the bind-mounted DB + media. Must live **outside the repo**. Defaults to `../fluke-data` (a sibling of the repo); recommend an absolute path like `/srv/fluke-data`. Create and `chown` it to the container UID/GID before the first `up` (see Volumes). |
 | `SITE_NAME` | no | Defaults to `Fluke`. |
@@ -132,20 +136,23 @@ bind-mounted `$DATA_DIR/db` host directory.
 
 ## Routing
 
-The `web` service publishes **no host ports** (`expose: ["8000"]`) — only Traefik
-reaches it on the shared `web` network. **Traefik** publishes the host's `:80` and
-`:443`. The labels route the apex and www over HTTPS with a Let's Encrypt cert:
+The `web` service publishes **no host ports** (`expose: ["8000"]`); the shared
+Traefik reaches it over the **shared Docker network** (`TRAEFIK_NETWORK`, joined
+as `external`) and routes by these labels:
 
 ```
+traefik.enable=true
+traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
 traefik.http.routers.fluke.rule=Host(`fluke.fm`) || Host(`www.fluke.fm`)
-traefik.http.routers.fluke.entrypoints=websecure
-traefik.http.routers.fluke.tls.certresolver=le
+traefik.http.routers.fluke.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+traefik.http.routers.fluke.tls=true
+traefik.http.routers.fluke.tls.certresolver=${TRAEFIK_CERTRESOLVER:-le}
 traefik.http.services.fluke.loadbalancer.server.port=8000
 ```
 
 To add another hostname, extend the `Host(...)` rule (and `DJANGO_ALLOWED_HOSTS`
-/ `CSRF_TRUSTED_ORIGINS`); Traefik will request a certificate for it once DNS
-points at the host.
+/ `CSRF_TRUSTED_ORIGINS`). The shared Traefik handles certificates, so nothing
+cert-related lives in this stack.
 
 ## Volumes
 

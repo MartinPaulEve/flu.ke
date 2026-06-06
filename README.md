@@ -110,11 +110,11 @@ honours MusicBrainz's descriptive User-Agent and 1 request/second rate limit).
 ## Production deployment
 
 Production runs the app with **gunicorn** under `config.settings_production`
-(`DEBUG=False`) inside Docker, behind a **Traefik** reverse proxy, which in turn
-sits behind **Pangolin** (Pangolin terminates TLS and forwards plain HTTP). The
-database is **SQLite** on a host bind-mount (`$DATA_DIR`), and uploaded media
-lives alongside it. The host-published Traefik port is configurable via
-`TRAEFIK_HTTP_PORT` (default **8001**); point Pangolin there.
+(`DEBUG=False`) inside Docker. TLS and routing are handled by a **separate, shared
+Traefik** instance that discovers the container via Docker labels — this stack
+runs only gunicorn (no published ports) and joins the shared Traefik network. The
+database is **SQLite** on a host bind-mount (`$DATA_DIR`), with uploaded media
+alongside it.
 
 ```bash
 cp .env.prod.example .env.prod             # then edit — see the deploy guide
@@ -147,7 +147,8 @@ secrets are never hard-coded. Copy `.env.example` (development) or
 | `MUSICBRAINZ_VERSION` | `1.0` | MusicBrainz client version. |
 | `MUSICBRAINZ_CONTACT` | _(empty)_ | Contact email for the MusicBrainz User-Agent; required by `musicbrainz_sync`. |
 
-Production additionally uses `DATA_DIR`, `TRAEFIK_HTTP_PORT` and optional
+Production additionally uses `DATA_DIR`, the `TRAEFIK_NETWORK` /
+`TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERTRESOLVER` discovery vars, and optional
 `UID`/`GID` build args — see [docs/deploy-docker.md](docs/deploy-docker.md).
 
 ## Licence
