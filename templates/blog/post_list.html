@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}News — {{ site_name }}{% endblock %}
+{% block meta %}{% include "partials/og_static.html" with og_title="News — Fluke" og_description="The latest Fluke news and announcements." %}{% endblock %}
 {% block content %}
 <section class="section wrap">
   <p class="kicker">Dispatches</p>

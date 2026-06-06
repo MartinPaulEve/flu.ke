@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Lyrics — {{ site_name }}{% endblock %}
+{% block meta %}{% include "partials/og_static.html" with og_title="Lyrics — Fluke" og_description="Lyrics across the Fluke discography." %}{% endblock %}
 {% block body_class %}discography{% endblock %}
 {% block content %}
 <section class="section wrap">
