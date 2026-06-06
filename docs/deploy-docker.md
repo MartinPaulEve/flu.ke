@@ -31,11 +31,11 @@ correct absolute URLs, no redirect loop).
 - **`TRAEFIK_NETWORK`** — the Docker network your Traefik watches. It must already
   exist (created by the Traefik stack); this compose joins it as `external`.
 - **`TRAEFIK_ENTRYPOINT`** — the HTTPS entrypoint name (default `websecure`).
-- **`TRAEFIK_CERTRESOLVER`** — the certificate resolver name (default `le`); drop
-  the `tls.certresolver` label if your Traefik uses a default resolver instead.
 
-The labels route `fluke.fm` + `www.fluke.fm`; extend the `Host(...)` rule (and
-`DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS`) to add more hostnames.
+TLS is terminated by the shared Traefik at that entrypoint, so this stack carries
+**no** `tls`/`certresolver` labels. The labels route `fluke.fm` + `www.fluke.fm`,
+and **301-redirect `www` to the apex** (`fluke.fm`); extend the `Host(...)` rule
+(and `DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS`) to add more hostnames.
 
 ## Quick start
 
@@ -120,7 +120,6 @@ they are missing.
 | `SITE_BASE_URL` | yes | The canonical origin, `https://fluke.fm`. |
 | `TRAEFIK_NETWORK` | no (default) | The shared Docker network your Traefik watches (must already exist). Defaults to `traefik`. |
 | `TRAEFIK_ENTRYPOINT` | no (default) | Your Traefik's HTTPS entrypoint name. Defaults to `websecure`. |
-| `TRAEFIK_CERTRESOLVER` | no (default) | Your Traefik's certificate resolver name. Defaults to `le`. |
 | `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. |
 | `DATA_DIR` | no (default) | Host directory for the bind-mounted DB + media. Must live **outside the repo**. Defaults to `../fluke-data` (a sibling of the repo); recommend an absolute path like `/srv/fluke-data`. Create and `chown` it to the container UID/GID before the first `up` (see Volumes). |
 | `SITE_NAME` | no | Defaults to `Fluke`. |
@@ -145,10 +144,17 @@ traefik.enable=true
 traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
 traefik.http.routers.fluke.rule=Host(`fluke.fm`) || Host(`www.fluke.fm`)
 traefik.http.routers.fluke.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
-traefik.http.routers.fluke.tls=true
-traefik.http.routers.fluke.tls.certresolver=${TRAEFIK_CERTRESOLVER:-le}
+traefik.http.routers.fluke.middlewares=fluke-www
+traefik.http.middlewares.fluke-www.redirectregex.regex=^https?://www\.fluke\.fm/(.*)
+traefik.http.middlewares.fluke-www.redirectregex.replacement=https://fluke.fm/${1}
+traefik.http.middlewares.fluke-www.redirectregex.permanent=true
 traefik.http.services.fluke.loadbalancer.server.port=8000
 ```
+
+There are no `tls`/`certresolver` labels — the shared Traefik terminates TLS at
+its entrypoint. The `fluke-www` middleware 301-redirects `www.fluke.fm` to the
+apex, preserving the path (in `compose.prod.yaml` the `${1}` is written `$${1}`
+to survive compose's variable interpolation).
 
 To add another hostname, extend the `Host(...)` rule (and `DJANGO_ALLOWED_HOSTS`
 / `CSRF_TRUSTED_ORIGINS`). The shared Traefik handles certificates, so nothing

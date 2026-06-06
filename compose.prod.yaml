@@ -75,11 +75,16 @@ services:
       - "traefik.enable=true"
       # Which network the shared Traefik should use to reach this container.
       - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik}"
-      # Route the apex + www. Adjust the entrypoint/certresolver to your Traefik.
+      # Route the apex + www on your Traefik's HTTPS entrypoint. TLS is terminated
+      # by the shared Traefik (at the entrypoint), so no tls/certresolver here.
       - "traefik.http.routers.fluke.rule=Host(`fluke.fm`) || Host(`www.fluke.fm`)"
       - "traefik.http.routers.fluke.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.routers.fluke.tls=true"
-      - "traefik.http.routers.fluke.tls.certresolver=${TRAEFIK_CERTRESOLVER:-le}"
+      - "traefik.http.routers.fluke.middlewares=fluke-www"
+      # Redirect www -> apex (301), preserving the path. $${1} escapes compose
+      # interpolation so Traefik receives the literal ${1} capture group.
+      - "traefik.http.middlewares.fluke-www.redirectregex.regex=^https?://www\\.fluke\\.fm/(.*)"
+      - "traefik.http.middlewares.fluke-www.redirectregex.replacement=https://fluke.fm/$${1}"
+      - "traefik.http.middlewares.fluke-www.redirectregex.permanent=true"
       - "traefik.http.services.fluke.loadbalancer.server.port=8000"
     restart: unless-stopped
 

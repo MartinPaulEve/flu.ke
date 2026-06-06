@@ -148,8 +148,8 @@ secrets are never hard-coded. Copy `.env.example` (development) or
 | `MUSICBRAINZ_CONTACT` | _(empty)_ | Contact email for the MusicBrainz User-Agent; required by `musicbrainz_sync`. |
 
 Production additionally uses `DATA_DIR`, the `TRAEFIK_NETWORK` /
-`TRAEFIK_ENTRYPOINT` / `TRAEFIK_CERTRESOLVER` discovery vars, and optional
-`UID`/`GID` build args — see [docs/deploy-docker.md](docs/deploy-docker.md).
+`TRAEFIK_ENTRYPOINT` discovery vars, and optional `UID`/`GID` build args — see
+[docs/deploy-docker.md](docs/deploy-docker.md).
 
 ## Licence
 
