@@ -1,3 +1,9 @@
+## 1.8.0 (2026-06-06)
+
+### Feat
+
+- **seo**: generate OG images lazily on first page visit
+
 ## 1.7.0 (2026-06-06)
 
 ### Feat
