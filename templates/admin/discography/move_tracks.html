@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<form method="post">{% csrf_token %}
+  <p>Move {{ tracks|length }} track(s) to another edition (the file and its metadata move with them):</p>
+  <ul>
+    {% for track in tracks %}
+      <li>{{ track }} <em>— currently {{ track.edition }} ({{ track.edition.release.name }})</em></li>
+    {% endfor %}
+  </ul>
+
+  {% for pk in selected %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="move_to_edition">
+
+  <p>
+    <label for="id_edition">Target edition:</label>
+    <select name="edition" id="id_edition" required>
+      {% for edition in editions %}
+        <option value="{{ edition.pk }}">{{ edition.release.name }} — {{ edition }}</option>
+      {% endfor %}
+    </select>
+  </p>
+
+  <button type="submit" name="apply" value="1" class="default">Move tracks</button>
+  <a href="{% url 'admin:discography_track_changelist' %}" class="button cancel-link">Cancel</a>
+</form>
+{% endblock %}
