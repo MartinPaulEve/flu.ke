@@ -1,3 +1,9 @@
+## 1.11.0 (2026-06-07)
+
+### Feat
+
+- **discography**: add musicbrainz_import command for a Release's editions
+
 ## 1.10.0 (2026-06-07)
 
 ### Feat
