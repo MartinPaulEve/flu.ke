@@ -12,9 +12,10 @@ has ``get_absolute_url``. It adds:
 
 from django.contrib import admin, messages
 from django.shortcuts import redirect
-from django.urls import path
+from django.urls import path, reverse
 
 from apps.core.cache import invalidate_path, invalidate_site_cache
+from apps.core.models import SiteConfiguration
 
 
 class OgCacheAdminMixin:
@@ -100,3 +101,19 @@ class OgCacheAdminMixin:
     def invalidate_whole_site_cache(self, request, queryset):
         invalidate_site_cache()
         self.message_user(request, "Invalidated the entire site cache.")
+
+
+@admin.register(SiteConfiguration)
+class SiteConfigurationAdmin(OgCacheAdminMixin, admin.ModelAdmin):
+    """Singleton admin: the changelist jumps straight to editing the one row, which
+    carries the OG-regenerate and clear-homepage-cache buttons (its page is ``/``)."""
+
+    def has_add_permission(self, request):
+        return not SiteConfiguration.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        config = SiteConfiguration.load()
+        return redirect(reverse("admin:core_siteconfiguration_change", args=[config.pk]))

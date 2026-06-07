@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, render
 
 from apps.blog.models import Category, Post
 from apps.core.cache import cached_page
+from apps.core.models import SiteConfiguration
 from apps.core.seo import blog_posting_jsonld, jsonld_dumps, music_album_jsonld
 from apps.discography.models import (
     PRIMARY_ARTIST_NAME,
@@ -51,6 +52,7 @@ def _ensure_og(obj):
 
 @cached_page
 def landing(request):
+    site_config = _ensure_og(SiteConfiguration.load())
     recent_posts = list(Post.objects.published()[:6])
     latest_resources = list(Resource.objects.published()[:8])
     other_homepage_artists = list(
@@ -63,6 +65,7 @@ def landing(request):
         request,
         "landing.html",
         {
+            "site_config": site_config,
             "recent_posts": recent_posts,
             "latest_resources": latest_resources,
             "primary_artist_name": PRIMARY_ARTIST_NAME,

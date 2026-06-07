@@ -16,7 +16,7 @@ from django.http import HttpResponse
 _SITE_VERSION_KEY = "site-cache-version"
 
 # Model changes in these apps invalidate the whole site cache (see CoreConfig).
-CONTENT_APPS = frozenset({"blog", "pages", "resources", "discography"})
+CONTENT_APPS = frozenset({"blog", "pages", "resources", "discography", "core"})
 
 
 def site_version():

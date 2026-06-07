@@ -135,3 +135,48 @@ class SeoFieldsMixin(models.Model):
         data = render_og_image(title, subtitle, cover=cover)
         self.og_image.save(f"{self._meta.model_name}-{self.pk}.jpg", ContentFile(data), save=False)
         return True
+
+
+class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
+    """Site-wide configuration stored as a single row — the homepage's OG card + copy.
+
+    Load it with :meth:`load`; ``save`` always keeps one row (pk=1). It reuses the
+    SEO/Open-Graph fields and image generation, with the homepage (``/``) as its
+    page, so the shared OG meta partial and admin cache/regenerate tools apply.
+    """
+
+    class Meta:
+        verbose_name = "site configuration"
+        verbose_name_plural = "site configuration"
+
+    def __str__(self):
+        return "Site configuration"
+
+    @classmethod
+    def load(cls):
+        config, _ = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "og_title": "Fluke — official & fan archive",
+                "meta_description": (
+                    "Everything Fluke and its aliases and other projects: news, the complete "
+                    "discography, official material, and the things fans made."
+                ),
+            },
+        )
+        return config
+
+    def save(self, *args, **kwargs):
+        self.pk = 1  # enforce a single row
+        super().save(*args, **kwargs)
+        if self.ensure_og_image():
+            super().save(update_fields=["og_image"])
+
+    def get_absolute_url(self):
+        return "/"
+
+    def resolved_seo_title(self):
+        return self.seo_title or "Fluke — official & fan archive"
+
+    def og_card(self):
+        return (self.og_title or "Fluke", "official & fan archive", None)

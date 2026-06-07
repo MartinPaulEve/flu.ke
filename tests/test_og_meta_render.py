@@ -9,10 +9,15 @@ from apps.discography.models import Artist, Lyric, Release, ReleaseType
 pytestmark = pytest.mark.django_db
 
 
-def test_homepage_emits_description_and_url(client):
+def test_homepage_emits_description_url_and_image(client):
     html = client.get("/").content.decode()
     assert 'property="og:description"' in html
     assert 'property="og:url"' in html
+    assert 'property="og:image"' in html   # the SiteConfiguration card
+
+
+def test_section_index_uses_the_default_card(client):
+    html = client.get("/news/").content.decode()
     assert "og-default.png" in html
 
 
