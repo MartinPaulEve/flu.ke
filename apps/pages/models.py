@@ -18,7 +18,7 @@ class Page(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     ]
 
     title = models.CharField(max_length=200)
-    body = models.TextField(blank=True, help_text="Markdown.")
+    body = models.TextField(blank=True, help_text="Rich text (HTML), edited with TinyMCE.")
     template_key = models.CharField(
         max_length=20, choices=TEMPLATE_CHOICES, default=TEMPLATE_STANDARD
     )
