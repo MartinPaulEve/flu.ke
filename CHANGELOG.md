@@ -1,3 +1,14 @@
+## 1.9.0 (2026-06-07)
+
+### Feat
+
+- **discography**: credit featured artists on releases as "(feat. …)"
+- **blog**: add relink_posts command to relativize 2bitpie.net links
+
+### Fix
+
+- **templates**: use {% comment %} for multi-line template comments
+
 ## 1.8.0 (2026-06-06)
 
 ### Feat
