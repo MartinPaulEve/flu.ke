@@ -1,3 +1,9 @@
+## 1.10.0 (2026-06-07)
+
+### Feat
+
+- **pages**: edit Body with TinyMCE and render it as HTML
+
 ## 1.9.0 (2026-06-07)
 
 ### Feat
