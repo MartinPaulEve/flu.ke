@@ -15,7 +15,7 @@
     {% for release in releases %}
       <li class="entry">
         <span class="entry__index">{% if release.year %}{{ release.year }}{% else %}—{% endif %}</span>
-        <span class="entry__title"><a href="{{ release.get_absolute_url }}">{{ release.name }}</a></span>
+        <span class="entry__title"><a href="{{ release.get_absolute_url }}">{{ release.display_name }}</a></span>
         <span class="entry__meta">{{ release.type.name }}</span>
       </li>
     {% endfor %}

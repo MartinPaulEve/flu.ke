@@ -102,6 +102,12 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     purchase_link = models.URLField(blank=True)
     mbid = models.UUIDField(null=True, blank=True, help_text="MusicBrainz release-group id.")
     is_published = models.BooleanField(default=True)
+    featured_artists = models.ManyToManyField(
+        Artist,
+        blank=True,
+        related_name="featured_on",
+        help_text="Guest/featured artists, shown as “(feat. …)” after the title.",
+    )
 
     objects = PublishableQuerySet.as_manager()
 
@@ -115,19 +121,38 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         return f"/discography/{self.artist.slug}/{self.slug}/"
 
     @property
+    def featured_credit(self):
+        """'feat. …' credit for the featured artists, or '' when there are none."""
+        names = list(self.featured_artists.order_by("name").values_list("name", flat=True))
+        if not names:
+            return ""
+        joined = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} & {names[-1]}"
+        return f"feat. {joined}"
+
+    @property
+    def display_name(self):
+        """Release name with a '(feat. …)' suffix when featured artists are credited."""
+        credit = self.featured_credit
+        return f"{self.name} ({credit})" if credit else self.name
+
+    @property
     def display_title(self):
-        """Release name, suffixed with the artist unless the artist is Fluke."""
+        """Display name, also suffixed with the artist unless the artist is Fluke."""
         return (
-            f"{self.name} ({self.artist.name})"
+            f"{self.display_name} ({self.artist.name})"
             if self.artist.name != PRIMARY_ARTIST_NAME
-            else self.name
+            else self.display_name
         )
+
+    def resolved_seo_title(self):
+        # Fold the (feat. …) credit into the page/OG title (an explicit seo_title wins).
+        return self.seo_title or self.display_name
 
     def og_card(self):
         subtitle = self.artist.name if self.artist_id else ""
         if self.year:
             subtitle = f"{subtitle} · {self.year}".strip(" ·")
-        return (self.name, subtitle, self._og_cover_bytes())
+        return (self.display_name, subtitle, self._og_cover_bytes())
 
     def _og_cover_bytes(self):
         """Front cover image bytes for the OG card (any cover if no front), or None."""
