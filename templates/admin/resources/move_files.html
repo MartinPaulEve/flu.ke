@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<form method="post">{% csrf_token %}
+  <p>Move {{ files|length }} file(s) to another resource (the file and its metadata move with them):</p>
+  <ul>
+    {% for file in files %}
+      <li>{{ file }} <em>— currently {{ file.resource.title }}</em></li>
+    {% endfor %}
+  </ul>
+
+  {% for pk in selected %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="move_to_resource">
+
+  <p>
+    <label for="id_resource">Target resource:</label>
+    <select name="resource" id="id_resource" required>
+      {% for resource in resources %}
+        <option value="{{ resource.pk }}">{{ resource.title }} — {{ resource.get_kind_display }}</option>
+      {% endfor %}
+    </select>
+  </p>
+
+  <button type="submit" name="apply" value="1" class="default">Move files</button>
+  <a href="{% url 'admin:resources_resourcefile_changelist' %}" class="button cancel-link">Cancel</a>
+</form>
+{% endblock %}

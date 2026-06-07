@@ -1,6 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.shortcuts import render
 
 from apps.core.admin import OgCacheAdminMixin
+from apps.core.cache import invalidate_site_cache
 
 from .models import Resource, ResourceFile, ResourceSubcategory
 
@@ -10,6 +13,42 @@ class ResourceFileInline(admin.TabularInline):
     extra = 0
     fields = ("file", "file_kind", "original_filename", "byte_size", "duration", "display_order")
     readonly_fields = ("byte_size",)
+
+
+@admin.register(ResourceFile)
+class ResourceFileAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "resource", "file_kind", "byte_size")
+    list_filter = ("file_kind",)
+    search_fields = ("original_filename", "file", "resource__title")
+    autocomplete_fields = ("resource",)
+    actions = ["move_to_resource"]
+
+    @admin.action(description="Move selected file(s) to another resource…")
+    def move_to_resource(self, request, queryset):
+        """Reassign files to a chosen resource. The file and all metadata travel
+        with the row — only the resource foreign key changes."""
+        if "apply" in request.POST:
+            resource = Resource.objects.filter(pk=request.POST.get("resource")).first()
+            if resource is None:
+                self.message_user(request, "Choose a target resource.", level=messages.ERROR)
+            else:
+                moved = queryset.update(resource=resource)
+                invalidate_site_cache()  # source + target resource pages change
+                self.message_user(request, f"Moved {moved} file(s) to “{resource.title}”.")
+                return None
+        return render(
+            request,
+            "admin/resources/move_files.html",
+            {
+                **self.admin_site.each_context(request),
+                "title": "Move files to another resource",
+                "opts": self.model._meta,
+                "files": queryset,
+                "resources": Resource.objects.order_by("kind", "title"),
+                "action_checkbox_name": ACTION_CHECKBOX_NAME,
+                "selected": list(queryset.values_list("pk", flat=True)),
+            },
+        )
 
 
 @admin.register(ResourceSubcategory)
