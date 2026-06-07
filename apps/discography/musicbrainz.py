@@ -10,9 +10,32 @@ Input dicts follow the musicbrainzngs shape (hyphenated keys, ``*-list`` arrays)
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from apps.discography.models import Edition, Release, Track
+
+_MBID = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+_URL_MBID = re.compile(rf"musicbrainz\.org/(release-group|release)/({_MBID})")
+_BARE_MBID = re.compile(rf"^({_MBID})$")
+
+
+def parse_mbid(value: str) -> tuple[str, str]:
+    """Parse a MusicBrainz URL or id into ``(entity_type, mbid)``.
+
+    Accepts a release-group/release URL (``https://musicbrainz.org/release-group/<id>``,
+    with any trailing path/query) or a bare UUID (assumed to be a release-group).
+    ``entity_type`` is ``"release-group"`` or ``"release"``. Raises ``ValueError``
+    on anything else.
+    """
+    text = (value or "").strip()
+    match = _URL_MBID.search(text)
+    if match:
+        return match.group(1), match.group(2).lower()
+    match = _BARE_MBID.match(text)
+    if match:
+        return "release-group", match.group(1).lower()
+    raise ValueError(f"Could not find a MusicBrainz release-group/release id in {value!r}.")
 
 
 @dataclass
@@ -129,6 +152,26 @@ def _upsert_track(fields, edition):
         track_number=fields["track_number"], length=fields["length"],
     )
     return track, True
+
+
+def sync_editions_for_release(release, mb_releases, *, dry_run=False) -> SyncStats:
+    """Upsert MusicBrainz releases as Editions (with Tracks) of an existing Release.
+
+    The Release is chosen by the caller (e.g. by slug). Each MB release becomes an
+    Edition (idempotent by release MBID), and each medium track a Track (idempotent
+    by recording MBID). Counts are totals processed, so a re-run reports the same.
+    """
+    stats = SyncStats()
+    for mb_release in mb_releases:
+        stats.editions += 1
+        if dry_run:
+            stats.tracks += sum(1 for _ in _iter_tracks(mb_release))
+            continue
+        edition, _ = _upsert_edition(map_release(mb_release), release)
+        for track in _iter_tracks(mb_release):
+            _upsert_track(map_recording(track), edition)
+            stats.tracks += 1
+    return stats
 
 
 def sync_release_groups(artist, release_type, release_groups, *, dry_run=False) -> SyncStats:
