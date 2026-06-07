@@ -1,6 +1,8 @@
-{# Open Graph + Twitter meta for non-model pages (home, section indexes).
-   Params: og_title, og_description, og_image_path (static path, defaults to the
-   site card), og_type (defaults to "website"). #}
+{% comment %}
+Open Graph + Twitter meta for non-model pages (home, section indexes).
+Params: og_title, og_description, og_image_path (static path, defaults to the
+site card), og_type (defaults to "website").
+{% endcomment %}
 {% load static %}
 {% if og_description %}<meta name="description" content="{{ og_description }}">{% endif %}
 <link rel="canonical" href="{{ site_base_url }}{{ request.path }}">

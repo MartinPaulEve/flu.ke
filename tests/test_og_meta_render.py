@@ -16,6 +16,12 @@ def test_homepage_emits_description_and_url(client):
     assert "og-default.png" in html
 
 
+def test_static_meta_comment_is_not_rendered(client):
+    # Django {# #} comments are single-line only; a multi-line one leaks as text.
+    html = client.get("/").content.decode()
+    assert "Open Graph + Twitter meta for non-model pages" not in html
+
+
 def test_artist_page_emits_its_own_og(client):
     Artist.objects.create(name="Yuki", slug="yuki")
     html = client.get("/discography/yuki/").content.decode()
