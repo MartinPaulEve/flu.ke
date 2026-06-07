@@ -137,7 +137,9 @@ def artist_detail(request, artist_slug):
 @cached_page
 def release_detail(request, artist_slug, release_slug):
     release = get_object_or_404(
-        Release.objects.published().select_related("artist", "type"),
+        Release.objects.published()
+        .select_related("artist", "type")
+        .prefetch_related("editions__covers", "editions__tracks__lyric"),
         artist__slug=artist_slug,
         slug=release_slug,
     )
