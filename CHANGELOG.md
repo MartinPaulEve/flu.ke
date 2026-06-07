@@ -1,3 +1,17 @@
+## 1.12.0 (2026-06-07)
+
+### Feat
+
+- **discography**: show a sole edition's covers at the release level
+- **resources**: admin action to move a file to another resource
+- **discography**: admin action to move a track to another edition/release
+- **core**: add SiteConfiguration singleton for the homepage
+- **seo**: emit OG cards as size-capped JPEG and version og:image URLs
+
+### Fix
+
+- **core**: homepage OG card matches the site default (drop redundant title)
+
 ## 1.11.0 (2026-06-07)
 
 ### Feat
