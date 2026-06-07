@@ -179,4 +179,7 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
         return self.seo_title or "Fluke — official & fan archive"
 
     def og_card(self):
-        return (self.og_title or "Fluke", "official & fan archive", None)
+        # A clean brand card matching the site's default (the generator always adds
+        # the FLUKE.FM mark). The editable og_title/og_description drive the <meta>
+        # tags; the card stays a fixed brand image (or upload a custom og_image).
+        return ("The fan source", "", None)
