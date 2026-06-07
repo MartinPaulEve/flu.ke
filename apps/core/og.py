@@ -14,6 +14,33 @@ from io import BytesIO
 from django.conf import settings
 from PIL import Image, ImageDraw, ImageFont
 
+# WhatsApp drops link-preview images larger than ~300 KB (Facebook is far more
+# lenient). Cards are emitted as JPEG and compressed to stay under this.
+OG_MAX_BYTES = 300 * 1024
+_JPEG_QUALITIES = (88, 80, 72, 64, 56, 48, 40)
+
+
+def _encode_within(image: Image.Image, max_bytes: int) -> bytes:
+    """JPEG-encode the card, shrinking it until it fits ``max_bytes``.
+
+    Steps the JPEG quality down first (keeping the 1200x630 OG dimensions, which
+    is enough for any real cover); only if even the lowest quality is still over
+    the cap does it downscale the pixels and retry. Returns the smallest result.
+    """
+    current = image
+    data = b""
+    for _ in range(6):
+        for quality in _JPEG_QUALITIES:
+            buffer = BytesIO()
+            current.save(buffer, format="JPEG", quality=quality, optimize=True, progressive=True)
+            data = buffer.getvalue()
+            if len(data) <= max_bytes:
+                return data
+        current = current.resize(
+            (max(1, current.width * 4 // 5), max(1, current.height * 4 // 5)), Image.LANCZOS
+        )
+    return data
+
 OG_SIZE = (1200, 630)
 _FONT_PATH = settings.BASE_DIR / "assets" / "fonts" / "og-display.ttf"
 
@@ -64,8 +91,9 @@ def render_og_image(
     fg: str = "#f4f1ea",
     accent: str = "#ff2e1f",
     size: tuple[int, int] = OG_SIZE,
+    max_bytes: int = OG_MAX_BYTES,
 ) -> bytes:
-    """Render an Open Graph card and return PNG bytes.
+    """Render an Open Graph card and return JPEG bytes (compressed under max_bytes).
 
     When ``cover`` (image bytes) is given, it is composited as a full-height
     square on the right and the text is laid out in the remaining space.
@@ -115,6 +143,4 @@ def render_og_image(
         draw.text((margin, y), line, font=title_font, fill=fg)
         y += line_height
 
-    buffer = BytesIO()
-    image.save(buffer, format="PNG", optimize=True)
-    return buffer.getvalue()
+    return _encode_within(image, max_bytes)

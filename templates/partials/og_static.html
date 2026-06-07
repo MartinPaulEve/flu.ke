@@ -11,7 +11,7 @@ site card), og_type (defaults to "website").
 {% if og_description %}<meta property="og:description" content="{{ og_description }}">{% endif %}
 <meta property="og:type" content="{{ og_type|default:'website' }}">
 <meta property="og:url" content="{{ site_base_url }}{{ request.path }}">
-<meta property="og:image" content="{{ site_base_url }}{% static og_image_path|default:'og-default.png' %}">
+<meta property="og:image" content="{{ site_base_url }}{% static og_image_path|default:'og-default.png' %}?v={{ static_version }}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">

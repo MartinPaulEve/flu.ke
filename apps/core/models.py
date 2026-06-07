@@ -133,5 +133,5 @@ class SeoFieldsMixin(models.Model):
         from apps.core.og import render_og_image
 
         data = render_og_image(title, subtitle, cover=cover)
-        self.og_image.save(f"{self._meta.model_name}-{self.pk}.png", ContentFile(data), save=False)
+        self.og_image.save(f"{self._meta.model_name}-{self.pk}.jpg", ContentFile(data), save=False)
         return True

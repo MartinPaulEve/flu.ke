@@ -43,3 +43,13 @@ def test_release_page_uses_name_for_title_and_its_own_image(client):
     html = client.get("/discography/fluke/risotto/").content.decode()
     assert "og/release-" in html
     assert 'content="Risotto"' in html
+
+
+def test_og_image_url_is_versioned_for_cache_busting(client):
+    import re
+
+    artist = Artist.objects.create(name="Fluke", slug="fluke")
+    rtype = ReleaseType.objects.create(name="Albums")
+    Release.objects.create(name="Risotto", slug="risotto", artist=artist, type=rtype)
+    html = client.get("/discography/fluke/risotto/").content.decode()
+    assert re.search(r'property="og:image" content="[^"]+\?v=[^"]+"', html)

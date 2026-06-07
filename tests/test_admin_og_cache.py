@@ -21,7 +21,7 @@ def test_regenerate_og_button_generates_a_missing_image(admin_client):
 
     artist.refresh_from_db()
     assert artist.og_image.name
-    assert artist.og_image.name.endswith(".png")
+    assert artist.og_image.name.endswith(".jpg")
 
 
 def test_change_page_renders_both_buttons(admin_client):

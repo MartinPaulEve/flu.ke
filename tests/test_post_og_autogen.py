@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 def test_saving_a_post_generates_an_og_image():
     post = Post.objects.create(title="Atom Bomb reissue", is_published=True, published_at=timezone.now())
     assert post.og_image.name
-    assert post.og_image.name.endswith(".png")
+    assert post.og_image.name.endswith(".jpg")
 
 
 def test_existing_og_image_is_not_regenerated():
