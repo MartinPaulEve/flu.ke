@@ -1,15 +1,17 @@
 """Production settings for the Fluke CMS.
 
-The live site is served by gunicorn behind a Traefik reverse proxy, which in turn
-sits behind Pangolin. Pangolin terminates TLS and forwards plain HTTP, setting an
-``X-Forwarded-Proto`` header — so Django must trust that header to know the
-original request arrived over HTTPS, but must NOT do its own HTTP→HTTPS redirect
-(the app listens on HTTP only and the edge already enforces TLS, so a redirect
-would loop).
+The live site is served by gunicorn behind a Traefik reverse proxy that terminates
+TLS and forwards plain HTTP with an ``X-Forwarded-Proto`` header — so Django trusts
+that header for the original scheme but does NOT do its own HTTP→HTTPS redirect
+(the app speaks HTTP only and the edge already enforces TLS, so a redirect loops).
 
-SQLite is the production database (chosen for trivial file-level backups); the
-pragmas below tune it for a concurrent web workload per
+The database is SQLite by default (trivial file-level backups), tuned with the
+pragmas below per
 https://alldjango.com/articles/definitive-guide-to-using-django-sqlite-in-production
+Set ``DATABASE_URL=postgres://…`` to use PostgreSQL instead (see POSTGRES.md); when
+fronted by a connection pooler (pgbouncer) in transaction mode, pooler-safe options
+are applied. Release tasks (migrations, collectstatic) run via the image's
+``release`` entrypoint, not on every boot — see docs/deploy-docker.md.
 
 Activate with ``DJANGO_SETTINGS_MODULE=config.settings_production``.
 """
@@ -36,7 +38,8 @@ if not SECRET_KEY or SECRET_KEY == "insecure-dev-key-override-in-env":
 # --- Hosts / CSRF ----------------------------------------------------------
 # Allow both the canonical domain and the test/staging domain, merged with any
 # hosts/origins supplied via the environment (de-duplicated, order preserved).
-_DEFAULT_ALLOWED_HOSTS = ["fluke.fm", "www.fluke.fm", "fluke.eve.gd"]
+# localhost/127.0.0.1 are allowed so the container HEALTHCHECK can hit the app.
+_DEFAULT_ALLOWED_HOSTS = ["fluke.fm", "www.fluke.fm", "fluke.eve.gd", "localhost", "127.0.0.1"]
 _DEFAULT_CSRF_TRUSTED_ORIGINS = [
     "https://fluke.fm",
     "https://www.fluke.fm",
@@ -63,8 +66,8 @@ CSRF_TRUSTED_ORIGINS = _merge(
 )
 
 # --- Security (behind an SSL-terminating proxy) ----------------------------
-# Pangolin terminates TLS and forwards plain HTTP with X-Forwarded-Proto, so
-# Django learns the original scheme from that header.
+# The proxy (Traefik) terminates TLS and forwards plain HTTP with
+# X-Forwarded-Proto, so Django learns the original scheme from that header.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # The app speaks HTTP only and the edge already enforces HTTPS, so the app-level
@@ -101,3 +104,12 @@ if "sqlite" in DATABASES["default"]["ENGINE"].lower():  # noqa: F405
         }
     )
     DATABASES["default"]["timeout"] = 5  # noqa: F405
+
+# --- Database (PostgreSQL behind a pgbouncer pooler) -----------------------
+# In transaction-pooling mode a connection isn't held across statements, so
+# server-side prepared statements and cursors don't survive (they'd raise
+# "prepared statement does not exist"). Disable both; harmless in session mode
+# or with a direct connection.
+if "postgresql" in DATABASES["default"]["ENGINE"].lower():  # noqa: F405
+    DATABASES["default"].setdefault("OPTIONS", {})["prepare_threshold"] = None  # noqa: F405
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True  # noqa: F405

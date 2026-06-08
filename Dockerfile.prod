@@ -74,9 +74,14 @@ USER app
 
 EXPOSE 8000
 
+# Readiness/liveness: gunicorn answers a lightweight, DB-free view (robots.txt).
+# 127.0.0.1 is in the production ALLOWED_HOSTS so this isn't rejected as a bad host.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/robots.txt', timeout=3).status == 200 else 1)"
+
 ENTRYPOINT ["entrypoint.prod.sh"]
-# 3 sync workers is a sensible default for a small SQLite-backed site; logs to
-# stdout/stderr so `docker compose logs` and Pangolin/Traefik see them.
+# 3 sync workers is a sensible default for this small site; logs to stdout/stderr
+# so `docker compose logs` and Traefik see them.
 CMD ["gunicorn", "config.wsgi:application", \
      "--bind", "0.0.0.0:8000", \
      "--workers", "3", \

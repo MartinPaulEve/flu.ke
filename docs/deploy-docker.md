@@ -9,7 +9,7 @@ Files:
 
 - `Dockerfile.prod` — the production image (gunicorn, not runserver).
 - `compose.prod.yaml` — the gunicorn (`web`) service, labelled for a shared Traefik.
-- `docker/entrypoint.prod.sh` — migrate, collectstatic, optional admin, then exec gunicorn.
+- `docker/entrypoint.prod.sh` — `release` runs migrate/collectstatic/optional admin; a plain start just execs gunicorn (fast boot).
 - `.env.prod.example` — the environment template (copy to `.env.prod`).
 
 ## Topology
@@ -40,34 +40,41 @@ and **301-redirect `www` to the apex** (`fluke.fm`); extend the `Host(...)` rule
 ## Quick start
 
 ```sh
-cp .env.prod.example .env.prod        # then edit — see "Environment" below
-docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+cp .env.prod.example .env.prod                                  # then edit
+COMPOSE="docker compose -f compose.prod.yaml --env-file .env.prod"
+$COMPOSE build web
+$COMPOSE run --rm web release                                   # migrate + collectstatic
+$COMPOSE up -d web
 ```
 
-The image runs `migrate` and `collectstatic` on start (the entrypoint), then
-launches gunicorn:
+The container start **does not** migrate — it just launches gunicorn, so cold
+starts (e.g. scale-to-zero wake-ups) are fast:
 
 ```
 gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 \
     --access-logfile - --error-logfile -
 ```
 
-Logs go to stdout/stderr — `docker compose -f compose.prod.yaml logs -f web`.
+**Release tasks** (migrations, `collectstatic`, optional admin) run via the
+`release` entrypoint, so run that one-shot **once per deploy** (it applies
+migrations, then exits). Alternatively set `RUN_RELEASE_TASKS=1` for a single
+normal start. The image has a `HEALTHCHECK` (gunicorn answering `/robots.txt`), so
+`docker compose ps` shows real readiness — handy for a scale-to-zero proxy. Logs go
+to stdout/stderr — `docker compose -f compose.prod.yaml logs -f web`.
 
 ## Redeploying
 
-To ship new code, just **pull and rebuild** — there is no `down` step (that only
-adds downtime). `up -d --build` builds the new image while the old container
-keeps serving, then swaps it in:
+`scripts/deploy.sh` is the whole deploy — **pull → build → `release` (migrate +
+collectstatic) → recreate → prune**:
 
 ```sh
-git pull
-docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+./scripts/deploy.sh
 ```
 
-The entrypoint re-runs `migrate` and `collectstatic` automatically on the new
-container, so that single command is the whole deploy. `scripts/deploy.sh` wraps
-it (pull → build → recreate → prune old image layers) into `./scripts/deploy.sh`.
+There is no `down` (that only adds downtime); the old container keeps serving while
+the new image builds, the release step migrates, then `up -d` swaps the container
+in. Because container start no longer migrates, the `release` step is what applies
+new migrations on deploy — don't skip it when a release adds migrations.
 The code is baked into the image (immutable build), so a `git pull` is only
 reflected after the rebuild — by design.
 
@@ -105,8 +112,8 @@ rsync -a media/ "$DATA_DIR/media/"
 sudo chown -R 1000:1000 "$DATA_DIR"
 ```
 
-Then `up -d` as usual — the entrypoint's `migrate` is a no-op on an
-already-migrated DB.
+Then run `./scripts/deploy.sh` (or the build → `run --rm web release` → `up -d`
+steps); the `release` migrate is a no-op on an already-migrated DB.
 
 ## Environment
 
@@ -120,7 +127,8 @@ they are missing.
 | `SITE_BASE_URL` | yes | The canonical origin, `https://fluke.fm`. |
 | `TRAEFIK_NETWORK` | no (default) | The shared Docker network your Traefik watches (must already exist). Defaults to `traefik`. |
 | `TRAEFIK_ENTRYPOINT` | no (default) | Your Traefik's HTTPS entrypoint name. Defaults to `websecure`. |
-| `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. |
+| `DATABASE_URL` | no (default) | Defaults to `sqlite:////data/db.sqlite3` — `/data` is the bind-mounted `$DATA_DIR/db`. A `postgres://…` URL switches to PostgreSQL (pooler-safe options auto-applied; see POSTGRES.md). |
+| `RUN_RELEASE_TASKS` | no | Set to `1` to run migrations/collectstatic on a normal start. Normally unset — use `docker compose run --rm web release` per deploy so cold starts stay fast. |
 | `REDIS_URL` | no (default) | Redis/Valkey URL for page caching via `django_redis` (e.g. `redis://valkey:6379/0`). Unset falls back to an in-process cache. |
 | `PAGE_CACHE_SECONDS` | no (default) | Page cache lifetime in seconds (default 600); content changes invalidate the whole site cache. |
 | `DATA_DIR` | no (default) | Host directory for the bind-mounted DB + media. Must live **outside the repo**. Defaults to `../fluke-data` (a sibling of the repo); recommend an absolute path like `/srv/fluke-data`. Create and `chown` it to the container UID/GID before the first `up` (see Volumes). |
