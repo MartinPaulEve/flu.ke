@@ -1,0 +1,9 @@
+{% extends "admin/change_form.html" %}
+{% load admin_urls %}
+{% comment %}Adds a "Copy tracklist from another edition" button to the edition tools.{% endcomment %}
+{% block object-tools-items %}
+  {% if original %}
+    <li><a href="{% url 'admin:discography_edition_copy_tracklist' original.pk %}">Copy tracklist from another edition</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

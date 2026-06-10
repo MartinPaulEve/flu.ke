@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<form method="post">{% csrf_token %}
+  <p>
+    Replace the tracklist of <strong>{{ target }}</strong> ({{ target.release.name }}) with a copy
+    of another edition's tracklist. <strong>This deletes the current
+    {{ target.tracks.count }} track(s)</strong> first.
+  </p>
+
+  <p>
+    <label for="id_source">Copy from:</label>
+    <select name="source" id="id_source" required>
+      {% for edition in editions %}
+        <option value="{{ edition.pk }}">{{ edition.release.name }} — {{ edition }} ({{ edition.tracks.count }} tracks)</option>
+      {% endfor %}
+    </select>
+  </p>
+
+  <button type="submit" class="default">Copy &amp; overwrite</button>
+  <a href="{% url 'admin:discography_edition_change' target.pk %}" class="button cancel-link">Cancel</a>
+</form>
+{% endblock %}

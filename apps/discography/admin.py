@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import path
 
 from apps.core.admin import OgCacheAdminMixin
 from apps.core.cache import invalidate_site_cache
@@ -68,6 +69,74 @@ class EditionAdmin(admin.ModelAdmin):
     search_fields = ("name", "catalogue_number", "release__name")
     autocomplete_fields = ("release",)
     inlines = [CoverImageInline, TrackInline]
+    change_form_template = "admin/discography/edition_change_form.html"
+
+    def get_urls(self):
+        custom = [
+            path(
+                "<path:object_id>/copy-tracklist/",
+                self.admin_site.admin_view(self.copy_tracklist_view),
+                name="discography_edition_copy_tracklist",
+            ),
+        ]
+        return custom + super().get_urls()
+
+    def copy_tracklist_view(self, request, object_id):
+        target = self.get_object(request, object_id)
+        if target is None:
+            self.message_user(request, "Edition not found.", level=messages.ERROR)
+            return redirect("..")
+        if request.method == "POST":
+            source = Edition.objects.filter(pk=request.POST.get("source")).first()
+            if source is None or source.pk == target.pk:
+                self.message_user(request, "Choose a different edition to copy from.", level=messages.ERROR)
+            else:
+                count = self._copy_tracklist(source, target)
+                invalidate_site_cache()
+                self.message_user(
+                    request,
+                    f"Replaced the tracklist with {count} track(s) copied from "
+                    f"“{source}” ({source.release.name}).",
+                )
+                return redirect("admin:discography_edition_change", object_id)
+        editions = (
+            Edition.objects.exclude(pk=target.pk)
+            .select_related("release")
+            .order_by("release__name", "display_order", "id")
+        )
+        return render(
+            request,
+            "admin/discography/copy_tracklist.html",
+            {
+                **self.admin_site.each_context(request),
+                "title": f"Copy a tracklist into {target}",
+                "opts": self.model._meta,
+                "target": target,
+                "editions": editions,
+            },
+        )
+
+    @staticmethod
+    def _copy_tracklist(source, target):
+        """Replace target's tracks with copies of source's (editorial fields only;
+        the MusicBrainz track/recording ids are edition-specific, so left blank)."""
+        target.tracks.all().delete()
+        count = 0
+        for track in source.tracks.all():
+            Track.objects.create(
+                edition=target,
+                name=track.name,
+                track_number=track.track_number,
+                mix_info=track.mix_info,
+                remixer=track.remixer,
+                length=track.length,
+                sample=track.sample.name,
+                sample_source_url=track.sample_source_url,
+                lyric=track.lyric,
+                display_order=track.display_order,
+            )
+            count += 1
+        return count
 
 
 @admin.register(Lyric)
