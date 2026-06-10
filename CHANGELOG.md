@@ -1,3 +1,11 @@
+## 1.13.0 (2026-06-10)
+
+### Feat
+
+- **frontend**: add a red-F-on-black favicon
+- **discography**: copy a tracklist from another edition in the admin
+- **deploy**: fast, scale-to-zero-friendly boot (gated release tasks, pgbouncer-safe DB, healthcheck)
+
 ## 1.12.0 (2026-06-07)
 
 ### Feat
