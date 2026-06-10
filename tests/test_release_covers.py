@@ -1,6 +1,7 @@
-"""Release-level cover display: hoist covers when only one edition has images."""
+"""Release OG cards draw on the front cover; covers show only in their edition."""
 
 import pytest
+from django.core.files.base import ContentFile
 
 from apps.discography.models import Artist, CoverImage, Edition, Release, ReleaseType
 
@@ -13,44 +14,39 @@ def _release():
     return Release.objects.create(name="Risotto", slug="risotto", artist=artist, type=rtype)
 
 
-def test_covers_hoisted_when_one_edition_has_images():
+def _cover(edition, kind, content):
+    cover = CoverImage.objects.create(edition=edition, kind=kind)
+    cover.image.save(f"{kind}.png", ContentFile(content), save=True)
+    return cover
+
+
+def test_og_cover_prefers_the_front_cover():
     release = _release()
     edition = Edition.objects.create(release=release)
-    Edition.objects.create(release=release)  # a second edition with no images
-    CoverImage.objects.create(edition=edition, kind="front", image="covers/front.jpg", display_order=0)
-    CoverImage.objects.create(edition=edition, kind="back", image="covers/back.jpg", display_order=1)
-
-    assert [c.kind for c in release.cover_images_for_release] == ["front", "back"]
+    _cover(edition, "back", b"BACK")
+    _cover(edition, "front", b"FRONT")
+    assert release._og_cover_bytes() == b"FRONT"
 
 
-def test_not_hoisted_when_no_edition_has_images():
+def test_og_cover_falls_back_to_any_cover():
+    release = _release()
+    edition = Edition.objects.create(release=release)
+    _cover(edition, "back", b"BACK")
+    assert release._og_cover_bytes() == b"BACK"
+
+
+def test_og_cover_is_none_without_covers():
     release = _release()
     Edition.objects.create(release=release)
-    assert list(release.cover_images_for_release) == []
+    assert release._og_cover_bytes() is None
 
 
-def test_not_hoisted_when_multiple_editions_have_images():
-    release = _release()
-    e1 = Edition.objects.create(release=release)
-    e2 = Edition.objects.create(release=release)
-    CoverImage.objects.create(edition=e1, image="covers/a.jpg")
-    CoverImage.objects.create(edition=e2, image="covers/b.jpg")
-    assert list(release.cover_images_for_release) == []
-
-
-def test_cover_rows_without_a_file_are_ignored():
+def test_release_page_shows_edition_covers_not_a_top_level_block(client):
     release = _release()
     edition = Edition.objects.create(release=release)
-    CoverImage.objects.create(edition=edition, kind="front", image="")  # row, but no file
-    assert list(release.cover_images_for_release) == []
-
-
-def test_release_page_shows_hoisted_covers(client):
-    release = _release()
-    edition = Edition.objects.create(release=release)
-    CoverImage.objects.create(edition=edition, kind="front", image="covers/front.jpg", alt_text="Front")
+    cover = _cover(edition, "front", b"x")
 
     html = client.get(release.get_absolute_url()).content.decode()
-    assert "covers--release" in html        # the release-level block rendered
-    assert "covers/front.jpg" in html
-    assert "gallery.js" in html             # the lightbox/modal gallery is wired up
+    assert "covers--release" not in html      # no hoisted covers at the top
+    assert cover.image.name in html           # still shown in the edition section
+    assert "gallery.js" in html               # lightbox still wired for edition covers

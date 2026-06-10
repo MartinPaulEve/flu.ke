@@ -12,14 +12,6 @@
   </p>
   {% if release.purchase_link %}<p class="prose"><a href="{{ release.purchase_link }}">Buy this release →</a></p>{% endif %}
 
-  {% if release.cover_images_for_release %}
-    <ul class="covers covers--release">
-      {% for cover in release.cover_images_for_release %}
-        <li><img src="{{ cover.image.url }}" alt="{{ cover.alt_text }}" loading="lazy"></li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
   <h2 style="margin-top:2.5rem">Editions</h2>
   {% for edition in release.editions.all %}
     <details class="edition"{% if forloop.first %} open{% endif %}>

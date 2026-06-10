@@ -227,8 +227,6 @@ details.edition[open] > summary::before { content: "\2013"; }
 .covers { display: flex; flex-wrap: wrap; gap: 0.8rem; list-style: none; padding: 0 0 1rem 2rem; }
 .covers img { width: clamp(80px, 16vw, 150px); aspect-ratio: 1; object-fit: cover; border: var(--rule) solid var(--hairline); filter: grayscale(0.2) contrast(1.05); cursor: zoom-in; }
 .covers img:hover { filter: none; }
-/* The release-level covers sit under the title text: give them room and no indent. */
-.covers--release { margin-top: clamp(1.5rem, 4vw, 2.5rem); padding-left: 0; }
 
 /* Cover lightbox / modal gallery (built by gallery.js). */
 .lightbox { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(8, 8, 10, 0.94); padding: clamp(1rem, 5vw, 4rem); }

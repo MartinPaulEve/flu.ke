@@ -14,7 +14,6 @@ Fatal are modelled as aliases that point at it via ``Artist.primary_artist``.
 """
 
 from django.db import models
-from django.utils.functional import cached_property
 
 from apps.core.models import (
     PublishableQuerySet,
@@ -148,22 +147,6 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     def resolved_seo_title(self):
         # Fold the (feat. …) credit into the page/OG title (an explicit seo_title wins).
         return self.seo_title or self.display_name
-
-    @cached_property
-    def cover_images_for_release(self):
-        """Covers to show for the whole release: those of the single edition that has
-        any images. Empty when zero or more than one edition has images (then which
-        edition represents the release is ambiguous). Covers stay attached to their
-        edition — this is purely a display convenience.
-        """
-        editions_with_covers = [
-            edition
-            for edition in self.editions.all()
-            if any(cover.image for cover in edition.covers.all())
-        ]
-        if len(editions_with_covers) != 1:
-            return []
-        return [cover for cover in editions_with_covers[0].covers.all() if cover.image]
 
     def og_card(self):
         subtitle = self.artist.name if self.artist_id else ""
