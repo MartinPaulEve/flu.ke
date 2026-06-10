@@ -53,3 +53,4 @@ def test_release_page_shows_hoisted_covers(client):
     html = client.get(release.get_absolute_url()).content.decode()
     assert "covers--release" in html        # the release-level block rendered
     assert "covers/front.jpg" in html
+    assert "gallery.js" in html             # the lightbox/modal gallery is wired up
