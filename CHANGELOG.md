@@ -1,3 +1,9 @@
+## 1.14.0 (2026-06-10)
+
+### Feat
+
+- **frontend**: cover lightbox gallery + gap above release covers
+
 ## 1.13.0 (2026-06-10)
 
 ### Feat
