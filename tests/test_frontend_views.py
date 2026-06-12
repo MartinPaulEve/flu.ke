@@ -133,13 +133,14 @@ def test_hero_does_not_list_fluke_among_aliases(client, homepage_artists):
 
 
 def test_hero_joins_with_ampersand_before_last_name(client, homepage_artists):
-    """Flagged others ordered by name: Fatal, Syntax, Yuki -> "...Syntax & Yuki".
-
-    Django autoescapes the ampersand in HTML output, so it appears as ``&amp;``.
+    """Flagged others ordered by name: Fatal, Syntax, Yuki -> "Fatal, Syntax & Yuki",
+    each name now a link. Django autoescapes the ampersand, so it appears as ``&amp;``.
     """
     response = client.get("/")
     body = response.content.decode()
-    assert "Fatal, Syntax &amp; Yuki" in body
+    assert ">Fatal</a>, <a" in body           # comma between non-final names
+    assert ">Syntax</a> &amp; <a" in body      # ampersand before the final name
+    assert ">Yuki</a>" in body
 
 
 def test_hero_uses_aliases_and_other_projects_wording(client, homepage_artists):

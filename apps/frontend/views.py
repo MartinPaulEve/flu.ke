@@ -28,18 +28,6 @@ from apps.resources.grouping import group_by_subcategory
 from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource
 
 
-def _join_names(names):
-    """Join names with commas and " & " before the final one.
-
-    ["A"] -> "A"; ["A", "B"] -> "A & B"; ["A", "B", "C"] -> "A, B & C".
-    """
-    if not names:
-        return ""
-    if len(names) == 1:
-        return names[0]
-    return f"{', '.join(names[:-1])} & {names[-1]}"
-
-
 def _ensure_og(obj):
     """Generate an object's OG image on first visit if it's missing (e.g. legacy
     content imported before OG generation). The OG-image-only save does not flush
@@ -60,7 +48,6 @@ def landing(request):
         .exclude(name=PRIMARY_ARTIST_NAME)
         .order_by("name")
     )
-    hero_aliases = _join_names([a.name for a in other_homepage_artists])
     return render(
         request,
         "landing.html",
@@ -70,7 +57,6 @@ def landing(request):
             "latest_resources": latest_resources,
             "primary_artist_name": PRIMARY_ARTIST_NAME,
             "other_homepage_artists": other_homepage_artists,
-            "hero_aliases": hero_aliases,
         },
     )
 

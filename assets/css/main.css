@@ -22,6 +22,8 @@ body {
 }
 img, svg, video { display: block; max-width: 100%; height: auto; }
 a { color: var(--link); text-decoration: none; }
+/* Links with no visual cue — look like the surrounding text (e.g. homepage aliases). */
+.alias-link { color: inherit; text-decoration: none; }
 
 /* ---------- atmosphere: film grain + faint scanlines ---------- */
 body::before {
