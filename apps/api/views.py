@@ -9,6 +9,7 @@ and are exposed unfiltered.
 
 import django_filters
 from rest_framework import viewsets
+from rest_framework.permissions import AllowAny
 
 from apps.discography.models import (
     Artist,
@@ -42,7 +43,18 @@ class ReleaseFilter(django_filters.FilterSet):
         fields = ["year", "type", "artist"]
 
 
-class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
+# Base for every API viewset: read-only and open to everyone. The discography
+# API is public reference data, so it requires no authentication. Declaring no
+# ``authentication_classes`` also keeps the OpenAPI schema free of security
+# schemes, so Swagger/ReDoc present the API as open (no "Authorize" prompt)
+# instead of looking login-gated. (Kept as a comment, not a docstring, so it
+# doesn't leak into the generated per-operation API descriptions.)
+class PublicReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+
+class ArtistViewSet(PublicReadOnlyViewSet):
     queryset = Artist.objects.select_related("primary_artist").all()
     serializer_class = ArtistSerializer
     lookup_field = "slug"
@@ -51,14 +63,14 @@ class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["name"]
 
 
-class ReleaseTypeViewSet(viewsets.ReadOnlyModelViewSet):
+class ReleaseTypeViewSet(PublicReadOnlyViewSet):
     queryset = ReleaseType.objects.all()
     serializer_class = ReleaseTypeSerializer
     ordering_fields = ["display_order", "name"]
     ordering = ["display_order", "name"]
 
 
-class ReleaseViewSet(viewsets.ReadOnlyModelViewSet):
+class ReleaseViewSet(PublicReadOnlyViewSet):
     queryset = (
         Release.objects.published()
         .select_related("artist", "type")
@@ -76,7 +88,7 @@ class ReleaseViewSet(viewsets.ReadOnlyModelViewSet):
         return ReleaseSerializer
 
 
-class EditionViewSet(viewsets.ReadOnlyModelViewSet):
+class EditionViewSet(PublicReadOnlyViewSet):
     queryset = (
         Edition.objects.filter(release__is_published=True)
         .select_related("release")
@@ -88,7 +100,7 @@ class EditionViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["display_order"]
 
 
-class TrackViewSet(viewsets.ReadOnlyModelViewSet):
+class TrackViewSet(PublicReadOnlyViewSet):
     queryset = (
         Track.objects.filter(edition__release__is_published=True)
         .select_related("remixer", "lyric")
@@ -100,7 +112,7 @@ class TrackViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["display_order", "track_number"]
 
 
-class LyricViewSet(viewsets.ReadOnlyModelViewSet):
+class LyricViewSet(PublicReadOnlyViewSet):
     queryset = Lyric.objects.select_related("artist").all()
     serializer_class = LyricSerializer
     lookup_field = "slug"
@@ -110,7 +122,7 @@ class LyricViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["title"]
 
 
-class CoverImageViewSet(viewsets.ReadOnlyModelViewSet):
+class CoverImageViewSet(PublicReadOnlyViewSet):
     queryset = CoverImage.objects.filter(
         edition__release__is_published=True
     ).select_related("edition")

@@ -185,6 +185,29 @@ def test_openapi_schema_is_served(client):
     assert resp.status_code == 200
 
 
+def test_openapi_schema_advertises_no_authentication(client):
+    """The public, read-only API must not present itself as requiring login.
+
+    drf-spectacular derives ``securitySchemes`` from the authentication classes;
+    if any are declared, Swagger/ReDoc render an "Authorize" control that makes
+    the open API look gated. An open API advertises no security schemes.
+    """
+    import yaml
+
+    resp = client.get("/discography/api/schema/")
+    doc = yaml.safe_load(resp.content.decode())
+
+    # No security schemes => Swagger/ReDoc render no "Authorize" control.
+    assert not doc.get("components", {}).get("securitySchemes")
+    # No operation may demand a named scheme; an empty requirement ({}) is the
+    # OpenAPI way of saying "anonymous access is allowed", which is fine.
+    for methods in doc.get("paths", {}).values():
+        for operation in methods.values():
+            if isinstance(operation, dict):
+                for requirement in operation.get("security", []):
+                    assert requirement == {}
+
+
 def test_swagger_ui_is_served(client):
     resp = client.get("/discography/api/docs/")
     assert resp.status_code == 200
