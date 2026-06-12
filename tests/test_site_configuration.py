@@ -53,3 +53,16 @@ def test_admin_regenerate_button_rebuilds_the_homepage_card(admin_client):
 
     config.refresh_from_db()
     assert config.og_image.name
+
+
+def test_footer_tagline_has_a_sensible_default():
+    assert SiteConfiguration.load().footer_tagline == "Black & red since the rave."
+
+
+def test_footer_renders_the_configurable_tagline(client):
+    config = SiteConfiguration.load()
+    config.footer_tagline = "Loud & proud since forever"
+    config.save()
+    html = client.get("/news/").content.decode()
+    # Django autoescapes the ampersand in HTML output.
+    assert "Loud &amp; proud since forever" in html

@@ -145,6 +145,12 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
     page, so the shared OG meta partial and admin cache/regenerate tools apply.
     """
 
+    footer_tagline = models.CharField(
+        max_length=200,
+        default="Black & red since the rave.",
+        help_text="The tagline shown in the site footer on every page.",
+    )
+
     class Meta:
         verbose_name = "site configuration"
         verbose_name_plural = "site configuration"
