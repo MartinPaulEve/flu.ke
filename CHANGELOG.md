@@ -1,3 +1,18 @@
+## 1.15.0 (2026-06-12)
+
+### Feat
+
+- **core**: make the footer tagline configurable in SiteConfiguration
+- **frontend**: hyperlink homepage artists to their discography pages
+
+### Fix
+
+- **api**: present the discography API as open in its OpenAPI docs
+
+### Refactor
+
+- **discography**: drop the hoisted top-of-page release covers
+
 ## 1.14.0 (2026-06-10)
 
 ### Feat
