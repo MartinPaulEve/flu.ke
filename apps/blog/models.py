@@ -63,6 +63,19 @@ class Post(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     cover_image = models.ImageField(upload_to="blog/", blank=True)
     categories = models.ManyToManyField(Category, blank=True, related_name="posts")
     tags = models.ManyToManyField(Tag, blank=True, related_name="posts")
+    # Discography links surfaced in the post's side rail. Optional, set per post.
+    related_releases = models.ManyToManyField(
+        "discography.Release",
+        blank=True,
+        related_name="related_posts",
+        help_text="Releases to surface in this post's sidebar.",
+    )
+    related_artists = models.ManyToManyField(
+        "discography.Artist",
+        blank=True,
+        related_name="related_posts",
+        help_text="Artists to surface in this post's sidebar.",
+    )
     # Provenance for Wayback-recovered posts.
     source_url = models.URLField(blank=True)
     import_confidence = models.CharField(

@@ -83,10 +83,21 @@ def post_detail(request, year, slug):
     post = get_object_or_404(Post.objects.published(), slug=slug)
     _ensure_og(post)
     jsonld = jsonld_dumps(blog_posting_jsonld(post, settings.SITE_BASE_URL))
+    # Side-rail links: only published releases get a live page; artists always do.
+    related_releases = list(
+        post.related_releases.published().select_related("artist", "type")
+    )
+    related_artists = list(post.related_artists.all())
     return render(
         request,
         "blog/post_detail.html",
-        {"post": post, "jsonld": jsonld, "edit_object": post},
+        {
+            "post": post,
+            "jsonld": jsonld,
+            "related_releases": related_releases,
+            "related_artists": related_artists,
+            "edit_object": post,
+        },
     )
 
 

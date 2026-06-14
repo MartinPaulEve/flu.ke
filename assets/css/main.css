@@ -246,8 +246,46 @@ details.edition[open] > summary::before { content: "\2013"; }
 .lyric-source { margin-top: 1.5rem; font-style: italic; color: var(--muted); }
 
 /* ---------- article ---------- */
+/* Sized so the readable prose measure plus the side rail fill the width, and the
+   heading above no longer dwarfs the (narrower) body text. */
+.article { width: min(100% - var(--gutter) * 2, 60rem); margin-inline: auto; }
 .article-head { padding-block: clamp(2.5rem, 6vw, 5rem); }
 time { font-variant-numeric: tabular-nums; }
+
+/* Body: prose column + a related-links rail. Stacked by default; two columns
+   with a vertical separator once there's room. */
+.article__body { display: grid; gap: 2.5rem; }
+.article__main .prose { max-width: var(--measure); }
+.article__rail {
+  display: grid; gap: clamp(1.5rem, 4vw, 2.5rem); align-content: start;
+  border-top: var(--rule) solid var(--hairline); padding-top: 1.75rem;
+}
+.rail__title {
+  font-family: var(--font-mono); font-weight: 600; font-size: var(--step--1);
+  text-transform: uppercase; letter-spacing: 0.18em; color: var(--accent-text);
+  margin-bottom: 0.6rem;
+}
+.rail__list { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
+.rail__list a, .rail__back { color: var(--fg); }
+.rail__list a:hover, .rail__back:hover { color: var(--accent-text); }
+.rail__back {
+  font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+@media (min-width: 60rem) {
+  .article__body {
+    grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem); align-items: start;
+  }
+  /* Vertical separator bar between the prose and the rail. */
+  .article__rail {
+    border-top: 0; padding-top: 0;
+    border-left: var(--rule) solid var(--hairline);
+    padding-left: clamp(1.5rem, 4vw, 3rem);
+    position: sticky; top: 2rem;
+  }
+}
 
 /* ---------- related blog post pulled into a resource ---------- */
 .related-post { border-top: var(--rule) solid var(--hairline); padding-top: 1.5rem; border-left: 3px solid var(--accent); padding-left: clamp(1rem, 3vw, 2rem); }

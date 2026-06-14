@@ -29,11 +29,18 @@ class PostAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     # Rich-text editing for the Body and Excerpt text fields.
     formfield_overrides = {models.TextField: {"widget": TinyMCE()}}
-    filter_horizontal = ("categories", "tags")
+    filter_horizontal = ("categories", "tags", "related_releases", "related_artists")
     date_hierarchy = "published_at"
     fieldsets = (
         (None, {"fields": ("title", "slug", "excerpt", "body", "cover_image")}),
         ("Publishing", {"fields": ("is_published", "published_at", "categories", "tags")}),
+        (
+            "Related",
+            {
+                "description": "Discography links shown in the post's side rail.",
+                "fields": ("related_releases", "related_artists"),
+            },
+        ),
         (
             "SEO & Open Graph",
             {

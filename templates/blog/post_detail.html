@@ -3,18 +3,46 @@
 {% block title %}{{ post.resolved_seo_title }} — {{ site_name }}{% endblock %}
 {% block meta %}{% include "partials/og_meta.html" with seo_object=post og_type="article" %}{% if jsonld %}<script type="application/ld+json">{{ jsonld|safe }}</script>{% endif %}{% endblock %}
 {% block content %}
-<article class="wrap">
+<article class="article">
   <header class="article-head">
     <p class="kicker">News</p>
     <h1>{{ post.title }}</h1>
     {% if post.published_at %}<p class="entry__meta"><time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:'j F Y' }}</time></p>{% endif %}
   </header>
-  {% if post.cover_image %}<img src="{{ post.cover_image.url }}" alt="">{% endif %}
-  <div class="prose">{{ post.body|markdownify }}</div>
-  {% if post.categories.all %}
-    <p class="entry__meta" style="margin-top:2rem">Filed under:
-      {% for category in post.categories.all %}<a href="{{ category.get_absolute_url }}">{{ category.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
-    </p>
-  {% endif %}
+  <div class="article__body">
+    <div class="article__main">
+      {% if post.cover_image %}<img src="{{ post.cover_image.url }}" alt="">{% endif %}
+      <div class="prose">{{ post.body|markdownify }}</div>
+    </div>
+    <aside class="article__rail">
+      {% if post.categories.all %}
+        <div class="rail__group">
+          <h2 class="rail__title">Filed under</h2>
+          <ul class="rail__list">
+            {% for category in post.categories.all %}<li><a href="{{ category.get_absolute_url }}">{{ category.name }}</a></li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      {% if related_releases %}
+        <div class="rail__group">
+          <h2 class="rail__title">Related releases</h2>
+          <ul class="rail__list">
+            {% for release in related_releases %}<li><a href="{{ release.get_absolute_url }}">{{ release.display_title }}</a></li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      {% if related_artists %}
+        <div class="rail__group">
+          <h2 class="rail__title">Related artists</h2>
+          <ul class="rail__list">
+            {% for artist in related_artists %}<li><a href="{{ artist.get_absolute_url }}">{{ artist.name }}</a></li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      <div class="rail__group">
+        <a class="rail__back" href="/news/">← All news</a>
+      </div>
+    </aside>
+  </div>
 </article>
 {% endblock %}
