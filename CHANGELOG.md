@@ -1,3 +1,9 @@
+## 1.16.0 (2026-06-14)
+
+### Feat
+
+- **discography**: list featured credits on the artist page
+
 ## 1.15.0 (2026-06-12)
 
 ### Feat
