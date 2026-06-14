@@ -10,6 +10,7 @@
     <p class="prose">An alias of <a href="{{ artist.primary_artist.get_absolute_url }}">{{ artist.primary_artist.name }}</a>.</p>
   {% endif %}
   {% if artist.biography %}<div class="prose">{{ artist.biography|linebreaks }}</div>{% endif %}
+  {% if releases %}
   <h2 style="margin-top:2.5rem">Releases</h2>
   <ul class="entries">
     {% for release in releases %}
@@ -20,5 +21,18 @@
       </li>
     {% endfor %}
   </ul>
+  {% endif %}
+  {% if featured_on %}
+  <h2 style="margin-top:2.5rem">Featured on</h2>
+  <ul class="entries">
+    {% for release in featured_on %}
+      <li class="entry">
+        <span class="entry__index">{% if release.year %}{{ release.year }}{% else %}—{% endif %}</span>
+        <span class="entry__title"><a href="{{ release.get_absolute_url }}">{{ release.display_title }}</a></span>
+        <span class="entry__meta">{{ release.type.name }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
 </section>
 {% endblock %}

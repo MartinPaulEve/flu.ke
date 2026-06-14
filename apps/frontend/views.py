@@ -113,10 +113,22 @@ def artist_detail(request, artist_slug):
     releases = list(
         artist.releases.published().select_related("artist", "type")
     )
+    # Releases where this artist only guests. Exclude any where they're already
+    # the primary act so nothing is listed twice.
+    featured_on = list(
+        artist.featured_on.published()
+        .exclude(artist=artist)
+        .select_related("artist", "type")
+    )
     return render(
         request,
         "discography/artist_detail.html",
-        {"artist": artist, "releases": releases, "edit_object": artist},
+        {
+            "artist": artist,
+            "releases": releases,
+            "featured_on": featured_on,
+            "edit_object": artist,
+        },
     )
 
 
