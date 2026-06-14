@@ -9,6 +9,7 @@ request and returning 404 for unpublished or missing content. The
 from __future__ import annotations
 
 from django.conf import settings
+from django.db.models import Exists, OuterRef
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 
@@ -38,16 +39,40 @@ def _ensure_og(obj):
     return obj
 
 
+def _homepage_artists():
+    """Flagged non-primary artists for the hero, each with a ``hero_url``.
+
+    An artist links to its own discography page unless that page would be empty
+    (no published releases of their own and no published featured credits), in
+    which case it links to the discography root. Emptiness is resolved with two
+    correlated EXISTS subqueries, so the whole list costs a single query
+    regardless of how many artists there are.
+    """
+    has_own = Release.objects.filter(artist=OuterRef("pk"), is_published=True)
+    has_feature = Release.objects.filter(
+        featured_artists=OuterRef("pk"), is_published=True
+    )
+    artists = list(
+        Artist.objects.filter(appears_on_homepage=True)
+        .exclude(name=PRIMARY_ARTIST_NAME)
+        .annotate(has_own=Exists(has_own), has_feature=Exists(has_feature))
+        .order_by("name")
+    )
+    for artist in artists:
+        artist.hero_url = (
+            artist.get_absolute_url()
+            if artist.has_own or artist.has_feature
+            else "/discography/"
+        )
+    return artists
+
+
 @cached_page
 def landing(request):
     site_config = _ensure_og(SiteConfiguration.load())
     recent_posts = list(Post.objects.published()[:6])
     latest_resources = list(Resource.objects.published()[:8])
-    other_homepage_artists = list(
-        Artist.objects.filter(appears_on_homepage=True)
-        .exclude(name=PRIMARY_ARTIST_NAME)
-        .order_by("name")
-    )
+    other_homepage_artists = _homepage_artists()
     return render(
         request,
         "landing.html",
