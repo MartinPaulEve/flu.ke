@@ -6,6 +6,9 @@
 <article class="section wrap">
   <p class="kicker">{{ resource.get_kind_display }}{% if resource.subcategory %} — {{ resource.subcategory.name }}{% endif %}</p>
   <h1>{{ resource.title }}</h1>
+  {% if resource.display_date %}
+    <p class="resource-date"><span class="resource-date__label">{{ resource.display_date_label }}</span><time datetime="{{ resource.display_date|date:'Y-m-d' }}">{{ resource.display_date|date:"Y" }}</time></p>
+  {% endif %}
   {% if resource.contributor %}<p class="entry__meta">By {{ resource.contributor }}</p>{% endif %}
   <div class="prose">{{ resource.description|markdownify }}</div>
 

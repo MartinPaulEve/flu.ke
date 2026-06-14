@@ -211,6 +211,24 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
             return self.snippet
         return build_snippet(self)
 
+    @property
+    def display_date(self):
+        """The meaningful content date: when recorded, else when released.
+
+        ``uploaded_at`` is site housekeeping, not a content date, so it is not
+        used here. Returns ``None`` when neither date is set.
+        """
+        return self.recorded_date or self.released_date
+
+    @property
+    def display_date_label(self) -> str:
+        """Label for :attr:`display_date` — 'Recorded', 'Released' or ''."""
+        if self.recorded_date:
+            return "Recorded"
+        if self.released_date:
+            return "Released"
+        return ""
+
     def og_card(self):
         subtitle = "Fan" if self.kind == KIND_FAN else "Official"
         return (self.resolved_og_title(), subtitle, None)

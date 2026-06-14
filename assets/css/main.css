@@ -209,6 +209,9 @@ h3 { font-size: var(--step-1); }
 .entry__meta { color: var(--muted); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.1em; min-width: 0; overflow-wrap: anywhere; }
 /* One-line resource description under the title (resources list + homepage). */
 .entry__snippet { display: block; margin-top: 0.25rem; color: var(--muted); font-family: var(--font-mono); font-weight: 400; font-size: var(--step--1); letter-spacing: 0; }
+/* Prominent content year in a listing's meta column, with the contributor beneath. */
+.entry__date { display: block; font-family: var(--font-display); font-weight: 800; font-size: var(--step-1); line-height: 1; letter-spacing: 0; color: var(--accent-text); }
+.entry__by { display: block; margin-top: 0.3rem; }
 .entry::after { content: ""; position: absolute; left: 0; bottom: -1px; height: 2px; width: 0; background: var(--accent); transition: width 0.4s var(--ease); }
 .entry:hover::after, .entry:focus-within::after { width: 100%; }
 .entry:hover .entry__title a { color: var(--accent-text); }
@@ -244,6 +247,20 @@ details.edition[open] > summary::before { content: "\2013"; }
 /* ---------- lyrics ---------- */
 .lyric-body { margin-top: 1.5rem; line-height: 1.7; }
 .lyric-source { margin-top: 1.5rem; font-style: italic; color: var(--muted); }
+
+/* ---------- resource detail: prominent content date ---------- */
+.resource-date {
+  margin-top: clamp(0.8rem, 2vw, 1.2rem);
+  display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap;
+}
+.resource-date__label {
+  font-family: var(--font-mono); font-weight: 600; font-size: var(--step--1);
+  text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
+}
+.resource-date time {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--step-2);
+  line-height: 1; letter-spacing: -0.02em; color: var(--accent-text);
+}
 
 /* ---------- article ---------- */
 /* Sized so the readable prose measure plus the side rail fill the width, and the

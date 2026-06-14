@@ -11,7 +11,7 @@
             <a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a>
             {% if resource.display_snippet %}<span class="entry__snippet">{{ resource.display_snippet }}</span>{% endif %}
           </span>
-          <span class="entry__meta">{% if resource.contributor %}{{ resource.contributor }}{% elif resource.released_date %}{{ resource.released_date|date:"Y" }}{% endif %}</span>
+          <span class="entry__meta">{% if resource.display_date %}<span class="entry__date" title="{{ resource.display_date_label }} {{ resource.display_date|date:'j M Y' }}">{{ resource.display_date|date:"Y" }}</span>{% endif %}{% if resource.contributor %}<span class="entry__by">{{ resource.contributor }}</span>{% endif %}</span>
         </li>
       {% endfor %}
     </ul>
