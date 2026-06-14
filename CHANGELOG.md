@@ -1,3 +1,10 @@
+## 1.17.0 (2026-06-14)
+
+### Feat
+
+- **resources**: show the content date prominently in lists and on the page
+- **blog**: two-column post layout with a related-content side rail
+
 ## 1.16.0 (2026-06-14)
 
 ### Feat
