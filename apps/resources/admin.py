@@ -54,9 +54,9 @@ class ResourceFileAdmin(admin.ModelAdmin):
 
 @admin.register(ResourceSubcategory)
 class ResourceSubcategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "kind", "display_order")
+    list_display = ("name", "kind", "snippet_phrase", "display_order")
     list_filter = ("kind",)
-    list_editable = ("display_order",)
+    list_editable = ("snippet_phrase", "display_order")
     search_fields = ("name",)
     prepopulated_fields = {"slug": ("name",)}
 

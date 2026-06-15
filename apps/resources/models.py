@@ -5,6 +5,8 @@ several files (e.g. a live-set archive plus its cover) and may link to discograp
 records (the artist/alias vocabulary lives in the discography app).
 """
 
+from collections import namedtuple
+
 from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.utils import timezone
@@ -49,8 +51,21 @@ def _dominant_file_kind(files) -> str | None:
     return max(counts, key=lambda k: (counts[k], k))
 
 
+def _capitalize_first(text: str) -> str:
+    """Upper-case the first character only, leaving the rest untouched."""
+    return text[:1].upper() + text[1:] if text else text
+
+
 def _content_phrase(resource, files, kind_word: str) -> str:
-    """A noun phrase for the content, blending the kind, title hints and file kind."""
+    """A noun phrase for the content, blending the kind, title hints and file kind.
+
+    A subcategory may pin the descriptor (e.g. "music video") via its
+    ``snippet_phrase``; that always wins over the heuristics below.
+    """
+    sub = resource.subcategory if resource.subcategory_id else None
+    if sub and sub.snippet_phrase.strip():
+        return f"{kind_word} {sub.snippet_phrase.strip()}"
+
     title = (resource.title or "").lower()
     dominant = _dominant_file_kind(files)
 
@@ -68,24 +83,27 @@ def _content_phrase(resource, files, kind_word: str) -> str:
     return kind_word
 
 
-def build_snippet(resource) -> str:
-    """Derive a best-effort one-line snippet for a resource from its metadata.
+SnippetParts = namedtuple("SnippetParts", ["lead", "artist", "tail"])
 
-    The shape is roughly ``[supplied by X · ] <content phrase>[ · N files][ · size]
-    [ · subcategory][ · artist][ · source]``. Everything is derived from real
-    metadata — archive contents are never inspected, so track counts are never
-    invented.
+
+def _snippet_segments(resource) -> SnippetParts:
+    """Build the snippet as ordered segments, with the trailing artist separated.
+
+    Returns ``(lead, artist, tail)`` where ``lead``/``tail`` are lists of text
+    fragments and ``artist`` is the credited :class:`Artist` (or ``None``). Joined
+    together they form the plain-text snippet; keeping the artist apart lets
+    listings link it. The shape is ``<content phrase>[ · supplied by X][ · N files]
+    [ · size][ · subcategory][ · artist][ · source]`` — it always leads with the
+    capitalised content phrase so every snippet reads consistently.
     """
     files = list(resource.files.all())
     kind_word = "Fan" if resource.kind == KIND_FAN else "Official"
-
-    parts: list[str] = []
-
     contributor = (resource.contributor or "").strip()
-    if contributor:
-        parts.append(f"supplied by {contributor}")
 
-    parts.append(_content_phrase(resource, files, kind_word))
+    lead: list[str] = [_content_phrase(resource, files, kind_word)]
+
+    if contributor:
+        lead.append(f"supplied by {contributor}")
 
     if files:
         n = len(files)
@@ -96,27 +114,40 @@ def build_snippet(resource) -> str:
         homogeneous = len({f.file_kind for f in files}) == 1
         noun = "file" if n == 1 else "files"
         if kind_label and homogeneous:
-            parts.append(f"{n} {kind_label} {noun}")
+            lead.append(f"{n} {kind_label} {noun}")
         else:
-            parts.append(f"{n} {noun}")
-        total = sum(f.byte_size or 0 for f in files)
+            lead.append(f"{n} {noun}")
+        total = sum((f.display_byte_size or 0) for f in files)
         if total:
-            parts.append(filesizeformat(total))
+            lead.append(filesizeformat(total))
 
     if resource.subcategory_id and resource.subcategory:
-        parts.append(resource.subcategory.name)
+        lead.append(resource.subcategory.name)
 
+    artist = None
     if resource.artist_id and resource.artist:
-        artist_name = resource.artist.name
-        if artist_name and artist_name not in contributor:
-            parts.append(artist_name)
+        name = resource.artist.name
+        if name and name not in contributor:
+            artist = resource.artist
 
+    tail: list[str] = []
     source = (resource.source_attribution or "").strip()
     if source:
-        parts.append(source)
+        tail.append(source)
 
+    return SnippetParts(lead, artist, tail)
+
+
+def build_snippet(resource) -> str:
+    """Derive a best-effort one-line plain-text snippet from a resource's metadata.
+
+    Everything is derived from real metadata — archive contents are never
+    inspected, so track counts are never invented.
+    """
+    lead, artist, tail = _snippet_segments(resource)
+    parts = [*lead, *([artist.name] if artist else []), *tail]
     snippet = " · ".join(p for p in parts if p)
-    return snippet[:255]
+    return _capitalize_first(snippet)[:255]
 
 
 class ResourceSubcategory(SluggedModel, TimeStampedModel):
@@ -124,6 +155,15 @@ class ResourceSubcategory(SluggedModel, TimeStampedModel):
     name = models.CharField(max_length=100)
     kind = models.CharField(max_length=20, choices=KIND_CHOICES, default=KIND_OFFICIAL)
     description = models.TextField(blank=True)
+    snippet_phrase = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text=(
+            "How a resource in this subcategory is described in its auto snippet, "
+            "after the kind word — e.g. “music video” gives “Official music video”. "
+            "Leave blank to derive it automatically."
+        ),
+    )
     display_order = models.IntegerField(default=0)
 
     class Meta:
@@ -218,6 +258,23 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         if self.snippet:
             return self.snippet
         return build_snippet(self)
+
+    @property
+    def snippet_display(self) -> SnippetParts:
+        """``(lead, artist, tail)`` for listings that link the credited artist.
+
+        A hand-written snippet is shown verbatim (no artist link); a derived one
+        keeps its trailing artist separate so the template can link it. ``lead``
+        and ``tail`` are pre-joined, capitalised strings.
+        """
+        if self.snippet:
+            return SnippetParts(self.snippet, None, "")
+        lead, artist, tail = _snippet_segments(self)
+        return SnippetParts(
+            _capitalize_first(" · ".join(p for p in lead if p)),
+            artist,
+            " · ".join(p for p in tail if p),
+        )
 
     @property
     def display_date(self):

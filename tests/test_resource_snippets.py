@@ -68,7 +68,7 @@ def test_build_snippet_describes_fan_audio():
     assert "audio" in snippet.lower()
 
 
-def test_build_snippet_credits_contributor_when_present():
+def test_build_snippet_credits_contributor_but_leads_with_the_phrase():
     r = Resource.objects.create(
         title="mINDFLOWER pROMO EP", kind=KIND_FAN, contributor="jUSTIN cREDIBLE"
     )
@@ -76,8 +76,40 @@ def test_build_snippet_credits_contributor_when_present():
         resource=r, file="resources/x.zip", file_kind="archive", byte_size=47_061_128
     )
     snippet = build_snippet(r)
-    assert "jUSTIN cREDIBLE" in snippet
-    assert snippet.lower().startswith("supplied by")
+    assert "jUSTIN cREDIBLE" in snippet            # still credited
+    assert snippet[0].isupper()                    # standardised: never starts lowercase
+    assert not snippet.lower().startswith("supplied by")  # phrase leads, not the contributor
+
+
+def test_subcategory_snippet_phrase_overrides_the_descriptor():
+    sub = ResourceSubcategory.objects.create(
+        name="Music Videos", kind=KIND_OFFICIAL, snippet_phrase="music video"
+    )
+    r = Resource.objects.create(
+        title="No Fool Boletus (live in the woods)",  # would otherwise read "live recording"
+        kind=KIND_OFFICIAL,
+        subcategory=sub,
+    )
+    ResourceFile.objects.create(
+        resource=r, file="resources/x.mp4", file_kind="video", byte_size=1_000_000
+    )
+    snippet = build_snippet(r)
+    assert "Official music video" in snippet
+    assert "live recording" not in snippet
+
+
+def test_snippet_size_falls_back_to_the_stored_file_when_byte_size_is_zero():
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    r = Resource.objects.create(title="A clip", kind=KIND_OFFICIAL)
+    ResourceFile.objects.create(
+        resource=r,
+        file=SimpleUploadedFile("clip.mp4", b"x" * 4096),
+        file_kind="video",
+        byte_size=0,  # never recorded
+    )
+    snippet = build_snippet(r)
+    assert "KB" in snippet  # 4096 bytes -> "4.0 KB"
 
 
 def test_build_snippet_includes_artist_when_present():
