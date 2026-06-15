@@ -9,7 +9,7 @@
           <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
           <span class="entry__title">
             <a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a>
-            {% if resource.display_snippet %}<span class="entry__snippet">{{ resource.display_snippet }}</span>{% endif %}
+            {% with snip=resource.snippet_display %}<span class="entry__snippet">{{ snip.lead }}{% if snip.artist %} · {% if snip.artist.id in linkable_artist_ids %}<a href="{{ snip.artist.get_absolute_url }}">{{ snip.artist.name }}</a>{% else %}{{ snip.artist.name }}{% endif %}{% endif %}{% if snip.tail %} · {{ snip.tail }}{% endif %}</span>{% endwith %}
           </span>
           <span class="entry__meta">{% if resource.display_date %}<span class="entry__date" title="{{ resource.display_date_label }} {{ resource.display_date|date:'j M Y' }}">{{ resource.display_date|date:"Y" }}</span>{% endif %}{% if resource.contributor %}<span class="entry__by">{{ resource.contributor }}</span>{% endif %}</span>
         </li>

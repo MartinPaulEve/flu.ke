@@ -26,6 +26,7 @@ from apps.discography.models import (
     Release,
     ReleaseType,
 )
+from apps.discography.queries import linkable_artist_ids
 from apps.pages.models import Page
 from apps.resources.grouping import group_by_subcategory
 from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource
@@ -217,10 +218,15 @@ def resource_list(request):
     # no content date sort last, by most-recently-added. Grouping preserves this
     # order within each subcategory.
     resources = sorted(
-        Resource.objects.published().select_related("subcategory"),
+        Resource.objects.published()
+        .select_related("subcategory", "artist")
+        .prefetch_related("files"),
         key=lambda r: (r.display_date or datetime.date.min, r.uploaded_at),
         reverse=True,
     )
+    # Which credited artists have a non-empty page, so the snippet can link them
+    # (resolved in one query for the whole listing).
+    linkable_artists = linkable_artist_ids(r.artist_id for r in resources)
     sections = [
         {
             "heading": "Official Resources",
@@ -240,7 +246,11 @@ def resource_list(request):
     return render(
         request,
         "resources/resource_list.html",
-        {"sections": sections, "edit_changelist": Resource},
+        {
+            "sections": sections,
+            "linkable_artist_ids": linkable_artists,
+            "edit_changelist": Resource,
+        },
     )
 
 
