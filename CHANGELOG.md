@@ -1,3 +1,15 @@
+## 1.20.0 (2026-06-15)
+
+### Feat
+
+- **resources**: link the credited artist in listing snippets
+- **resources**: standardise snippets and make the descriptor configurable
+- **resources**: order the listing newest-first by content date
+
+### Fix
+
+- **resources**: keep the listing date right-aligned when a contributor shows
+
 ## 1.19.0 (2026-06-15)
 
 ### Feat
