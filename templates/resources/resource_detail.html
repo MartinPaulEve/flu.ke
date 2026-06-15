@@ -12,7 +12,7 @@
       {% if resource.related_release %}<li><span class="resource-meta__label">Release</span> <a href="{{ resource.related_release.get_absolute_url }}">{{ resource.related_release.name }}</a></li>{% endif %}
       {% if resource.recorded_date %}<li><span class="resource-meta__label">Recorded</span> <time datetime="{{ resource.recorded_date|date:'Y-m-d' }}">{{ resource.recorded_display }}</time></li>{% endif %}
       {% if resource.released_date %}<li><span class="resource-meta__label">Released</span> <time datetime="{{ resource.released_date|date:'Y-m-d' }}">{{ resource.released_date|date:'j M Y' }}</time></li>{% endif %}
-      {% if resource.license %}<li><span class="resource-meta__label">Licence</span> {{ resource.license }}</li>{% endif %}
+      {% if resource.license %}<li><span class="resource-meta__label">License</span> {{ resource.license }}</li>{% endif %}
       {% if resource.source_attribution %}<li><span class="resource-meta__label">Source</span> {{ resource.source_attribution }}</li>{% endif %}
     </ul>
   {% endif %}
