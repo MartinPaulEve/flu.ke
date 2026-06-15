@@ -1,3 +1,9 @@
+## 1.19.0 (2026-06-15)
+
+### Feat
+
+- **resources**: inline metadata line, imprecise recorded dates, file sizes
+
 ## 1.18.0 (2026-06-14)
 
 ### Feat
