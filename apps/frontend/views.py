@@ -258,12 +258,20 @@ def resource_list(request):
 
 @cached_page
 def resource_detail(request, kind, slug):
-    resource = get_object_or_404(Resource.objects.published(), kind=kind, slug=slug)
+    resource = get_object_or_404(
+        Resource.objects.published().select_related("artist", "related_release"),
+        kind=kind,
+        slug=slug,
+    )
     _ensure_og(resource)
+    # Link the artist only when their discography page isn't empty.
+    artist_has_page = bool(resource.artist_id) and bool(
+        linkable_artist_ids([resource.artist_id])
+    )
     return render(
         request,
         "resources/resource_detail.html",
-        {"resource": resource, "edit_object": resource},
+        {"resource": resource, "artist_has_page": artist_has_page, "edit_object": resource},
     )
 
 

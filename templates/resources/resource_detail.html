@@ -7,8 +7,9 @@
   <p class="kicker">{{ resource.get_kind_display }}{% if resource.subcategory %} — {{ resource.subcategory.name }}{% endif %}</p>
   <h1>{{ resource.title }}</h1>
   {% if resource.contributor %}<p class="entry__meta">By {{ resource.contributor }}</p>{% endif %}
-  {% if resource.related_release or resource.recorded_date or resource.released_date or resource.license or resource.source_attribution %}
+  {% if resource.artist or resource.related_release or resource.recorded_date or resource.released_date or resource.license or resource.source_attribution %}
     <ul class="resource-meta">
+      {% if resource.artist %}<li><span class="resource-meta__label">Artist</span> {% if artist_has_page %}<a href="{{ resource.artist.get_absolute_url }}">{{ resource.artist.name }}</a>{% else %}{{ resource.artist.name }}{% endif %}</li>{% endif %}
       {% if resource.related_release %}<li><span class="resource-meta__label">Release</span> <a href="{{ resource.related_release.get_absolute_url }}">{{ resource.related_release.name }}</a></li>{% endif %}
       {% if resource.recorded_date %}<li><span class="resource-meta__label">Recorded</span> <time datetime="{{ resource.recorded_date|date:'Y-m-d' }}">{{ resource.recorded_display }}</time></li>{% endif %}
       {% if resource.released_date %}<li><span class="resource-meta__label">Released</span> <time datetime="{{ resource.released_date|date:'Y-m-d' }}">{{ resource.released_date|date:'j M Y' }}</time></li>{% endif %}
