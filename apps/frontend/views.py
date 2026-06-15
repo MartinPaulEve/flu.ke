@@ -116,6 +116,7 @@ def post_detail(request, year, slug):
         post.related_releases.published().select_related("artist", "type")
     )
     related_artists = list(post.related_artists.all())
+    related_resources = list(post.related_resources.published().prefetch_related("files"))
     return render(
         request,
         "blog/post_detail.html",
@@ -124,6 +125,7 @@ def post_detail(request, year, slug):
             "jsonld": jsonld,
             "related_releases": related_releases,
             "related_artists": related_artists,
+            "related_resources": related_resources,
             "edit_object": post,
         },
     )

@@ -76,6 +76,12 @@ class Post(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         related_name="related_posts",
         help_text="Artists to surface in this post's sidebar.",
     )
+    related_resources = models.ManyToManyField(
+        "resources.Resource",
+        blank=True,
+        related_name="related_posts",
+        help_text="Resources to surface in this post's sidebar.",
+    )
     # Provenance for Wayback-recovered posts.
     source_url = models.URLField(blank=True)
     import_confidence = models.CharField(

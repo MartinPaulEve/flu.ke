@@ -39,6 +39,19 @@
           </ul>
         </div>
       {% endif %}
+      {% if related_resources %}
+        <div class="rail__group">
+          <h2 class="rail__title">Related resources</h2>
+          <ul class="rail__list rail__list--rich">
+            {% for resource in related_resources %}
+              <li>
+                <a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a>
+                <span class="rail__meta">{{ resource.rail_summary }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
       <div class="rail__group">
         <a class="rail__back" href="/news/">← All news</a>
       </div>

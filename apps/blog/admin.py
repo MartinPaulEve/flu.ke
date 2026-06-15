@@ -29,7 +29,9 @@ class PostAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     # Rich-text editing for the Body and Excerpt text fields.
     formfield_overrides = {models.TextField: {"widget": TinyMCE()}}
-    filter_horizontal = ("categories", "tags", "related_releases", "related_artists")
+    filter_horizontal = (
+        "categories", "tags", "related_releases", "related_artists", "related_resources",
+    )
     date_hierarchy = "published_at"
     fieldsets = (
         (None, {"fields": ("title", "slug", "excerpt", "body", "cover_image")}),
@@ -37,8 +39,8 @@ class PostAdmin(OgCacheAdminMixin, admin.ModelAdmin):
         (
             "Related",
             {
-                "description": "Discography links shown in the post's side rail.",
-                "fields": ("related_releases", "related_artists"),
+                "description": "Links shown in the post's side rail.",
+                "fields": ("related_releases", "related_artists", "related_resources"),
             },
         ),
         (

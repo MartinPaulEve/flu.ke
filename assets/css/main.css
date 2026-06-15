@@ -293,6 +293,9 @@ time { font-variant-numeric: tabular-nums; }
 .rail__list { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
 .rail__list a, .rail__back { color: var(--fg); }
 .rail__list a:hover, .rail__back:hover { color: var(--accent-text); }
+/* Richer rail items (e.g. related resources): a link with a concise meta line. */
+.rail__list--rich { gap: 0.9rem; }
+.rail__meta { display: block; margin-top: 0.15rem; font-size: var(--step--1); line-height: 1.4; color: var(--muted); }
 .rail__back {
   font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.14em;
   color: var(--muted);

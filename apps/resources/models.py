@@ -260,6 +260,29 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         return build_snippet(self)
 
     @property
+    def content_descriptor(self) -> str:
+        """A short 'what this is' phrase, e.g. 'Official live recording'."""
+        files = list(self.files.all())
+        kind_word = "Fan" if self.kind == KIND_FAN else "Official"
+        return _content_phrase(self, files, kind_word)
+
+    @property
+    def total_byte_size(self) -> int:
+        """Combined download size across all files (best-known per file)."""
+        return sum((f.display_byte_size or 0) for f in self.files.all())
+
+    @property
+    def rail_summary(self) -> str:
+        """A one-line ``what it is · size · year`` summary for compact listings."""
+        parts = [self.content_descriptor]
+        total = self.total_byte_size
+        if total:
+            parts.append(filesizeformat(total))
+        if self.display_date:
+            parts.append(str(self.display_date.year))
+        return " · ".join(p for p in parts if p)
+
+    @property
     def snippet_display(self) -> SnippetParts:
         """``(lead, artist, tail)`` for listings that link the credited artist.
 
