@@ -2,7 +2,7 @@
 <div class="disco-section" id="{{ anchor }}" aria-labelledby="{{ anchor }}-title">
   <h2 id="{{ anchor }}-title">{{ heading }}</h2>
   {% for group in groups %}
-    {% if group.subcategory %}<h3>{{ group.subcategory.name }}</h3>{% endif %}
+    <h3>{% if group.subcategory %}{{ group.subcategory.name }}{% else %}Uncategorised{% endif %}</h3>
     <ul class="entries">
       {% for resource in group.resources %}
         <li class="entry">

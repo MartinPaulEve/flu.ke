@@ -222,6 +222,10 @@ h3 { font-size: var(--step-1); }
 
 /* ---------- discography ---------- */
 .disco-section + .disco-section { margin-top: clamp(2rem, 5vw, 4rem); }
+/* Resources index: a little more air after the page title, before each kind
+   heading (Official/Fan) and before each subcategory heading. */
+.resources-index .disco-section { margin-top: clamp(2.5rem, 5vw, 4rem); }
+.resources-index .disco-section h3 { margin-top: clamp(1.6rem, 3.5vw, 2.6rem); }
 details.edition { border-top: var(--rule) solid var(--hairline); }
 details.edition > summary {
   cursor: pointer; list-style: none; padding: 1rem 0; display: flex; gap: 1rem;
