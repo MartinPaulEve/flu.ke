@@ -278,9 +278,12 @@ details.edition[open] > summary::before { content: "\2013"; }
 time { font-variant-numeric: tabular-nums; }
 
 /* Body: prose column + a related-links rail. Stacked by default; two columns
-   with a vertical separator once there's room. */
-.article__body { display: grid; gap: 2.5rem; }
-.article__main .prose { max-width: var(--measure); }
+   with a vertical separator once there's room. The minmax(0,1fr) column and
+   min-width:0 items let the grid shrink with the viewport instead of being held
+   open by a long token, so text always wraps to fit (the viewport never grows). */
+.article__body { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1fr); }
+.article__main, .article__rail { min-width: 0; }
+.article__main .prose { max-width: var(--measure); overflow-wrap: anywhere; }
 .article__rail {
   display: grid; gap: clamp(1.5rem, 4vw, 2.5rem); align-content: start;
   border-top: var(--rule) solid var(--hairline); padding-top: 1.75rem;
