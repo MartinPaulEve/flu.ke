@@ -8,6 +8,8 @@ request and returning 404 for unpublished or missing content. The
 
 from __future__ import annotations
 
+import datetime
+
 from django.conf import settings
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponse
@@ -211,7 +213,14 @@ def lyric_detail(request, slug):
 
 @cached_page
 def resource_list(request):
-    resources = list(Resource.objects.published().select_related("subcategory"))
+    # Newest first by the shown content date (recorded/released); resources with
+    # no content date sort last, by most-recently-added. Grouping preserves this
+    # order within each subcategory.
+    resources = sorted(
+        Resource.objects.published().select_related("subcategory"),
+        key=lambda r: (r.display_date or datetime.date.min, r.uploaded_at),
+        reverse=True,
+    )
     sections = [
         {
             "heading": "Official Resources",
