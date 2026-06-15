@@ -15,6 +15,7 @@ from apps.core.models import (
     SluggedModel,
     TimeStampedModel,
 )
+from apps.resources.partial_date import DAY, MONTH, YEAR, format_partial_date
 
 KIND_OFFICIAL = "official"
 KIND_FAN = "fan"
@@ -186,6 +187,13 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     source_attribution = models.CharField(max_length=300, blank=True)
     license = models.CharField(max_length=200, blank=True)
     recorded_date = models.DateField(null=True, blank=True)
+    # How precise recorded_date is. Unknown parts are stored as 1 but not shown,
+    # so the field stays a real date for sorting/filtering. See partial_date.py.
+    recorded_precision = models.CharField(
+        max_length=5,
+        choices=[(YEAR, "Year"), (MONTH, "Month"), (DAY, "Day")],
+        default=DAY,
+    )
     released_date = models.DateField(null=True, blank=True)
     uploaded_at = models.DateTimeField(
         default=timezone.now, help_text="When this was added to the site."
@@ -229,6 +237,11 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
             return "Released"
         return ""
 
+    @property
+    def recorded_display(self) -> str:
+        """The recorded date shown only as precisely as it's known (year/month/day)."""
+        return format_partial_date(self.recorded_date, self.recorded_precision)
+
     def og_card(self):
         subtitle = "Fan" if self.kind == KIND_FAN else "Official"
         return (self.resolved_og_title(), subtitle, None)
@@ -263,3 +276,14 @@ class ResourceFile(TimeStampedModel):
 
     def __str__(self):
         return self.original_filename or self.file.name
+
+    @property
+    def display_byte_size(self):
+        """Best-known download size: the recorded ``byte_size``, else the actual
+        size of the stored file. ``None`` when neither is available."""
+        if self.byte_size:
+            return self.byte_size
+        try:
+            return self.file.size or None
+        except (ValueError, OSError):
+            return None

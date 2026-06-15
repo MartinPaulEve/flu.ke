@@ -212,6 +212,8 @@ h3 { font-size: var(--step-1); }
 /* Prominent content year in a listing's meta column, with the contributor beneath. */
 .entry__date { display: block; font-family: var(--font-display); font-weight: 800; font-size: var(--step-1); line-height: 1; letter-spacing: 0; color: var(--accent-text); }
 .entry__by { display: block; margin-top: 0.3rem; }
+/* Download size after a file name — quieter and smaller than the file name. */
+.entry__size { font-family: var(--font-mono); font-weight: 400; font-size: var(--step--1); letter-spacing: 0; color: var(--muted); }
 .entry::after { content: ""; position: absolute; left: 0; bottom: -1px; height: 2px; width: 0; background: var(--accent); transition: width 0.4s var(--ease); }
 .entry:hover::after, .entry:focus-within::after { width: 100%; }
 .entry:hover .entry__title a { color: var(--accent-text); }
@@ -248,19 +250,19 @@ details.edition[open] > summary::before { content: "\2013"; }
 .lyric-body { margin-top: 1.5rem; line-height: 1.7; }
 .lyric-source { margin-top: 1.5rem; font-style: italic; color: var(--muted); }
 
-/* ---------- resource detail: prominent content date ---------- */
-.resource-date {
-  margin-top: clamp(0.8rem, 2vw, 1.2rem);
-  display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap;
+/* ---------- resource detail: inline metadata line under the title ---------- */
+.resource-meta {
+  list-style: none; padding: 0; margin-top: clamp(0.9rem, 2vw, 1.3rem);
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  font-family: var(--font-mono); font-size: var(--step--1);
+  text-transform: uppercase; letter-spacing: 0.1em;
 }
-.resource-date__label {
-  font-family: var(--font-mono); font-weight: 600; font-size: var(--step--1);
-  text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
-}
-.resource-date time {
-  font-family: var(--font-mono); font-weight: 600; font-size: var(--step--1);
-  letter-spacing: 0.06em; color: var(--accent-text);
-}
+.resource-meta > li { display: flex; align-items: baseline; gap: 0.5ch; }
+/* Pipe separators between items. */
+.resource-meta > li:not(:last-child)::after { content: "|"; color: var(--hairline); margin: 0 0.9rem; }
+.resource-meta__label { color: var(--accent-text); }
+.resource-meta__label::after { content: ":"; }
+.resource-meta a { color: var(--fg); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.18em; }
 
 /* ---------- article ---------- */
 /* Sized so the readable prose measure plus the side rail fill the width, and the

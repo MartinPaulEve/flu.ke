@@ -5,6 +5,7 @@ from django.shortcuts import render
 from apps.core.admin import OgCacheAdminMixin
 from apps.core.cache import invalidate_site_cache
 
+from .forms import ResourceAdminForm
 from .models import Resource, ResourceFile, ResourceSubcategory
 
 
@@ -62,6 +63,7 @@ class ResourceSubcategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Resource)
 class ResourceAdmin(OgCacheAdminMixin, admin.ModelAdmin):
+    form = ResourceAdminForm
     list_display = ("title", "snippet", "kind", "subcategory", "is_published", "uploaded_at")
     list_filter = ("kind", "is_published", "subcategory")
     search_fields = ("title", "snippet", "description", "contributor")
@@ -88,7 +90,7 @@ class ResourceAdmin(OgCacheAdminMixin, admin.ModelAdmin):
                     "contributor",
                     "source_attribution",
                     "license",
-                    "recorded_date",
+                    "recorded",
                     "released_date",
                     "uploaded_at",
                     "external_url",
