@@ -194,6 +194,24 @@ class Edition(TimeStampedModel):
             bits.append(self.catalogue_number)
         return " – ".join(bits)
 
+    @property
+    def summary_lead(self) -> str:
+        """The headline for the edition row: its name, else media, else cat#."""
+        return self.name or self.media or self.catalogue_number or "Edition"
+
+    @property
+    def summary_meta(self) -> list[str]:
+        """Secondary summary pieces shown inline after the lead, in order:
+        media, year, record label, catalogue number — minus whatever is already
+        the lead, and without duplicates."""
+        lead = self.summary_lead
+        out: list[str] = []
+        for value in (self.media, self.year, self.record_label, self.catalogue_number):
+            text = str(value).strip() if value not in (None, "") else ""
+            if text and text != lead and text not in out:
+                out.append(text)
+        return out
+
 
 class Lyric(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     """Lyrics for a song, shared by every track that performs it (de-duplicated)."""

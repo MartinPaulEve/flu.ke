@@ -16,14 +16,8 @@
   {% for edition in release.editions.all %}
     <details class="edition"{% if forloop.first %} open{% endif %}>
       <summary>
-        {{ edition.name|default:edition.catalogue_number|default:"Edition" }}
-        {% if edition.media %} <span class="entry__meta">· {{ edition.media }}</span>{% endif %}
-        {% if edition.year %} <span class="entry__meta">· {{ edition.year }}</span>{% endif %}
+        {{ edition.summary_lead }}{% for part in edition.summary_meta %} <span class="entry__meta">· {{ part }}</span>{% endfor %}
       </summary>
-
-      {% if edition.record_label or edition.catalogue_number %}
-        <p class="entry__meta" style="padding-left:2rem">{{ edition.record_label }}{% if edition.catalogue_number %} · {{ edition.catalogue_number }}{% endif %}</p>
-      {% endif %}
 
       {% if edition.covers.all %}
         <ul class="covers">
