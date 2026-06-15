@@ -1,3 +1,9 @@
+## 1.18.0 (2026-06-14)
+
+### Feat
+
+- **frontend**: point empty-page homepage artists at the discography root
+
 ## 1.17.0 (2026-06-14)
 
 ### Feat
