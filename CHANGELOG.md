@@ -1,3 +1,13 @@
+## 1.21.0 (2026-06-15)
+
+### Feat
+
+- **resources**: group loose resources under 'Uncategorised' and space out the list
+
+### Fix
+
+- **resources**: label the metadata field 'License' to match the model
+
 ## 1.20.0 (2026-06-15)
 
 ### Feat
