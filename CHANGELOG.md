@@ -1,3 +1,10 @@
+## 1.24.0 (2026-06-16)
+
+### Feat
+
+- **resources**: multiple artists per resource and remote-URL files
+- **discography**: credit multiple artists on a release
+
 ## 1.23.0 (2026-06-16)
 
 ### Feat
