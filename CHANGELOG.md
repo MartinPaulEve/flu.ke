@@ -1,3 +1,9 @@
+## 1.24.2 (2026-06-16)
+
+### Fix
+
+- **blog**: stop TinyMCE sandboxing embedded iframes
+
 ## 1.24.1 (2026-06-16)
 
 ### Fix
