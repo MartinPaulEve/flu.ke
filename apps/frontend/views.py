@@ -235,13 +235,15 @@ def resource_list(request):
     resources = sorted(
         Resource.objects.published()
         .select_related("subcategory", "artist")
-        .prefetch_related("files"),
+        .prefetch_related("files", "additional_artists"),
         key=lambda r: (r.display_date or datetime.date.min, r.uploaded_at),
         reverse=True,
     )
     # Which credited artists have a non-empty page, so the snippet can link them
     # (resolved in one query for the whole listing).
-    linkable_artists = linkable_artist_ids(r.artist_id for r in resources)
+    linkable_artists = linkable_artist_ids(
+        a.id for r in resources for a in r.all_artists
+    )
     sections = [
         {
             "heading": "Official Resources",
@@ -272,19 +274,23 @@ def resource_list(request):
 @cached_page
 def resource_detail(request, kind, slug):
     resource = get_object_or_404(
-        Resource.objects.published().select_related("artist", "related_release"),
+        Resource.objects.published()
+        .select_related("artist", "related_release")
+        .prefetch_related("additional_artists", "files"),
         kind=kind,
         slug=slug,
     )
     _ensure_og(resource)
-    # Link the artist only when their discography page isn't empty.
-    artist_has_page = bool(resource.artist_id) and bool(
-        linkable_artist_ids([resource.artist_id])
-    )
+    # Link each credited artist only when their discography page isn't empty.
+    linkable_artists = linkable_artist_ids(a.id for a in resource.all_artists)
     return render(
         request,
         "resources/resource_detail.html",
-        {"resource": resource, "artist_has_page": artist_has_page, "edit_object": resource},
+        {
+            "resource": resource,
+            "linkable_artist_ids": linkable_artists,
+            "edit_object": resource,
+        },
     )
 
 

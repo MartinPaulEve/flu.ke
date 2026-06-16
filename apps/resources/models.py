@@ -7,6 +7,7 @@ records (the artist/alias vocabulary lives in the discography app).
 
 from collections import namedtuple
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.utils import timezone
@@ -83,18 +84,18 @@ def _content_phrase(resource, files, kind_word: str) -> str:
     return kind_word
 
 
-SnippetParts = namedtuple("SnippetParts", ["lead", "artist", "tail"])
+SnippetParts = namedtuple("SnippetParts", ["lead", "artists", "tail"])
 
 
 def _snippet_segments(resource) -> SnippetParts:
-    """Build the snippet as ordered segments, with the trailing artist separated.
+    """Build the snippet as ordered segments, with the credited artists separated.
 
-    Returns ``(lead, artist, tail)`` where ``lead``/``tail`` are lists of text
-    fragments and ``artist`` is the credited :class:`Artist` (or ``None``). Joined
-    together they form the plain-text snippet; keeping the artist apart lets
-    listings link it. The shape is ``<content phrase>[ · supplied by X][ · N files]
-    [ · size][ · subcategory][ · artist][ · source]`` — it always leads with the
-    capitalised content phrase so every snippet reads consistently.
+    Returns ``(lead, artists, tail)`` where ``lead``/``tail`` are lists of text
+    fragments and ``artists`` is the list of credited :class:`Artist` objects.
+    Joined together they form the plain-text snippet; keeping the artists apart
+    lets listings link each one. The shape is ``<content phrase>[ · supplied by X]
+    [ · N files][ · size][ · subcategory][ · artists][ · source]`` — it always
+    leads with the capitalised content phrase so every snippet reads consistently.
     """
     files = list(resource.files.all())
     kind_word = "Fan" if resource.kind == KIND_FAN else "Official"
@@ -124,18 +125,14 @@ def _snippet_segments(resource) -> SnippetParts:
     if resource.subcategory_id and resource.subcategory:
         lead.append(resource.subcategory.name)
 
-    artist = None
-    if resource.artist_id and resource.artist:
-        name = resource.artist.name
-        if name and name not in contributor:
-            artist = resource.artist
+    artists = [a for a in resource.all_artists if a.name and a.name not in contributor]
 
     tail: list[str] = []
     source = (resource.source_attribution or "").strip()
     if source:
         tail.append(source)
 
-    return SnippetParts(lead, artist, tail)
+    return SnippetParts(lead, artists, tail)
 
 
 def build_snippet(resource) -> str:
@@ -144,8 +141,9 @@ def build_snippet(resource) -> str:
     Everything is derived from real metadata — archive contents are never
     inspected, so track counts are never invented.
     """
-    lead, artist, tail = _snippet_segments(resource)
-    parts = [*lead, *([artist.name] if artist else []), *tail]
+    lead, artists, tail = _snippet_segments(resource)
+    names = ", ".join(a.name for a in artists)
+    parts = [*lead, *([names] if names else []), *tail]
     snippet = " · ".join(p for p in parts if p)
     return _capitalize_first(snippet)[:255]
 
@@ -198,6 +196,13 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="resources",
+    )
+    additional_artists = models.ManyToManyField(
+        "discography.Artist",
+        blank=True,
+        related_name="additional_resources",
+        help_text="Other artists credited alongside the primary artist "
+        "(shown comma-separated wherever the artist appears).",
     )
     related_release = models.ForeignKey(
         "discography.Release",
@@ -253,6 +258,22 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         return f"/resources/{self.kind}/{self.slug}/"
 
     @property
+    def all_artists(self):
+        """Primary artist (if any) followed by additional artists, de-duplicated."""
+        artists = [self.artist] if self.artist_id else []
+        seen = {a.pk for a in artists}
+        for extra in self.additional_artists.all():
+            if extra.pk not in seen:
+                artists.append(extra)
+                seen.add(extra.pk)
+        return artists
+
+    @property
+    def artists_display(self) -> str:
+        """Comma-separated names of every credited artist."""
+        return ", ".join(a.name for a in self.all_artists)
+
+    @property
     def display_snippet(self) -> str:
         """The snippet to show in listings: the stored one, else a derived fallback."""
         if self.snippet:
@@ -291,11 +312,11 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         and ``tail`` are pre-joined, capitalised strings.
         """
         if self.snippet:
-            return SnippetParts(self.snippet, None, "")
-        lead, artist, tail = _snippet_segments(self)
+            return SnippetParts(self.snippet, [], "")
+        lead, artists, tail = _snippet_segments(self)
         return SnippetParts(
             _capitalize_first(" · ".join(p for p in lead if p)),
-            artist,
+            artists,
             " · ".join(p for p in tail if p),
         )
 
@@ -342,7 +363,12 @@ class ResourceFile(TimeStampedModel):
     ]
 
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name="files")
-    file = models.FileField(upload_to="resources/")
+    file = models.FileField(upload_to="resources/", blank=True)
+    external_url = models.URLField(
+        blank=True,
+        help_text="Link to an off-site copy instead of uploading a file. "
+        "Provide either a file or a URL.",
+    )
     original_filename = models.CharField(max_length=300, blank=True)
     file_kind = models.CharField(max_length=20, choices=KIND_CHOICES, default="audio")
     byte_size = models.BigIntegerField(default=0)
@@ -355,12 +381,38 @@ class ResourceFile(TimeStampedModel):
         ordering = ["display_order", "id"]
 
     def __str__(self):
-        return self.original_filename or self.file.name
+        return self.display_name
+
+    def clean(self):
+        super().clean()
+        if not self.file and not self.external_url:
+            raise ValidationError("Provide either an uploaded file or an external URL.")
+
+    @property
+    def is_external(self) -> bool:
+        """True when this file is a remote link rather than an uploaded file."""
+        return not self.file and bool(self.external_url)
+
+    @property
+    def download_url(self) -> str:
+        """Where the file can be fetched — the uploaded file, else the remote URL."""
+        return self.file.url if self.file else self.external_url
+
+    @property
+    def display_name(self) -> str:
+        """The label shown for this file: a given filename, the uploaded file's
+        name, else the last path segment of the remote URL."""
+        if self.original_filename:
+            return self.original_filename
+        if self.file:
+            return self.file.name
+        return self.external_url.rstrip("/").rsplit("/", 1)[-1] or self.external_url
 
     @property
     def display_byte_size(self):
         """Best-known download size: the recorded ``byte_size``, else the actual
-        size of the stored file. ``None`` when neither is available."""
+        size of the stored file. ``None`` when neither is available (e.g. a remote
+        link without a recorded size)."""
         if self.byte_size:
             return self.byte_size
         try:

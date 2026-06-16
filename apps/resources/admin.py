@@ -12,7 +12,10 @@ from .models import Resource, ResourceFile, ResourceSubcategory
 class ResourceFileInline(admin.TabularInline):
     model = ResourceFile
     extra = 0
-    fields = ("file", "file_kind", "original_filename", "byte_size", "duration", "display_order")
+    fields = (
+        "file", "external_url", "file_kind", "original_filename",
+        "byte_size", "duration", "display_order",
+    )
     readonly_fields = ("byte_size",)
 
 
@@ -76,6 +79,7 @@ class ResourceAdmin(OgCacheAdminMixin, admin.ModelAdmin):
         "subcategory",
     )
     date_hierarchy = "uploaded_at"
+    filter_horizontal = ("additional_artists",)
     inlines = [ResourceFileInline]
     fieldsets = (
         (None, {"fields": ("title", "slug", "kind", "subcategory", "snippet", "description")}),
@@ -84,6 +88,7 @@ class ResourceAdmin(OgCacheAdminMixin, admin.ModelAdmin):
             {
                 "fields": (
                     "artist",
+                    "additional_artists",
                     "related_release",
                     "related_edition",
                     "related_post",
