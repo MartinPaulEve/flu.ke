@@ -185,6 +185,18 @@ def test_openapi_schema_is_served(client):
     assert resp.status_code == 200
 
 
+def test_api_ignores_a_stray_basic_auth_header(client):
+    """A public, read-only API must not 403 just because a request happens to
+    carry an Authorization header (BasicAuthentication would otherwise reject bad
+    credentials before AllowAny is even consulted)."""
+    import base64
+
+    header = "Basic " + base64.b64encode(b"someone:wrong").decode()
+    for url in ("/discography/api/", "/discography/api/releases/"):
+        resp = client.get(url, HTTP_AUTHORIZATION=header)
+        assert resp.status_code == 200, f"{url} -> {resp.status_code}"
+
+
 def test_openapi_schema_advertises_no_authentication(client):
     """The public, read-only API must not present itself as requiring login.
 

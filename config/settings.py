@@ -195,6 +195,11 @@ MUSICBRAINZ = {
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    # The discography API is public and read-only, so it requires no
+    # authentication. Leaving the default classes (Session + Basic) enabled means
+    # a stray/invalid Authorization header is rejected with 403 before AllowAny is
+    # consulted — and it advertises auth in the OpenAPI schema. Disable them.
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
