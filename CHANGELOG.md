@@ -1,3 +1,9 @@
+## 1.24.1 (2026-06-16)
+
+### Fix
+
+- **api**: disable authentication so a stray header can't 403 the public API
+
 ## 1.24.0 (2026-06-16)
 
 ### Feat
