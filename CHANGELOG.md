@@ -1,3 +1,15 @@
+## 1.22.0 (2026-06-16)
+
+### Feat
+
+- **discography**: show label and catalogue number in the edition summary
+- **resources**: show the artist first in the page metadata bar
+- **blog**: add related resources to a post's side rail
+
+### Fix
+
+- **blog**: wrap post text to the viewport on mobile
+
 ## 1.21.0 (2026-06-15)
 
 ### Feat
