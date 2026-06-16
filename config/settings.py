@@ -229,4 +229,10 @@ TINYMCE_DEFAULT_CONFIG = {
     "branding": False,
     "promotion": False,
     "convert_urls": False,
+    # TinyMCE 7 sandboxes embedded iframes by default (adds sandbox=""), which
+    # gives third-party players (Mixcloud, YouTube, …) an opaque origin and blocks
+    # their scripts — breaking the embed with cross-origin/CORS errors. Editor
+    # content is trusted here (it's rendered unsanitised already), so don't
+    # sandbox embeds.
+    "sandbox_iframes": False,
 }
