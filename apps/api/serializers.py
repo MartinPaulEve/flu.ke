@@ -140,6 +140,7 @@ class ReleaseSerializer(serializers.ModelSerializer):
     """Compact release serializer for list endpoints."""
 
     artist = ArtistRefSerializer(read_only=True)
+    artists = ArtistRefSerializer(source="all_artists", many=True, read_only=True)
     type = ReleaseTypeRefSerializer(read_only=True)
     display_title = serializers.CharField(read_only=True)
     url = serializers.CharField(source="get_absolute_url", read_only=True)
@@ -153,6 +154,7 @@ class ReleaseSerializer(serializers.ModelSerializer):
             "display_title",
             "year",
             "artist",
+            "artists",
             "type",
             "url",
         ]
@@ -162,6 +164,7 @@ class ReleaseDetailSerializer(serializers.ModelSerializer):
     """Full release payload nesting editions -> tracks + covers."""
 
     artist = ArtistRefSerializer(read_only=True)
+    artists = ArtistRefSerializer(source="all_artists", many=True, read_only=True)
     type = ReleaseTypeRefSerializer(read_only=True)
     display_title = serializers.CharField(read_only=True)
     url = serializers.CharField(source="get_absolute_url", read_only=True)
@@ -176,6 +179,7 @@ class ReleaseDetailSerializer(serializers.ModelSerializer):
             "display_title",
             "year",
             "artist",
+            "artists",
             "type",
             "order",
             "purchase_link",

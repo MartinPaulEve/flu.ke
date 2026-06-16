@@ -108,6 +108,16 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         related_name="featured_on",
         help_text="Guest/featured artists, shown as “(feat. …)” after the title.",
     )
+    additional_artists = models.ManyToManyField(
+        Artist,
+        blank=True,
+        related_name="additional_releases",
+        help_text=(
+            "Other acts credited alongside the primary artist (e.g. a “vs.” "
+            "collaboration). Shown comma-separated after the primary artist; the "
+            "primary artist still owns the URL and grouping."
+        ),
+    )
 
     objects = PublishableQuerySet.as_manager()
 
@@ -136,20 +146,35 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         return f"{self.name} ({credit})" if credit else self.name
 
     @property
+    def all_artists(self):
+        """Primary artist followed by any additional artists, de-duplicated."""
+        artists = [self.artist] if self.artist_id else []
+        seen = {a.pk for a in artists}
+        for extra in self.additional_artists.all():
+            if extra.pk not in seen:
+                artists.append(extra)
+                seen.add(extra.pk)
+        return artists
+
+    @property
+    def artists_display(self):
+        """Comma-separated names of every credited artist."""
+        return ", ".join(a.name for a in self.all_artists)
+
+    @property
     def display_title(self):
-        """Display name, also suffixed with the artist unless the artist is Fluke."""
-        return (
-            f"{self.display_name} ({self.artist.name})"
-            if self.artist.name != PRIMARY_ARTIST_NAME
-            else self.display_name
-        )
+        """Display name, suffixed with the credited artist(s) unless that's just Fluke."""
+        names = self.artists_display
+        if names == PRIMARY_ARTIST_NAME:
+            return self.display_name
+        return f"{self.display_name} ({names})"
 
     def resolved_seo_title(self):
         # Fold the (feat. …) credit into the page/OG title (an explicit seo_title wins).
         return self.seo_title or self.display_name
 
     def og_card(self):
-        subtitle = self.artist.name if self.artist_id else ""
+        subtitle = self.artists_display
         if self.year:
             subtitle = f"{subtitle} · {self.year}".strip(" ·")
         return (self.display_name, subtitle, self._og_cover_bytes())

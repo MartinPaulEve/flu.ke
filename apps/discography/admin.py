@@ -59,7 +59,7 @@ class ReleaseAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     search_fields = ("name",)
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("artist", "type")
-    filter_horizontal = ("featured_artists",)
+    filter_horizontal = ("featured_artists", "additional_artists")
     inlines = [EditionInline]
 
 

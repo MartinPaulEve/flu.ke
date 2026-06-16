@@ -48,7 +48,9 @@ def music_album_jsonld(release, base_url: str) -> dict:
         "@type": "MusicAlbum",
         "name": release.name,
         "url": f"{base_url}{release.get_absolute_url()}",
-        "byArtist": {"@type": "MusicGroup", "name": release.artist.name},
+        "byArtist": [
+            {"@type": "MusicGroup", "name": artist.name} for artist in release.all_artists
+        ],
     }
     if release.year:
         data["datePublished"] = str(release.year)

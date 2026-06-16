@@ -74,7 +74,7 @@ class ReleaseViewSet(PublicReadOnlyViewSet):
     queryset = (
         Release.objects.published()
         .select_related("artist", "type")
-        .prefetch_related("editions__tracks", "editions__covers")
+        .prefetch_related("additional_artists", "editions__tracks", "editions__covers")
     )
     lookup_field = "slug"
     filterset_class = ReleaseFilter

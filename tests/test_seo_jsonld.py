@@ -33,7 +33,8 @@ def test_music_album_jsonld_includes_artist_and_tracks():
     assert data["@type"] == "MusicAlbum"
     assert data["name"] == "Risotto"
     assert data["datePublished"] == "1997"
-    assert data["byArtist"] == {"@type": "MusicGroup", "name": "Fluke"}
+    # byArtist is a list so a release can credit more than one artist.
+    assert data["byArtist"] == [{"@type": "MusicGroup", "name": "Fluke"}]
     names = [t["name"] for t in data["track"]]
     assert "Squelch" in names
     assert "Bullet (Edit)" in names

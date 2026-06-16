@@ -11,7 +11,7 @@ from __future__ import annotations
 import datetime
 
 from django.conf import settings
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 
@@ -133,7 +133,11 @@ def post_detail(request, year, slug):
 
 @cached_page
 def discography_index(request):
-    releases = list(Release.objects.published().select_related("artist", "type"))
+    releases = list(
+        Release.objects.published()
+        .select_related("artist", "type")
+        .prefetch_related("additional_artists")
+    )
     sections = []
     for release_type in ReleaseType.objects.all():
         type_releases = [r for r in releases if r.type_id == release_type.id]
@@ -151,16 +155,23 @@ def discography_index(request):
 def artist_detail(request, artist_slug):
     artist = get_object_or_404(Artist, slug=artist_slug)
     _ensure_og(artist)
+    # Releases this artist is credited on — as the primary act or alongside it.
     releases = list(
-        artist.releases.published().select_related("artist", "type")
-    )
-    # Releases where this artist only guests. Exclude any where they're already
-    # the primary act so nothing is listed twice.
-    featured_on = list(
-        artist.featured_on.published()
-        .exclude(artist=artist)
+        Release.objects.published()
+        .filter(Q(artist=artist) | Q(additional_artists=artist))
+        .distinct()
         .select_related("artist", "type")
+        .prefetch_related("additional_artists")
     )
+    shown = {r.id for r in releases}
+    # Releases where this artist only guests, minus any already shown above.
+    featured_on = [
+        r
+        for r in artist.featured_on.published()
+        .select_related("artist", "type")
+        .prefetch_related("additional_artists")
+        if r.id not in shown
+    ]
     return render(
         request,
         "discography/artist_detail.html",
@@ -178,7 +189,9 @@ def release_detail(request, artist_slug, release_slug):
     release = get_object_or_404(
         Release.objects.published()
         .select_related("artist", "type")
-        .prefetch_related("editions__covers", "editions__tracks__lyric"),
+        .prefetch_related(
+            "additional_artists", "editions__covers", "editions__tracks__lyric"
+        ),
         artist__slug=artist_slug,
         slug=release_slug,
     )

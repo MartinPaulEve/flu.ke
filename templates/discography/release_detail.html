@@ -7,7 +7,7 @@
   <p class="kicker">{{ release.type.name }}{% if release.year %} — {{ release.year }}{% endif %}</p>
   <h1>{{ release.display_name }}</h1>
   <p class="prose byline">
-    <a href="{{ release.artist.get_absolute_url }}">{{ release.artist.name }}</a>
+    {% for a in release.all_artists %}<a href="{{ a.get_absolute_url }}">{{ a.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
     {% if release.artist.is_alias and release.artist.primary_artist %}<span class="entry__meta"> (alias of {{ release.artist.primary_artist.name }})</span>{% endif %}
   </p>
   {% if release.purchase_link %}<p class="prose"><a href="{{ release.purchase_link }}">Buy this release →</a></p>{% endif %}
