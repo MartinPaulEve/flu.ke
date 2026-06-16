@@ -1,3 +1,13 @@
+## 1.23.0 (2026-06-16)
+
+### Feat
+
+- **blog**: style blockquotes in prose with a red left bar
+
+### Fix
+
+- **resources**: let the description fill the width, not the prose measure
+
 ## 1.22.0 (2026-06-16)
 
 ### Feat
