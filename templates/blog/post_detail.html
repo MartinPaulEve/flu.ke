@@ -15,6 +15,11 @@
       <div class="prose">{{ post.body|markdownify }}</div>
     </div>
     <aside class="article__rail">
+      {% if post.credit %}
+        <div class="rail__group">
+          <p class="rail__credit">Thanks for this post to {{ post.credit }}</p>
+        </div>
+      {% endif %}
       {% if post.categories.all %}
         <div class="rail__group">
           <h2 class="rail__title">Filed under</h2>

@@ -61,6 +61,13 @@ class Post(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     published_at = models.DateTimeField(null=True, blank=True)
     is_published = models.BooleanField(default=False)
     cover_image = models.ImageField(upload_to="blog/", blank=True)
+    credit = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Thanks to",
+        help_text="Who tipped off / supplied this post; shown as a 'Thanks for "
+        "this post to …' note at the top of the sidebar.",
+    )
     categories = models.ManyToManyField(Category, blank=True, related_name="posts")
     tags = models.ManyToManyField(Tag, blank=True, related_name="posts")
     # Discography links surfaced in the post's side rail. Optional, set per post.

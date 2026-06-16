@@ -316,6 +316,11 @@ time { font-variant-numeric: tabular-nums; }
   font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.14em;
   color: var(--muted);
 }
+/* "Thanks for this post to …" note pinned at the top of the rail. */
+.rail__credit {
+  font-size: var(--step--1); line-height: 1.5; color: var(--muted);
+  border-left: 3px solid var(--accent); padding-left: 0.9rem;
+}
 
 @media (min-width: 60rem) {
   .article__body {

@@ -34,7 +34,7 @@ class PostAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     )
     date_hierarchy = "published_at"
     fieldsets = (
-        (None, {"fields": ("title", "slug", "excerpt", "body", "cover_image")}),
+        (None, {"fields": ("title", "slug", "excerpt", "body", "cover_image", "credit")}),
         ("Publishing", {"fields": ("is_published", "published_at", "categories", "tags")}),
         (
             "Related",
