@@ -54,6 +54,10 @@ body::after {
 /* ---------- layout ---------- */
 .wrap { width: min(100% - var(--gutter) * 2, 1320px); margin-inline: auto; }
 .prose { max-width: var(--measure); }
+/* Fills the available width instead of capping at the readability measure (e.g.
+   a resource description). Still bounded by its wrap, so it shrinks with the
+   viewport; long tokens break so it never pushes the page wider. */
+.prose--full { max-width: none; overflow-wrap: anywhere; }
 .prose > * + * { margin-top: 1em; }
 .prose a { color: var(--link); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.18em; text-decoration-thickness: 2px; }
 

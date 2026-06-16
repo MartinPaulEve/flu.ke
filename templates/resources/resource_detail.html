@@ -17,7 +17,7 @@
       {% if resource.source_attribution %}<li><span class="resource-meta__label">Source</span> {{ resource.source_attribution }}</li>{% endif %}
     </ul>
   {% endif %}
-  <div class="prose">{{ resource.description|markdownify }}</div>
+  <div class="prose prose--full">{{ resource.description|markdownify }}</div>
 
   {% if resource.files.all %}
     <h2 style="margin-top:2.5rem">Files</h2>
