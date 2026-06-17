@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.shortcuts import render
 
-from apps.core.admin import OgCacheAdminMixin
+from apps.core.admin import OgCacheAdminMixin, PublishActionsMixin
 from apps.core.cache import invalidate_site_cache
 
 from .forms import ResourceAdminForm
@@ -65,8 +65,9 @@ class ResourceSubcategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Resource)
-class ResourceAdmin(OgCacheAdminMixin, admin.ModelAdmin):
+class ResourceAdmin(OgCacheAdminMixin, PublishActionsMixin, admin.ModelAdmin):
     form = ResourceAdminForm
+    actions = [*OgCacheAdminMixin.actions, "mark_published", "mark_unpublished"]
     list_display = ("title", "snippet", "kind", "subcategory", "is_published", "uploaded_at")
     list_filter = ("kind", "is_published", "subcategory")
     search_fields = ("title", "snippet", "description", "contributor")

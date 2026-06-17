@@ -103,6 +103,27 @@ class OgCacheAdminMixin:
         self.message_user(request, "Invalidated the entire site cache.")
 
 
+class PublishActionsMixin:
+    """Bulk publish/unpublish changelist actions for models with ``is_published``.
+
+    ``queryset.update()`` bypasses the post_save signal that flushes the page
+    cache, so these invalidate the whole site cache after toggling. List the
+    actions in the admin's ``actions`` (alongside any inherited from
+    ``OgCacheAdminMixin``)."""
+
+    @admin.action(description="Mark selected as published")
+    def mark_published(self, request, queryset):
+        count = queryset.update(is_published=True)
+        invalidate_site_cache()
+        self.message_user(request, f"Marked {count} item(s) as published.")
+
+    @admin.action(description="Mark selected as unpublished")
+    def mark_unpublished(self, request, queryset):
+        count = queryset.update(is_published=False)
+        invalidate_site_cache()
+        self.message_user(request, f"Marked {count} item(s) as unpublished.")
+
+
 @admin.register(SiteConfiguration)
 class SiteConfigurationAdmin(OgCacheAdminMixin, admin.ModelAdmin):
     """Singleton admin: the changelist jumps straight to editing the one row, which

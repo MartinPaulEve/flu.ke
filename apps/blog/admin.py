@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.db import models
 from tinymce.widgets import TinyMCE
 
-from apps.core.admin import OgCacheAdminMixin
+from apps.core.admin import OgCacheAdminMixin, PublishActionsMixin
 
 from .models import Category, Post, Tag
 
@@ -22,9 +22,10 @@ class TagAdmin(admin.ModelAdmin):
 
 
 @admin.register(Post)
-class PostAdmin(OgCacheAdminMixin, admin.ModelAdmin):
-    list_display = ("title", "published_at", "is_published", "import_confidence")
-    list_filter = ("is_published", "import_confidence", "categories")
+class PostAdmin(OgCacheAdminMixin, PublishActionsMixin, admin.ModelAdmin):
+    actions = [*OgCacheAdminMixin.actions, "mark_published", "mark_unpublished"]
+    list_display = ("title", "published_at", "is_published", "credit")
+    list_filter = ("is_published", "categories")
     search_fields = ("title", "excerpt", "body")
     prepopulated_fields = {"slug": ("title",)}
     # Rich-text editing for the Body and Excerpt text fields.
