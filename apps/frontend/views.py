@@ -14,6 +14,7 @@ from django.conf import settings
 from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
 from apps.blog.models import Category, Post
 from apps.core.cache import cached_page
@@ -180,6 +181,7 @@ def artist_detail(request, artist_slug):
             "releases": releases,
             "featured_on": featured_on,
             "edit_object": artist,
+            "api_url": reverse("artist-detail", kwargs={"slug": artist.slug}),
         },
     )
 
@@ -200,7 +202,12 @@ def release_detail(request, artist_slug, release_slug):
     return render(
         request,
         "discography/release_detail.html",
-        {"release": release, "jsonld": jsonld, "edit_object": release},
+        {
+            "release": release,
+            "jsonld": jsonld,
+            "edit_object": release,
+            "api_url": reverse("release-detail", kwargs={"slug": release.slug}),
+        },
     )
 
 
@@ -223,7 +230,11 @@ def lyric_detail(request, slug):
     return render(
         request,
         "discography/lyric_detail.html",
-        {"lyric": lyric, "edit_object": lyric},
+        {
+            "lyric": lyric,
+            "edit_object": lyric,
+            "api_url": reverse("lyric-detail", kwargs={"slug": lyric.slug}),
+        },
     )
 
 
