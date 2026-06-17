@@ -1,3 +1,9 @@
+## 1.27.0 (2026-06-17)
+
+### Feat
+
+- **api**: add a 'collection' link to every API object
+
 ## 1.26.0 (2026-06-17)
 
 ### Feat
