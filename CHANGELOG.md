@@ -1,3 +1,13 @@
+## 1.25.0 (2026-06-17)
+
+### Feat
+
+- **blog**: add a 'thanks to' credit at the top of the post sidebar
+
+### Fix
+
+- **discography**: keep shared recordings on every edition in a MB import
+
 ## 1.24.2 (2026-06-16)
 
 ### Fix
