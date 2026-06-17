@@ -8,6 +8,7 @@ artists and lyrics by slug + name only, never recursing back into releases.
 """
 
 from rest_framework import serializers
+from rest_framework.reverse import reverse as drf_reverse
 
 from apps.discography.models import (
     Artist,
@@ -18,6 +19,49 @@ from apps.discography.models import (
     ReleaseType,
     Track,
 )
+
+HAL_JSON = "application/hal+json"
+TEXT_HTML = "text/html"
+
+
+def _api_link(view_name, kwargs, request):
+    """Build a HAL link object pointing at an absolute API detail endpoint."""
+    return {
+        "href": drf_reverse(view_name, kwargs=kwargs, request=request),
+        "type": HAL_JSON,
+    }
+
+
+def _self_link(view_name, kwargs, request):
+    """The object's own API detail endpoint."""
+    return _api_link(view_name, kwargs, request)
+
+
+def _alternate_link(obj, request):
+    """The object's public HTML page (for objects with ``get_absolute_url``)."""
+    path = obj.get_absolute_url()
+    href = request.build_absolute_uri(path) if request else path
+    return {"href": href, "type": TEXT_HTML}
+
+
+class HALLinksMixin:
+    """Adds request-aware ``_links`` behaviour to a serializer.
+
+    Subclasses declare ``_links = serializers.SerializerMethodField(
+    method_name="get_links")`` (and add ``"_links"`` to their ``fields``) and
+    implement :meth:`build_links` to return the dict of link objects. This mixin
+    wires up the method and exposes the request from the serializer context.
+    """
+
+    @property
+    def _request(self):
+        return self.context.get("request")
+
+    def get_links(self, obj):
+        return self.build_links(obj, self._request)
+
+    def build_links(self, obj, request):  # pragma: no cover - overridden
+        raise NotImplementedError
 
 
 class AbsoluteURLField(serializers.CharField):
@@ -40,31 +84,55 @@ class AbsoluteURLField(serializers.CharField):
         return request.build_absolute_uri(path) if request else path
 
 
-class ArtistRefSerializer(serializers.ModelSerializer):
+class ArtistRefSerializer(HALLinksMixin, serializers.ModelSerializer):
     """Compact artist reference used when nesting inside other payloads."""
+
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Artist
-        fields = ["slug", "name"]
+        fields = ["slug", "name", "_links"]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("artist-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
 
 
-class LyricRefSerializer(serializers.ModelSerializer):
+class LyricRefSerializer(HALLinksMixin, serializers.ModelSerializer):
     """Compact lyric reference (slug + title) used inside tracks."""
+
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Lyric
-        fields = ["slug", "title"]
+        fields = ["slug", "title", "_links"]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("lyric-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
 
 
-class ReleaseTypeRefSerializer(serializers.ModelSerializer):
+class ReleaseTypeRefSerializer(HALLinksMixin, serializers.ModelSerializer):
+    _links = serializers.SerializerMethodField(method_name="get_links")
+
     class Meta:
         model = ReleaseType
-        fields = ["name"]
+        fields = ["name", "_links"]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("releasetype-detail", {"pk": obj.pk}, request),
+        }
 
 
-class ArtistSerializer(serializers.ModelSerializer):
+class ArtistSerializer(HALLinksMixin, serializers.ModelSerializer):
     primary_artist = ArtistRefSerializer(read_only=True)
     url = AbsoluteURLField(source="get_absolute_url")
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Artist
@@ -76,29 +144,51 @@ class ArtistSerializer(serializers.ModelSerializer):
             "primary_artist",
             "biography",
             "url",
+            "_links",
         ]
 
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("artist-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
 
-class ReleaseTypeSerializer(serializers.ModelSerializer):
+
+class ReleaseTypeSerializer(HALLinksMixin, serializers.ModelSerializer):
+    _links = serializers.SerializerMethodField(method_name="get_links")
+
     class Meta:
         model = ReleaseType
-        fields = ["id", "name", "display_order"]
+        fields = ["id", "name", "display_order", "_links"]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("releasetype-detail", {"pk": obj.pk}, request),
+        }
 
 
-class LyricSerializer(serializers.ModelSerializer):
+class LyricSerializer(HALLinksMixin, serializers.ModelSerializer):
     artist = ArtistRefSerializer(read_only=True)
     url = AbsoluteURLField(source="get_absolute_url")
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Lyric
-        fields = ["id", "slug", "title", "artist", "lyrics", "comments", "url"]
+        fields = ["id", "slug", "title", "artist", "lyrics", "comments", "url", "_links"]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("lyric-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
 
 
-class TrackSerializer(serializers.ModelSerializer):
+class TrackSerializer(HALLinksMixin, serializers.ModelSerializer):
     remixer = ArtistRefSerializer(read_only=True)
     lyric = LyricRefSerializer(read_only=True)
     sample = serializers.FileField(read_only=True)
     display_title = serializers.CharField(read_only=True)
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Track
@@ -115,11 +205,24 @@ class TrackSerializer(serializers.ModelSerializer):
             "lyric",
             "display_order",
             "edition",
+            "_links",
         ]
 
+    def build_links(self, obj, request):
+        links = {
+            "self": _self_link("track-detail", {"pk": obj.pk}, request),
+            "edition": _self_link("edition-detail", {"pk": obj.edition_id}, request),
+        }
+        if obj.lyric_id:
+            links["lyric"] = _self_link(
+                "lyric-detail", {"slug": obj.lyric.slug}, request
+            )
+        return links
 
-class CoverImageSerializer(serializers.ModelSerializer):
+
+class CoverImageSerializer(HALLinksMixin, serializers.ModelSerializer):
     image = serializers.ImageField(read_only=True)
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = CoverImage
@@ -132,12 +235,20 @@ class CoverImageSerializer(serializers.ModelSerializer):
             "source_url",
             "display_order",
             "edition",
+            "_links",
         ]
 
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("coverimage-detail", {"pk": obj.pk}, request),
+            "edition": _self_link("edition-detail", {"pk": obj.edition_id}, request),
+        }
 
-class EditionSerializer(serializers.ModelSerializer):
+
+class EditionSerializer(HALLinksMixin, serializers.ModelSerializer):
     tracks = TrackSerializer(many=True, read_only=True)
     covers = CoverImageSerializer(many=True, read_only=True)
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Edition
@@ -153,10 +264,19 @@ class EditionSerializer(serializers.ModelSerializer):
             "display_order",
             "tracks",
             "covers",
+            "_links",
         ]
 
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("edition-detail", {"pk": obj.pk}, request),
+            "release": _self_link(
+                "release-detail", {"slug": obj.release.slug}, request
+            ),
+        }
 
-class ReleaseSerializer(serializers.ModelSerializer):
+
+class ReleaseSerializer(HALLinksMixin, serializers.ModelSerializer):
     """Compact release serializer for list endpoints."""
 
     artist = ArtistRefSerializer(read_only=True)
@@ -164,6 +284,7 @@ class ReleaseSerializer(serializers.ModelSerializer):
     type = ReleaseTypeRefSerializer(read_only=True)
     display_title = serializers.CharField(read_only=True)
     url = AbsoluteURLField(source="get_absolute_url")
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Release
@@ -177,10 +298,17 @@ class ReleaseSerializer(serializers.ModelSerializer):
             "artists",
             "type",
             "url",
+            "_links",
         ]
 
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("release-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
 
-class ReleaseDetailSerializer(serializers.ModelSerializer):
+
+class ReleaseDetailSerializer(HALLinksMixin, serializers.ModelSerializer):
     """Full release payload nesting editions -> tracks + covers."""
 
     artist = ArtistRefSerializer(read_only=True)
@@ -189,6 +317,7 @@ class ReleaseDetailSerializer(serializers.ModelSerializer):
     display_title = serializers.CharField(read_only=True)
     url = AbsoluteURLField(source="get_absolute_url")
     editions = EditionSerializer(many=True, read_only=True)
+    _links = serializers.SerializerMethodField(method_name="get_links")
 
     class Meta:
         model = Release
@@ -205,4 +334,11 @@ class ReleaseDetailSerializer(serializers.ModelSerializer):
             "purchase_link",
             "url",
             "editions",
+            "_links",
         ]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("release-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
