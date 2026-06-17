@@ -1,3 +1,9 @@
+## 1.25.1 (2026-06-17)
+
+### Fix
+
+- **api**: return absolute URLs from serializer url fields
+
 ## 1.25.0 (2026-06-17)
 
 ### Feat
