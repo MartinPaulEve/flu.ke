@@ -1,3 +1,9 @@
+## 1.28.0 (2026-06-17)
+
+### Feat
+
+- **api**: move the API to /api/ and add resources, pages and news sections
+
 ## 1.27.0 (2026-06-17)
 
 ### Feat
