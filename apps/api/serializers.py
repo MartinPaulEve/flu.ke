@@ -10,6 +10,7 @@ artists and lyrics by slug + name only, never recursing back into releases.
 from rest_framework import serializers
 from rest_framework.reverse import reverse as drf_reverse
 
+from apps.blog.models import Category, Post, Tag
 from apps.discography.models import (
     Artist,
     CoverImage,
@@ -19,6 +20,8 @@ from apps.discography.models import (
     ReleaseType,
     Track,
 )
+from apps.pages.models import Page
+from apps.resources.models import Resource, ResourceFile
 
 HAL_JSON = "application/hal+json"
 TEXT_HTML = "text/html"
@@ -356,5 +359,122 @@ class ReleaseDetailSerializer(HALLinksMixin, serializers.ModelSerializer):
     def build_links(self, obj, request):
         return {
             "self": _self_link("release-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
+
+
+# --- resources -------------------------------------------------------------
+
+class ResourceFileSerializer(serializers.ModelSerializer):
+    """A downloadable file (or remote link) belonging to a resource."""
+
+    display_name = serializers.CharField(read_only=True)
+    is_external = serializers.BooleanField(read_only=True)
+    download_url = serializers.SerializerMethodField()
+    byte_size = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ResourceFile
+        fields = [
+            "id", "display_name", "file_kind", "download_url",
+            "is_external", "byte_size", "display_order",
+        ]
+
+    def get_download_url(self, obj):
+        url = obj.download_url
+        request = self.context.get("request")
+        if url and url.startswith("/") and request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def get_byte_size(self, obj):
+        return obj.display_byte_size
+
+
+class ResourceSerializer(HALLinksMixin, serializers.ModelSerializer):
+    """Full resource payload (official material / fan resources)."""
+
+    artist = ArtistRefSerializer(read_only=True)
+    artists = ArtistRefSerializer(source="all_artists", many=True, read_only=True)
+    kind_display = serializers.CharField(source="get_kind_display", read_only=True)
+    subcategory = serializers.SerializerMethodField()
+    snippet = serializers.CharField(source="display_snippet", read_only=True)
+    files = ResourceFileSerializer(many=True, read_only=True)
+    url = AbsoluteURLField(source="get_absolute_url")
+    _links = serializers.SerializerMethodField(method_name="get_links")
+
+    class Meta:
+        model = Resource
+        fields = [
+            "id", "slug", "title", "kind", "kind_display", "subcategory", "snippet",
+            "description", "artist", "artists", "contributor", "source_attribution",
+            "license", "recorded_date", "released_date", "external_url", "files",
+            "url", "_links",
+        ]
+
+    def get_subcategory(self, obj):
+        return obj.subcategory.name if obj.subcategory_id else None
+
+    def build_links(self, obj, request):
+        links = {
+            "self": _self_link("resource-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
+        if obj.related_release_id:
+            links["release"] = _self_link(
+                "release-detail", {"slug": obj.related_release.slug}, request
+            )
+        return links
+
+
+# --- pages -----------------------------------------------------------------
+
+class PageSerializer(HALLinksMixin, serializers.ModelSerializer):
+    url = AbsoluteURLField(source="get_absolute_url")
+    _links = serializers.SerializerMethodField(method_name="get_links")
+
+    class Meta:
+        model = Page
+        fields = ["id", "slug", "title", "body", "menu_order", "url", "_links"]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("page-detail", {"slug": obj.slug}, request),
+            "alternate": _alternate_link(obj, request),
+        }
+
+
+# --- news (blog posts) -----------------------------------------------------
+
+class CategoryRefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["slug", "name"]
+
+
+class TagRefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ["slug", "name"]
+
+
+class PostSerializer(HALLinksMixin, serializers.ModelSerializer):
+    categories = CategoryRefSerializer(many=True, read_only=True)
+    tags = TagRefSerializer(many=True, read_only=True)
+    cover_image = serializers.ImageField(read_only=True)
+    related_releases = ReleaseSerializer(many=True, read_only=True)
+    url = AbsoluteURLField(source="get_absolute_url")
+    _links = serializers.SerializerMethodField(method_name="get_links")
+
+    class Meta:
+        model = Post
+        fields = [
+            "id", "slug", "title", "excerpt", "body", "published_at", "credit",
+            "categories", "tags", "cover_image", "related_releases", "url", "_links",
+        ]
+
+    def build_links(self, obj, request):
+        return {
+            "self": _self_link("post-detail", {"slug": obj.slug}, request),
             "alternate": _alternate_link(obj, request),
         }

@@ -82,29 +82,29 @@ def _assert_absolute(href):
 def test_objects_link_to_their_collection(client, discography):
     """Every object carries a 'collection' link to its own list endpoint, so a
     client can navigate from any item up to the full list."""
-    body = client.get(f"/discography/api/releases/{discography['published'].slug}/").json()
+    body = client.get(f"/api/discography/releases/{discography['published'].slug}/").json()
 
     release_coll = body["_links"]["collection"]
     _assert_absolute(release_coll["href"])
-    assert release_coll["href"].endswith("/discography/api/releases/")
+    assert release_coll["href"].endswith("/api/discography/releases/")
     assert release_coll["type"] == "application/hal+json"
 
     edition = body["editions"][0]
-    assert edition["_links"]["collection"]["href"].endswith("/discography/api/editions/")
+    assert edition["_links"]["collection"]["href"].endswith("/api/discography/editions/")
 
     track = edition["tracks"][0]
-    assert track["_links"]["collection"]["href"].endswith("/discography/api/tracks/")
+    assert track["_links"]["collection"]["href"].endswith("/api/discography/tracks/")
 
     cover = edition["covers"][0]
-    assert cover["_links"]["collection"]["href"].endswith("/discography/api/cover-images/")
+    assert cover["_links"]["collection"]["href"].endswith("/api/discography/cover-images/")
 
 
 def test_artist_and_lyric_link_to_their_collections(client, discography):
-    artist = client.get(f"/discography/api/artists/{discography['fluke'].slug}/").json()
-    assert artist["_links"]["collection"]["href"].endswith("/discography/api/artists/")
+    artist = client.get(f"/api/discography/artists/{discography['fluke'].slug}/").json()
+    assert artist["_links"]["collection"]["href"].endswith("/api/discography/artists/")
 
-    lyric = client.get(f"/discography/api/lyrics/{discography['lyric'].slug}/").json()
-    assert lyric["_links"]["collection"]["href"].endswith("/discography/api/lyrics/")
+    lyric = client.get(f"/api/discography/lyrics/{discography['lyric'].slug}/").json()
+    assert lyric["_links"]["collection"]["href"].endswith("/api/discography/lyrics/")
 
 
 # --- Release detail tree ----------------------------------------------------
@@ -112,12 +112,12 @@ def test_artist_and_lyric_link_to_their_collections(client, discography):
 
 def test_release_detail_has_self_and_alternate_links(client, discography):
     release = discography["published"]
-    body = client.get(f"/discography/api/releases/{release.slug}/").json()
+    body = client.get(f"/api/discography/releases/{release.slug}/").json()
 
     links = body["_links"]
     _assert_absolute(links["self"]["href"])
     assert links["self"]["href"].endswith(
-        f"/discography/api/releases/{release.slug}/"
+        f"/api/discography/releases/{release.slug}/"
     )
     assert links["self"]["type"] == HAL
 
@@ -129,19 +129,19 @@ def test_release_detail_has_self_and_alternate_links(client, discography):
 def test_nested_edition_has_self_and_release_backlink(client, discography):
     release = discography["published"]
     edition = discography["edition"]
-    body = client.get(f"/discography/api/releases/{release.slug}/").json()
+    body = client.get(f"/api/discography/releases/{release.slug}/").json()
 
     ed = body["editions"][0]
     links = ed["_links"]
     _assert_absolute(links["self"]["href"])
     assert links["self"]["href"].endswith(
-        f"/discography/api/editions/{edition.id}/"
+        f"/api/discography/editions/{edition.id}/"
     )
     assert links["self"]["type"] == HAL
 
     _assert_absolute(links["release"]["href"])
     assert links["release"]["href"].endswith(
-        f"/discography/api/releases/{release.slug}/"
+        f"/api/discography/releases/{release.slug}/"
     )
     assert links["release"]["type"] == HAL
 
@@ -151,21 +151,21 @@ def test_nested_track_has_self_edition_and_lyric_links(client, discography):
     edition = discography["edition"]
     track = discography["track"]
     lyric = discography["lyric"]
-    body = client.get(f"/discography/api/releases/{release.slug}/").json()
+    body = client.get(f"/api/discography/releases/{release.slug}/").json()
 
     tr = body["editions"][0]["tracks"][0]
     links = tr["_links"]
     _assert_absolute(links["self"]["href"])
-    assert links["self"]["href"].endswith(f"/discography/api/tracks/{track.id}/")
+    assert links["self"]["href"].endswith(f"/api/discography/tracks/{track.id}/")
     assert links["self"]["type"] == HAL
 
     assert links["edition"]["href"].endswith(
-        f"/discography/api/editions/{edition.id}/"
+        f"/api/discography/editions/{edition.id}/"
     )
     assert links["edition"]["type"] == HAL
 
     assert links["lyric"]["href"].endswith(
-        f"/discography/api/lyrics/{lyric.slug}/"
+        f"/api/discography/lyrics/{lyric.slug}/"
     )
     assert links["lyric"]["type"] == HAL
 
@@ -174,18 +174,18 @@ def test_nested_cover_has_self_and_edition_link(client, discography):
     release = discography["published"]
     edition = discography["edition"]
     cover = discography["cover"]
-    body = client.get(f"/discography/api/releases/{release.slug}/").json()
+    body = client.get(f"/api/discography/releases/{release.slug}/").json()
 
     cv = body["editions"][0]["covers"][0]
     links = cv["_links"]
     _assert_absolute(links["self"]["href"])
     assert links["self"]["href"].endswith(
-        f"/discography/api/cover-images/{cover.id}/"
+        f"/api/discography/cover-images/{cover.id}/"
     )
     assert links["self"]["type"] == HAL
 
     assert links["edition"]["href"].endswith(
-        f"/discography/api/editions/{edition.id}/"
+        f"/api/discography/editions/{edition.id}/"
     )
     assert links["edition"]["type"] == HAL
 
@@ -198,12 +198,12 @@ def test_track_without_lyric_omits_lyric_link(client, discography):
     track.lyric = None
     track.save()
 
-    body = client.get(f"/discography/api/tracks/{track.id}/").json()
+    body = client.get(f"/api/discography/tracks/{track.id}/").json()
     links = body["_links"]
     assert "lyric" not in links
     assert links["self"]["type"] == HAL
     assert links["edition"]["href"].endswith(
-        f"/discography/api/editions/{discography['edition'].id}/"
+        f"/api/discography/editions/{discography['edition'].id}/"
     )
 
 
@@ -212,11 +212,11 @@ def test_track_without_lyric_omits_lyric_link(client, discography):
 
 def test_artist_detail_has_self_and_alternate(client, discography):
     fluke = discography["fluke"]
-    body = client.get(f"/discography/api/artists/{fluke.slug}/").json()
+    body = client.get(f"/api/discography/artists/{fluke.slug}/").json()
 
     links = body["_links"]
     _assert_absolute(links["self"]["href"])
-    assert links["self"]["href"].endswith(f"/discography/api/artists/{fluke.slug}/")
+    assert links["self"]["href"].endswith(f"/api/discography/artists/{fluke.slug}/")
     assert links["self"]["type"] == HAL
 
     _assert_absolute(links["alternate"]["href"])
@@ -226,11 +226,11 @@ def test_artist_detail_has_self_and_alternate(client, discography):
 
 def test_lyric_detail_has_self_and_alternate(client, discography):
     lyric = discography["lyric"]
-    body = client.get(f"/discography/api/lyrics/{lyric.slug}/").json()
+    body = client.get(f"/api/discography/lyrics/{lyric.slug}/").json()
 
     links = body["_links"]
     _assert_absolute(links["self"]["href"])
-    assert links["self"]["href"].endswith(f"/discography/api/lyrics/{lyric.slug}/")
+    assert links["self"]["href"].endswith(f"/api/discography/lyrics/{lyric.slug}/")
     assert links["self"]["type"] == HAL
 
     _assert_absolute(links["alternate"]["href"])
@@ -243,11 +243,11 @@ def test_lyric_detail_has_self_and_alternate(client, discography):
 
 def test_release_type_detail_has_self_only(client, discography):
     rt = discography["album"]
-    body = client.get(f"/discography/api/release-types/{rt.id}/").json()
+    body = client.get(f"/api/discography/release-types/{rt.id}/").json()
 
     links = body["_links"]
     assert links["self"]["href"].endswith(
-        f"/discography/api/release-types/{rt.id}/"
+        f"/api/discography/release-types/{rt.id}/"
     )
     assert links["self"]["type"] == HAL
     assert "alternate" not in links

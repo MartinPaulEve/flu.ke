@@ -10,7 +10,11 @@ and are exposed unfiltered.
 import django_filters
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+from rest_framework.views import APIView
 
+from apps.blog.models import Post
 from apps.discography.models import (
     Artist,
     CoverImage,
@@ -20,15 +24,20 @@ from apps.discography.models import (
     ReleaseType,
     Track,
 )
+from apps.pages.models import Page
+from apps.resources.models import Resource
 
 from .serializers import (
     ArtistSerializer,
     CoverImageSerializer,
     EditionSerializer,
     LyricSerializer,
+    PageSerializer,
+    PostSerializer,
     ReleaseDetailSerializer,
     ReleaseSerializer,
     ReleaseTypeSerializer,
+    ResourceSerializer,
     TrackSerializer,
 )
 
@@ -130,3 +139,59 @@ class CoverImageViewSet(PublicReadOnlyViewSet):
     filterset_fields = {"edition": ["exact"], "kind": ["exact"]}
     ordering_fields = ["display_order"]
     ordering = ["display_order"]
+
+
+# --- other content sections -----------------------------------------------
+
+class ResourceViewSet(PublicReadOnlyViewSet):
+    queryset = (
+        Resource.objects.published()
+        .select_related("artist", "subcategory", "related_release")
+        .prefetch_related("files", "additional_artists")
+    )
+    serializer_class = ResourceSerializer
+    lookup_field = "slug"
+    filterset_fields = {"kind": ["exact"]}
+    search_fields = ["title"]
+    ordering_fields = ["uploaded_at", "title"]
+    ordering = ["-uploaded_at"]
+
+
+class PageViewSet(PublicReadOnlyViewSet):
+    queryset = Page.objects.published()
+    serializer_class = PageSerializer
+    lookup_field = "slug"
+    ordering_fields = ["menu_order", "title"]
+    ordering = ["menu_order", "title"]
+
+
+class PostViewSet(PublicReadOnlyViewSet):
+    serializer_class = PostSerializer
+    lookup_field = "slug"
+    search_fields = ["title", "excerpt"]
+    ordering_fields = ["published_at", "title"]
+    ordering = ["-published_at"]
+
+    def get_queryset(self):
+        # Evaluated per request: Post.published() filters published_at <= now(),
+        # so it must not be frozen at import time on a class attribute.
+        return Post.objects.published().prefetch_related(
+            "categories", "tags", "related_releases__artist"
+        )
+
+
+class ApiRootView(APIView):
+    """The API entry point: links to each content section."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        return Response(
+            {
+                "discography": reverse("discography-root", request=request),
+                "resources": reverse("resource-list", request=request),
+                "pages": reverse("page-list", request=request),
+                "news": reverse("post-list", request=request),
+            }
+        )

@@ -1,9 +1,9 @@
 """Root URL configuration.
 
 Django serves everything live: the admin (private editing), the read-only REST
-API under ``/discography/api/``, and the public site (``apps.frontend``). The
-frontend is included last because it owns the ``/<slug>/`` page catch-all; the
-more specific ``discography/api/`` include is therefore matched first.
+API under ``/api/``, and the public site (``apps.frontend``). The frontend is
+included last because it owns the ``/<slug>/`` page catch-all; the more specific
+``api/`` include is therefore matched first.
 """
 
 from django.conf import settings
@@ -14,7 +14,7 @@ from django.views.static import serve
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("tinymce/", include("tinymce.urls")),
-    path("discography/api/", include("apps.api.urls")),
+    path("api/", include("apps.api.urls")),
 ]
 
 # Serve uploaded media. In production a front web server should serve /media/

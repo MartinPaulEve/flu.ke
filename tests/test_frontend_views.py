@@ -158,12 +158,12 @@ def test_hero_second_sentence_has_four_destination_links(client, homepage_artist
     assert 'href="/resources/#fan"' in body
 
 
-def test_footer_links_to_discography_api(client):
+def test_footer_links_to_the_api(client):
     response = client.get("/")
     assert response.status_code == 200
     body = response.content.decode()
-    assert 'href="/discography/api/"' in body
-    assert "Discography API" in body
+    assert 'href="/api/"' in body
+    assert ">API</a>" in body
 
 
 def test_news_list_shows_published_posts_only(client, seeded):

@@ -93,7 +93,11 @@ def landing(request):
 @cached_page
 def post_list(request):
     posts = list(Post.objects.published().prefetch_related("categories", "tags"))
-    return render(request, "blog/post_list.html", {"posts": posts, "edit_changelist": Post})
+    return render(
+        request,
+        "blog/post_list.html",
+        {"posts": posts, "edit_changelist": Post, "api_url": reverse("post-list")},
+    )
 
 
 @cached_page
@@ -103,7 +107,12 @@ def post_category(request, slug):
     return render(
         request,
         "blog/post_list.html",
-        {"posts": posts, "category": category, "edit_object": category},
+        {
+            "posts": posts,
+            "category": category,
+            "edit_object": category,
+            "api_url": reverse("post-list"),
+        },
     )
 
 
@@ -128,6 +137,7 @@ def post_detail(request, year, slug):
             "related_artists": related_artists,
             "related_resources": related_resources,
             "edit_object": post,
+            "api_url": reverse("post-detail", kwargs={"slug": post.slug}),
         },
     )
 
@@ -148,7 +158,12 @@ def discography_index(request):
     return render(
         request,
         "discography/index.html",
-        {"sections": sections, "has_lyrics": has_lyrics, "edit_changelist": Release},
+        {
+            "sections": sections,
+            "has_lyrics": has_lyrics,
+            "edit_changelist": Release,
+            "api_url": reverse("discography-root"),
+        },
     )
 
 
@@ -278,6 +293,7 @@ def resource_list(request):
             "sections": sections,
             "linkable_artist_ids": linkable_artists,
             "edit_changelist": Resource,
+            "api_url": reverse("resource-list"),
         },
     )
 
@@ -301,6 +317,7 @@ def resource_detail(request, kind, slug):
             "resource": resource,
             "linkable_artist_ids": linkable_artists,
             "edit_object": resource,
+            "api_url": reverse("resource-detail", kwargs={"slug": resource.slug}),
         },
     )
 
@@ -309,7 +326,15 @@ def resource_detail(request, kind, slug):
 def page_detail(request, slug):
     page = get_object_or_404(Page.objects.published(), slug=slug)
     _ensure_og(page)
-    return render(request, "pages/page_detail.html", {"page": page, "edit_object": page})
+    return render(
+        request,
+        "pages/page_detail.html",
+        {
+            "page": page,
+            "edit_object": page,
+            "api_url": reverse("page-detail", kwargs={"slug": page.slug}),
+        },
+    )
 
 
 def robots_txt(request):

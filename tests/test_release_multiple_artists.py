@@ -79,7 +79,7 @@ def test_release_appears_on_an_additional_artists_page(client, duo):
 
 
 def test_api_release_detail_lists_all_artists(duo):
-    resp = APIClient().get(f'/discography/api/releases/{duo["rel"].slug}/')
+    resp = APIClient().get(f'/api/discography/releases/{duo["rel"].slug}/')
     assert resp.status_code == 200
     slugs = [a["slug"] for a in resp.json()["artists"]]
     assert slugs == ["fluke", "the-crystal-method"]
