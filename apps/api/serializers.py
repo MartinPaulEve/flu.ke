@@ -44,6 +44,14 @@ def _alternate_link(obj, request):
     return {"href": href, "type": TEXT_HTML}
 
 
+def _collection_link(list_view_name, request):
+    """The list endpoint this object belongs to (RFC 6573 ``collection`` rel)."""
+    return {
+        "href": drf_reverse(list_view_name, request=request),
+        "type": HAL_JSON,
+    }
+
+
 class HALLinksMixin:
     """Adds request-aware ``_links`` behaviour to a serializer.
 
@@ -58,7 +66,15 @@ class HALLinksMixin:
         return self.context.get("request")
 
     def get_links(self, obj):
-        return self.build_links(obj, self._request)
+        request = self._request
+        links = self.build_links(obj, request)
+        # Every object also links to its own list endpoint (RFC 6573 'collection'
+        # rel), so a client can navigate from any item up to the full list. The
+        # router basenames match the model names, so "<model>-list" reverses.
+        links.setdefault(
+            "collection", _collection_link(f"{obj._meta.model_name}-list", request)
+        )
+        return links
 
     def build_links(self, obj, request):  # pragma: no cover - overridden
         raise NotImplementedError

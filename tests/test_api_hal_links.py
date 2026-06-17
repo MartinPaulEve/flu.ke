@@ -77,6 +77,36 @@ def _assert_absolute(href):
     assert href.startswith("http://") or href.startswith("https://"), href
 
 
+# --- Collection links (RFC 6573 'collection' rel) ---------------------------
+
+def test_objects_link_to_their_collection(client, discography):
+    """Every object carries a 'collection' link to its own list endpoint, so a
+    client can navigate from any item up to the full list."""
+    body = client.get(f"/discography/api/releases/{discography['published'].slug}/").json()
+
+    release_coll = body["_links"]["collection"]
+    _assert_absolute(release_coll["href"])
+    assert release_coll["href"].endswith("/discography/api/releases/")
+    assert release_coll["type"] == "application/hal+json"
+
+    edition = body["editions"][0]
+    assert edition["_links"]["collection"]["href"].endswith("/discography/api/editions/")
+
+    track = edition["tracks"][0]
+    assert track["_links"]["collection"]["href"].endswith("/discography/api/tracks/")
+
+    cover = edition["covers"][0]
+    assert cover["_links"]["collection"]["href"].endswith("/discography/api/cover-images/")
+
+
+def test_artist_and_lyric_link_to_their_collections(client, discography):
+    artist = client.get(f"/discography/api/artists/{discography['fluke'].slug}/").json()
+    assert artist["_links"]["collection"]["href"].endswith("/discography/api/artists/")
+
+    lyric = client.get(f"/discography/api/lyrics/{discography['lyric'].slug}/").json()
+    assert lyric["_links"]["collection"]["href"].endswith("/discography/api/lyrics/")
+
+
 # --- Release detail tree ----------------------------------------------------
 
 
