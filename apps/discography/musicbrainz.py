@@ -137,8 +137,21 @@ def _upsert_edition(fields, release):
 
 
 def _upsert_track(fields, edition):
+    # Idempotency is scoped to the edition. Editions in a release-group share
+    # recordings (the same recording MBID is on the CD single, the digital
+    # release, …), so a global match would let the first edition "claim" the
+    # track and leave later editions with empty tracklists. Match within the
+    # edition by recording MBID, falling back to track number when a track has none.
     mbid = fields["recording_mbid"] or None
-    track = Track.objects.filter(recording_mbid=mbid).first() if mbid else None
+    within = Track.objects.filter(edition=edition)
+    if mbid:
+        track = within.filter(recording_mbid=mbid).first()
+    elif fields["track_number"]:
+        track = within.filter(
+            recording_mbid__isnull=True, track_number=fields["track_number"]
+        ).first()
+    else:
+        track = None
     if track:
         updates = [a for a in ("name", "track_number", "length")
                    if fields[a] and getattr(track, a) != fields[a]]

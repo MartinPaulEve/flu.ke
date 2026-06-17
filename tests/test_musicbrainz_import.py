@@ -92,6 +92,32 @@ def test_sync_editions_is_idempotent():
     assert Track.objects.count() == 1
 
 
+REL_B = "44444444-4444-4444-4444-444444444444"
+
+
+@pytest.mark.django_db
+def test_recording_shared_across_editions_is_kept_on_each():
+    """Editions in a release-group share recordings; each edition must still get
+    its own copy of the track, not have it claimed by the first edition."""
+    release = _release()
+    sync_editions_for_release(
+        release,
+        [_mb_release(rel=REL_MBID, rec=REC_MBID), _mb_release(rel=REL_B, rec=REC_MBID)],
+    )
+
+    assert Edition.objects.get(mbid=REL_MBID).tracks.count() == 1
+    assert Edition.objects.get(mbid=REL_B).tracks.count() == 1
+
+
+@pytest.mark.django_db
+def test_shared_recording_import_is_idempotent_per_edition():
+    release = _release()
+    pair = [_mb_release(rel=REL_MBID, rec=REC_MBID), _mb_release(rel=REL_B, rec=REC_MBID)]
+    sync_editions_for_release(release, pair)
+    sync_editions_for_release(release, pair)
+    assert Track.objects.count() == 2  # one per edition, not duplicated
+
+
 # --- command (musicbrainzngs mocked) ----------------------------------------
 @pytest.fixture
 def mocked_mb(monkeypatch, settings):
