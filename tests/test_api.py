@@ -141,6 +141,25 @@ def test_releases_filter_by_year_no_match_is_empty(client, discography):
     assert resp.json()["results"] == []
 
 
+# --- Absolute URLs ----------------------------------------------------------
+
+def test_serializer_url_fields_are_absolute(client, discography):
+    """The browsable API only linkifies absolute http(s) URLs, so every ``url``
+    field must be fully qualified (not a relative path)."""
+    release = discography["published"]
+    lyric = discography["lyric"]
+    fluke = discography["fluke"]
+
+    list_item = client.get("/discography/api/releases/").json()["results"][0]
+    detail = client.get(f"/discography/api/releases/{release.slug}/").json()
+    artist = client.get(f"/discography/api/artists/{fluke.slug}/").json()
+    lyric_body = client.get(f"/discography/api/lyrics/{lyric.slug}/").json()
+
+    for url in (list_item["url"], detail["url"], artist["url"], lyric_body["url"]):
+        assert url.startswith("http://"), url
+        assert url.endswith(("/",))  # a full path, not a bare host
+
+
 # --- Artists ----------------------------------------------------------------
 
 def test_artist_detail_by_slug(client, discography):

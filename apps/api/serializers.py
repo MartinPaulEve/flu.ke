@@ -20,6 +20,26 @@ from apps.discography.models import (
 )
 
 
+class AbsoluteURLField(serializers.CharField):
+    """A read-only URL field that returns a fully-qualified (absolute) URI.
+
+    ``source`` should resolve to a path (e.g. ``get_absolute_url``); the field
+    makes it absolute using the request in context. This keeps the API
+    consistent with the request-aware links DRF builds for the router root, and
+    means the browsable API renders the value as a clickable link (it only
+    linkifies absolute http(s) URLs). Falls back to the path when there's no
+    request (e.g. rendering outside a view)."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("read_only", True)
+        super().__init__(**kwargs)
+
+    def to_representation(self, value):
+        path = super().to_representation(value)
+        request = self.context.get("request")
+        return request.build_absolute_uri(path) if request else path
+
+
 class ArtistRefSerializer(serializers.ModelSerializer):
     """Compact artist reference used when nesting inside other payloads."""
 
@@ -44,7 +64,7 @@ class ReleaseTypeRefSerializer(serializers.ModelSerializer):
 
 class ArtistSerializer(serializers.ModelSerializer):
     primary_artist = ArtistRefSerializer(read_only=True)
-    url = serializers.CharField(source="get_absolute_url", read_only=True)
+    url = AbsoluteURLField(source="get_absolute_url")
 
     class Meta:
         model = Artist
@@ -67,7 +87,7 @@ class ReleaseTypeSerializer(serializers.ModelSerializer):
 
 class LyricSerializer(serializers.ModelSerializer):
     artist = ArtistRefSerializer(read_only=True)
-    url = serializers.CharField(source="get_absolute_url", read_only=True)
+    url = AbsoluteURLField(source="get_absolute_url")
 
     class Meta:
         model = Lyric
@@ -143,7 +163,7 @@ class ReleaseSerializer(serializers.ModelSerializer):
     artists = ArtistRefSerializer(source="all_artists", many=True, read_only=True)
     type = ReleaseTypeRefSerializer(read_only=True)
     display_title = serializers.CharField(read_only=True)
-    url = serializers.CharField(source="get_absolute_url", read_only=True)
+    url = AbsoluteURLField(source="get_absolute_url")
 
     class Meta:
         model = Release
@@ -167,7 +187,7 @@ class ReleaseDetailSerializer(serializers.ModelSerializer):
     artists = ArtistRefSerializer(source="all_artists", many=True, read_only=True)
     type = ReleaseTypeRefSerializer(read_only=True)
     display_title = serializers.CharField(read_only=True)
-    url = serializers.CharField(source="get_absolute_url", read_only=True)
+    url = AbsoluteURLField(source="get_absolute_url")
     editions = EditionSerializer(many=True, read_only=True)
 
     class Meta:
