@@ -1,3 +1,11 @@
+## 1.26.0 (2026-06-17)
+
+### Feat
+
+- **api**: add HAL _links throughout for a fully navigable API
+- **frontend**: point the footer API link at the current item's API entry
+- **admin**: bulk publish/unpublish actions for posts and resources
+
 ## 1.25.1 (2026-06-17)
 
 ### Fix
