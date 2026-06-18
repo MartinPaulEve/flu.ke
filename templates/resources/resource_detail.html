@@ -41,6 +41,7 @@
       <p class="kicker">From the blog</p>
       <h2 id="related-post-title"><a href="{{ resource.related_post.get_absolute_url }}">{{ resource.related_post.title }}</a></h2>
       {% if resource.related_post.published_at %}<p class="entry__meta"><time datetime="{{ resource.related_post.published_at|date:'c' }}">{{ resource.related_post.published_at|date:'j M Y' }}</time></p>{% endif %}
+      {% if resource.related_post.cover_image %}<img class="related-post__cover" src="{{ resource.related_post.cover_image.url }}" alt="" loading="lazy">{% endif %}
       <div class="prose">{{ resource.related_post.body|markdownify }}</div>
       <p><a class="prose" href="{{ resource.related_post.get_absolute_url }}">Read the original post →</a></p>
     </section>
