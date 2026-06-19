@@ -118,6 +118,11 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
             "primary artist still owns the URL and grouping."
         ),
     )
+    hide_artist_list = models.BooleanField(
+        default=False,
+        verbose_name="Do not display additional artist list on discography page",
+        help_text="Drop the '(artist, …)' suffix after the title on the discography listing.",
+    )
 
     objects = PublishableQuerySet.as_manager()
 
@@ -163,9 +168,10 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     @property
     def display_title(self):
-        """Display name, suffixed with the credited artist(s) unless that's just Fluke."""
+        """Display name, suffixed with the credited artist(s) unless that's just Fluke
+        (or the release opts out via ``hide_artist_list``)."""
         names = self.artists_display
-        if names == PRIMARY_ARTIST_NAME:
+        if self.hide_artist_list or names == PRIMARY_ARTIST_NAME:
             return self.display_name
         return f"{self.display_name} ({names})"
 
