@@ -247,8 +247,10 @@ details.edition > summary {
 details.edition > summary::-webkit-details-marker { display: none; }
 details.edition > summary::before { content: "+"; color: var(--accent); font-weight: 800; }
 details.edition[open] > summary::before { content: "\2013"; }
-.tracklist { list-style: none; padding: 0 0 1rem 2rem; columns: 2; column-gap: 2.5rem; }
-.tracklist li { break-inside: avoid; padding: 0.2rem 0; color: var(--muted); }
+/* Row-major 2-column grid: 01 left, 02 right, 03 under 01 — predictable, unlike
+   balanced CSS columns which reflow oddly when track lines wrap. */
+.tracklist { list-style: none; padding: 0 0 1rem 2rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
+.tracklist li { padding: 0.2rem 0; color: var(--muted); }
 .tracklist li span { color: var(--fg); }
 .covers { display: flex; flex-wrap: wrap; gap: 0.8rem; list-style: none; padding: 0 0 1rem 2rem; }
 .covers img { width: clamp(80px, 16vw, 150px); aspect-ratio: 1; object-fit: cover; border: var(--rule) solid var(--hairline); filter: grayscale(0.2) contrast(1.05); cursor: zoom-in; }
@@ -348,7 +350,7 @@ time { font-variant-numeric: tabular-nums; }
 @media (max-width: 40rem) {
   /* One tracklist column on narrow screens so long track names have full width
      to wrap into rather than being squeezed (and overflowing) in two columns. */
-  .tracklist { columns: 1; }
+  .tracklist { grid-template-columns: 1fr; }
 }
 
 @media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }
