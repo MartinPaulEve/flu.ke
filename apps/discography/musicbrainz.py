@@ -13,7 +13,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from apps.discography.models import Edition, Release, Track
+from django.core.files.base import ContentFile
+
+from apps.discography.models import CoverImage, Edition, Release, Track
 
 _MBID = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 _URL_MBID = re.compile(rf"musicbrainz\.org/(release-group|release)/({_MBID})")
@@ -43,6 +45,7 @@ class SyncStats:
     releases: int = 0
     editions: int = 0
     tracks: int = 0
+    covers: int = 0
     notes: list = field(default_factory=list)
 
 
@@ -92,6 +95,52 @@ def map_recording(track: dict) -> dict:
         "name": recording.get("title", ""),
         "length": parse_length(recording.get("length")),
     }
+
+
+_CAA_KIND = {
+    "Front": "front",
+    "Back": "back",
+    "Medium": "cd",
+    "Booklet": "booklet",
+    "Tray": "inlay",
+    "Inlay": "inlay",
+}
+
+
+def map_cover(image: dict) -> dict:
+    """Map a Cover Art Archive image dict to CoverImage fields (no network).
+
+    The first recognised entry of ``types`` chooses the ``kind`` (else ``other``);
+    ``source_url`` is the image URL and ``display_name`` joins the types.
+    """
+    types = image.get("types") or []
+    kind = next((_CAA_KIND[t] for t in types if t in _CAA_KIND), "other")
+    return {
+        "kind": kind,
+        "source_url": image["image"],
+        "display_name": ", ".join(types) or "Cover",
+        "alt_text": ", ".join(types) or "Cover",
+    }
+
+
+def _upsert_cover(fields, data, edition):
+    """Idempotently attach a CoverImage to ``edition`` keyed by source_url."""
+    existing = CoverImage.objects.filter(
+        edition=edition, source_url=fields["source_url"]
+    ).first()
+    if existing:
+        return existing, False
+    cover = CoverImage.objects.create(
+        edition=edition,
+        kind=fields["kind"],
+        display_name=fields["display_name"],
+        source_url=fields["source_url"],
+        alt_text=fields["alt_text"],
+    )
+    cover.image.save(
+        f"{edition.id}-{fields['kind']}.jpg", ContentFile(data), save=True
+    )
+    return cover, True
 
 
 def _iter_tracks(release: dict):
@@ -179,11 +228,15 @@ def sync_editions_for_release(release, mb_releases, *, dry_run=False) -> SyncSta
         stats.editions += 1
         if dry_run:
             stats.tracks += sum(1 for _ in _iter_tracks(mb_release))
+            stats.covers += len(mb_release.get("cover-art") or [])
             continue
         edition, _ = _upsert_edition(map_release(mb_release), release)
         for track in _iter_tracks(mb_release):
             _upsert_track(map_recording(track), edition)
             stats.tracks += 1
+        for image in mb_release.get("cover-art") or []:
+            _upsert_cover(map_cover(image), image["data"], edition)
+            stats.covers += 1
     return stats
 
 

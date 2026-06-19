@@ -55,20 +55,35 @@ class Command(BaseCommand):
         prefix = "[dry-run] " if options["dry_run"] else ""
         self.stdout.write(
             self.style.SUCCESS(
-                f"{prefix}Imported {stats.editions} edition(s) and {stats.tracks} track(s) "
-                f"into “{release.name}”."
+                f"{prefix}Imported {stats.editions} edition(s), {stats.tracks} track(s) "
+                f"and {stats.covers} cover(s) into “{release.name}”."
             )
         )
 
     def _fetch(self, entity_type, mbid):
-        """Fetch the release(s) with tracklists, formats and labels (rate-limited)."""
+        """Fetch the release(s) with tracklists, formats, labels and cover art (rate-limited)."""
         includes = ["recordings", "labels", "media"]
         if entity_type == "release":
-            return [musicbrainzngs.get_release_by_id(mbid, includes=includes)["release"]]
-        group = musicbrainzngs.get_release_group_by_id(mbid, includes=["releases"])["release-group"]
-        releases = []
-        for stub in group.get("release-list", []):
-            releases.append(
+            releases = [musicbrainzngs.get_release_by_id(mbid, includes=includes)["release"]]
+        else:
+            group = musicbrainzngs.get_release_group_by_id(
+                mbid, includes=["releases"]
+            )["release-group"]
+            releases = [
                 musicbrainzngs.get_release_by_id(stub["id"], includes=includes)["release"]
-            )
+                for stub in group.get("release-list", [])
+            ]
+        for release in releases:
+            release["cover-art"] = self._fetch_cover_art(release["id"])
         return releases
+
+    def _fetch_cover_art(self, release_mbid):
+        """Fetch Cover Art Archive images (with bytes) for a release; [] if none."""
+        try:
+            images = musicbrainzngs.get_image_list(release_mbid).get("images") or []
+        except musicbrainzngs.ResponseError:
+            return []
+        return [
+            {**image, "data": musicbrainzngs.get_image(release_mbid, image["id"])}
+            for image in images
+        ]

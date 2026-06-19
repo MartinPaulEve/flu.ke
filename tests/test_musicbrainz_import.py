@@ -4,8 +4,8 @@ import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
-from apps.discography.models import Artist, Edition, Release, ReleaseType, Track
-from apps.discography.musicbrainz import parse_mbid, sync_editions_for_release
+from apps.discography.models import Artist, CoverImage, Edition, Release, ReleaseType, Track
+from apps.discography.musicbrainz import map_cover, parse_mbid, sync_editions_for_release
 
 RG = "0838c153-c193-3fcc-93db-189d9ef592d9"
 REL_MBID = "22222222-2222-2222-2222-222222222222"
@@ -37,9 +37,31 @@ def test_parse_invalid_raises():
         parse_mbid("https://example.com/not-an-id")
 
 
+# --- map_cover (pure) -------------------------------------------------------
+def test_map_cover_front():
+    fields = map_cover({"image": "http://caa/1.jpg", "types": ["Front"]})
+    assert fields["kind"] == CoverImage.KIND_FRONT
+    assert fields["source_url"] == "http://caa/1.jpg"
+    assert fields["display_name"] == "Front"
+
+
+def test_map_cover_unknown_type_is_other():
+    fields = map_cover({"image": "http://caa/2.jpg", "types": ["Spine"]})
+    assert fields["kind"] == "other"
+    assert fields["source_url"] == "http://caa/2.jpg"
+
+
+def test_map_cover_no_types_defaults_name_cover():
+    fields = map_cover({"image": "http://caa/3.jpg", "types": []})
+    assert fields["display_name"] == "Cover"
+
+
 # --- sync_editions_for_release (DB) -----------------------------------------
-def _mb_release(rel=REL_MBID, rec=REC_MBID):
-    return {
+COVER_URL = "http://caa/the-fruit/front.jpg"
+
+
+def _mb_release(rel=REL_MBID, rec=REC_MBID, cover_art=None):
+    release = {
         "id": rel,
         "date": "2003",
         "label-info-list": [{"catalog-number": "NEO123", "label": {"name": "Neo"}}],
@@ -55,6 +77,13 @@ def _mb_release(rel=REL_MBID, rec=REC_MBID):
             }
         ],
     }
+    if cover_art is not None:
+        release["cover-art"] = cover_art
+    return release
+
+
+def _cover_art(url=COVER_URL, data=b"\xff\xd8jpegbytes"):
+    return [{"image": url, "id": "1", "types": ["Front"], "data": data}]
 
 
 def _release(slug="the-fruit"):
@@ -90,6 +119,38 @@ def test_sync_editions_is_idempotent():
     sync_editions_for_release(release, [_mb_release()])
     assert Edition.objects.count() == 1
     assert Track.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_sync_editions_attaches_cover_image():
+    release = _release()
+    stats = sync_editions_for_release(release, [_mb_release(cover_art=_cover_art())])
+
+    edition = Edition.objects.get(mbid=REL_MBID)
+    cover = CoverImage.objects.get(edition=edition)
+    assert cover.kind == CoverImage.KIND_FRONT
+    assert cover.source_url == COVER_URL
+    assert bool(cover.image)
+    assert cover.image.read() == b"\xff\xd8jpegbytes"
+    assert stats.covers == 1
+
+
+@pytest.mark.django_db
+def test_sync_editions_cover_is_idempotent():
+    release = _release()
+    sync_editions_for_release(release, [_mb_release(cover_art=_cover_art())])
+    sync_editions_for_release(release, [_mb_release(cover_art=_cover_art())])
+    assert CoverImage.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_sync_editions_dry_run_counts_covers_without_saving():
+    release = _release()
+    stats = sync_editions_for_release(
+        release, [_mb_release(cover_art=_cover_art())], dry_run=True
+    )
+    assert stats.covers == 1
+    assert CoverImage.objects.count() == 0
 
 
 REL_B = "44444444-4444-4444-4444-444444444444"
@@ -132,6 +193,12 @@ def mocked_mb(monkeypatch, settings):
         lambda mbid, includes=None: {"release-group": {"id": mbid, "release-list": [{"id": REL_MBID}]}},
     )
     monkeypatch.setattr(m, "get_release_by_id", lambda mbid, includes=None: {"release": _mb_release()})
+    monkeypatch.setattr(
+        m,
+        "get_image_list",
+        lambda mbid: {"images": [{"image": COVER_URL, "id": "1", "types": ["Front"]}]},
+    )
+    monkeypatch.setattr(m, "get_image", lambda mbid, coverid: b"\xff\xd8jpegbytes")
 
 
 @pytest.mark.django_db
@@ -140,6 +207,16 @@ def test_command_imports_editions_by_slug(mocked_mb):
     call_command("musicbrainz_import", "the-fruit", f"https://musicbrainz.org/release-group/{RG}")
     assert Edition.objects.get(mbid=REL_MBID).media == '12" Vinyl'
     assert Track.objects.get(recording_mbid=REC_MBID).length == "7:00"
+
+
+@pytest.mark.django_db
+def test_command_imports_cover_art(mocked_mb):
+    _release()
+    call_command("musicbrainz_import", "the-fruit", f"https://musicbrainz.org/release-group/{RG}")
+    cover = CoverImage.objects.get(edition__mbid=REL_MBID)
+    assert cover.kind == CoverImage.KIND_FRONT
+    assert cover.source_url == COVER_URL
+    assert bool(cover.image)
 
 
 @pytest.mark.django_db
