@@ -19,7 +19,13 @@ from django.urls import reverse
 from apps.blog.models import Category, Post
 from apps.core.cache import cached_page
 from apps.core.models import SiteConfiguration
-from apps.core.seo import blog_posting_jsonld, jsonld_dumps, music_album_jsonld
+from apps.core.seo import (
+    blog_posting_jsonld,
+    discography_jsonld,
+    jsonld_dumps,
+    music_album_jsonld,
+    music_group_jsonld,
+)
 from apps.discography.models import (
     PRIMARY_ARTIST_NAME,
     Artist,
@@ -147,7 +153,7 @@ def discography_index(request):
     releases = list(
         Release.objects.published()
         .select_related("artist", "type")
-        .prefetch_related("additional_artists")
+        .prefetch_related("additional_artists", "featured_artists")
     )
     sections = []
     for release_type in ReleaseType.objects.all():
@@ -155,12 +161,14 @@ def discography_index(request):
         if type_releases:
             sections.append({"type": release_type, "releases": type_releases})
     has_lyrics = Lyric.objects.exclude(lyrics="").exists()
+    jsonld = jsonld_dumps(discography_jsonld(releases, settings.SITE_BASE_URL))
     return render(
         request,
         "discography/index.html",
         {
             "sections": sections,
             "has_lyrics": has_lyrics,
+            "jsonld": jsonld,
             "edit_changelist": Release,
             "api_url": reverse("discography-root"),
         },
@@ -177,7 +185,7 @@ def artist_detail(request, artist_slug):
         .filter(Q(artist=artist) | Q(additional_artists=artist))
         .distinct()
         .select_related("artist", "type")
-        .prefetch_related("additional_artists")
+        .prefetch_related("additional_artists", "featured_artists")
     )
     shown = {r.id for r in releases}
     # Releases where this artist only guests, minus any already shown above.
@@ -188,6 +196,7 @@ def artist_detail(request, artist_slug):
         .prefetch_related("additional_artists")
         if r.id not in shown
     ]
+    jsonld = jsonld_dumps(music_group_jsonld(artist, releases, settings.SITE_BASE_URL))
     return render(
         request,
         "discography/artist_detail.html",
@@ -195,6 +204,7 @@ def artist_detail(request, artist_slug):
             "artist": artist,
             "releases": releases,
             "featured_on": featured_on,
+            "jsonld": jsonld,
             "edit_object": artist,
             "api_url": reverse("artist-detail", kwargs={"slug": artist.slug}),
         },
@@ -207,7 +217,10 @@ def release_detail(request, artist_slug, release_slug):
         Release.objects.published()
         .select_related("artist", "type")
         .prefetch_related(
-            "additional_artists", "editions__covers", "editions__tracks__lyric"
+            "additional_artists",
+            "editions__covers",
+            "editions__tracks__lyric",
+            "editions__tracks__remixers",
         ),
         artist__slug=artist_slug,
         slug=release_slug,

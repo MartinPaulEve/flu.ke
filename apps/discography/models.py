@@ -51,6 +51,12 @@ class Artist(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     is_alias = models.BooleanField(
         default=False, help_text="True for a Fluke alias / side-project."
     )
+    is_person = models.BooleanField(
+        default=False,
+        verbose_name="Is a person",
+        help_text="An individual person (schema.org Person) rather than a band/"
+        "group (MusicGroup). Affects the structured-data type in markup.",
+    )
     primary_artist = models.ForeignKey(
         "self",
         null=True,
@@ -77,6 +83,11 @@ class Artist(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         if self.is_alias and self.primary_artist_id:
             return self.primary_artist
         return self
+
+    @property
+    def schema_type(self) -> str:
+        """schema.org type: 'Person' for an individual, else 'MusicGroup'."""
+        return "Person" if self.is_person else "MusicGroup"
 
     def get_absolute_url(self):
         return f"/discography/{self.slug}/"

@@ -3,37 +3,39 @@
 {% block meta %}{% include "partials/og_meta.html" with seo_object=release og_type="music.album" %}{% if jsonld %}<script type="application/ld+json">{{ jsonld|safe }}</script>{% endif %}{% endblock %}
 {% block body_class %}discography{% endblock %}
 {% block content %}
-<article class="section wrap">
+<article class="section wrap" itemscope itemtype="https://schema.org/MusicAlbum">
   <p class="kicker">{{ release.type.name }}{% if release.year %} — {{ release.year }}{% endif %}</p>
-  <h1>{{ release.display_name }}</h1>
+  {% if release.year %}<meta itemprop="datePublished" content="{{ release.year }}">{% endif %}
+  <h1 itemprop="name">{{ release.display_name }}</h1>
   <p class="prose byline">
-    {% for a in release.all_artists %}<a href="{{ a.get_absolute_url }}">{{ a.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+    {% for a in release.all_artists %}<a itemprop="byArtist" itemscope itemtype="https://schema.org/{{ a.schema_type }}" href="{{ a.get_absolute_url }}"><span itemprop="name">{{ a.name }}</span></a>{% if not forloop.last %}, {% endif %}{% endfor %}
     {% if release.artist.is_alias and release.artist.primary_artist %}<span class="entry__meta"> (alias of {{ release.artist.primary_artist.name }})</span>{% endif %}
   </p>
   {% if release.purchase_link %}<p class="prose"><a href="{{ release.purchase_link }}">Buy this release →</a></p>{% endif %}
 
   <h2 style="margin-top:2.5rem">Editions</h2>
   {% for edition in release.editions.all %}
-    <details class="edition"{% if forloop.first %} open{% endif %}>
+    <details class="edition" itemprop="albumRelease" itemscope itemtype="https://schema.org/MusicRelease"{% if forloop.first %} open{% endif %}>
       <summary>
-        {{ edition.summary_lead }}{% for part in edition.summary_meta %} <span class="entry__meta">· {{ part }}</span>{% endfor %}
+        <span itemprop="name">{{ edition.summary_lead }}</span>{% for part in edition.summary_meta %} <span class="entry__meta">· {{ part }}</span>{% endfor %}
+        {% if edition.catalogue_number %}<meta itemprop="catalogNumber" content="{{ edition.catalogue_number }}">{% endif %}
         {% if edition.purchase_link %}<a class="edition__buy" href="{{ edition.purchase_link }}" rel="noopener" target="_blank" data-stop-toggle>Purchase</a>{% endif %}
       </summary>
 
       {% if edition.covers.all %}
         <ul class="covers">
           {% for cover in edition.covers.all %}
-            <li>{% if cover.image %}<img src="{{ cover.image.url }}" alt="{{ cover.alt_text }}" loading="lazy">{% else %}<span class="entry__meta">{{ cover.display_name }}</span>{% endif %}</li>
+            <li>{% if cover.image %}<img itemprop="image" src="{{ cover.image.url }}" alt="{{ cover.alt_text }}" loading="lazy">{% else %}<span class="entry__meta">{{ cover.display_name }}</span>{% endif %}</li>
           {% endfor %}
         </ul>
       {% endif %}
 
       <ol class="tracklist">
         {% for track in edition.tracks.all %}
-          <li>
-            <span>{{ track.track_number }} {{ track.display_title }}</span>{% if track.length %} ({{ track.length }}){% endif %}
-            {% if track.remixers.all %} · rmx {% for r in track.remixers.all %}{{ r.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
-            {% if track.sample %} · <a href="{{ track.sample.url }}">sample</a>{% endif %}
+          <li itemprop="track" itemscope itemtype="https://schema.org/MusicRecording">
+            <span><span itemprop="position">{{ track.track_number }}</span> <span itemprop="name">{{ track.display_title }}</span></span>{% if track.length %} (<span itemprop="duration">{{ track.length }}</span>){% endif %}
+            {% if track.remixers.all %} · rmx {% for r in track.remixers.all %}<span itemprop="contributor" itemscope itemtype="https://schema.org/{{ r.schema_type }}"><span itemprop="name">{{ r.name }}</span></span>{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+            {% if track.sample %} · <a itemprop="audio" href="{{ track.sample.url }}">sample</a>{% endif %}
             {% if track.lyric and track.lyric.lyrics %} · <a href="{{ track.lyric.get_absolute_url }}">lyrics</a>{% endif %}
           </li>
         {% endfor %}

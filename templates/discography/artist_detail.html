@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ artist.name }} — {{ site_name }}{% endblock %}
-{% block meta %}{% include "partials/og_meta.html" with seo_object=artist og_type="profile" %}{% endblock %}
+{% block meta %}{% include "partials/og_meta.html" with seo_object=artist og_type="profile" %}{% if jsonld %}<script type="application/ld+json">{{ jsonld|safe }}</script>{% endif %}{% endblock %}
 {% block body_class %}discography{% endblock %}
 {% block content %}
-<section class="section wrap">
+<section class="section wrap" itemscope itemtype="https://schema.org/{{ artist.schema_type }}">
   <p class="kicker">{% if artist.is_alias %}Alias{% else %}Artist{% endif %}</p>
-  <h1>{{ artist.name }}</h1>
+  <h1 itemprop="name">{{ artist.name }}</h1>
   {% if artist.is_alias and artist.primary_artist %}
-    <p class="prose">An alias of <a href="{{ artist.primary_artist.get_absolute_url }}">{{ artist.primary_artist.name }}</a>.</p>
+    <p class="prose">An alias of <a itemprop="memberOf" href="{{ artist.primary_artist.get_absolute_url }}">{{ artist.primary_artist.name }}</a>.</p>
   {% endif %}
-  {% if artist.biography %}<div class="prose">{{ artist.biography|linebreaks }}</div>{% endif %}
+  {% if artist.biography %}<div class="prose" itemprop="description">{{ artist.biography|linebreaks }}</div>{% endif %}
   {% if releases %}
   <h2 style="margin-top:2.5rem">Releases</h2>
   <ul class="entries">

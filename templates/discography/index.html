@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Discography — {{ site_name }}{% endblock %}
-{% block meta %}{% include "partials/og_static.html" with og_title="The complete Fluke discography" og_description="Every Fluke release — albums, singles and live sets — across Fluke and its aliases." %}{% endblock %}
+{% block meta %}{% include "partials/og_static.html" with og_title="The complete Fluke discography" og_description="Every Fluke release — albums, singles and live sets — across Fluke and its aliases." %}{% if jsonld %}<script type="application/ld+json">{{ jsonld|safe }}</script>{% endif %}{% endblock %}
 {% block body_class %}discography{% endblock %}
 {% block content %}
 <section class="section wrap">
