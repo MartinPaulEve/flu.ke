@@ -1,3 +1,14 @@
+## 1.29.0 (2026-06-19)
+
+### Feat
+
+- **discography**: option to hide the artist list after a release title
+- **resources**: show the related post's cover image on the resource page
+
+### Fix
+
+- **discography**: lay out the tracklist as a row-major 2-column grid
+
 ## 1.28.0 (2026-06-17)
 
 ### Feat
