@@ -1,3 +1,9 @@
+## 1.31.0 (2026-06-19)
+
+### Feat
+
+- **discography**: comprehensive schema.org markup across the discography
+
 ## 1.30.0 (2026-06-19)
 
 ### Feat
