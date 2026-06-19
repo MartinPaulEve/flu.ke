@@ -26,8 +26,8 @@ class EditionInline(admin.TabularInline):
 class TrackInline(admin.TabularInline):
     model = Track
     extra = 0
-    fields = ("track_number", "name", "mix_info", "remixer", "length", "sample", "lyric")
-    autocomplete_fields = ("remixer", "lyric")
+    fields = ("track_number", "name", "mix_info", "remixers", "length", "sample", "lyric")
+    autocomplete_fields = ("remixers", "lyric")
 
 
 class CoverImageInline(admin.TabularInline):
@@ -123,18 +123,18 @@ class EditionAdmin(admin.ModelAdmin):
         target.tracks.all().delete()
         count = 0
         for track in source.tracks.all():
-            Track.objects.create(
+            new_track = Track.objects.create(
                 edition=target,
                 name=track.name,
                 track_number=track.track_number,
                 mix_info=track.mix_info,
-                remixer=track.remixer,
                 length=track.length,
                 sample=track.sample.name,
                 sample_source_url=track.sample_source_url,
                 lyric=track.lyric,
                 display_order=track.display_order,
             )
+            new_track.remixers.set(track.remixers.all())
             count += 1
         return count
 
@@ -148,10 +148,14 @@ class LyricAdmin(OgCacheAdminMixin, admin.ModelAdmin):
 
 @admin.register(Track)
 class TrackAdmin(admin.ModelAdmin):
-    list_display = ("name", "edition", "track_number", "mix_info", "remixer")
+    list_display = ("name", "edition", "track_number", "mix_info", "remixers_display")
     search_fields = ("name", "edition__release__name")
-    autocomplete_fields = ("edition", "remixer", "lyric")
+    autocomplete_fields = ("edition", "remixers", "lyric")
     actions = ["move_to_edition"]
+
+    @admin.display(description="Remixers")
+    def remixers_display(self, obj):
+        return ", ".join(a.name for a in obj.remixers.all())
 
     @admin.action(description="Move selected track(s) to another edition…")
     def move_to_edition(self, request, queryset):

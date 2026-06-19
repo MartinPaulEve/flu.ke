@@ -111,19 +111,20 @@ def import_releases(parsed_releases) -> ImportStats:
                         title=parsed_track.lyric_title, defaults={"artist": artist}
                     )
                     stats.lyrics += int(created)
-                _, created = Track.objects.get_or_create(
+                track, created = Track.objects.get_or_create(
                     edition=edition,
                     track_number=parsed_track.track_number,
                     mix_info=parsed_track.mix_info,
                     name=parsed_track.name,
                     defaults={
                         "length": parsed_track.length,
-                        "remixer": remixer,
                         "sample_source_url": parsed_track.sample_url,
                         "lyric": lyric,
                         "display_order": ti,
                     },
                 )
+                if remixer:
+                    track.remixers.add(remixer)
                 stats.tracks += int(created)
 
     stats.artists = Artist.objects.count()

@@ -39,7 +39,7 @@ def test_import_does_not_mark_external_remixers_as_aliases():
     myagi = Artist.objects.get(name="Myagi")
     assert myagi.is_alias is False
     fly = Track.objects.get(name="Fly", edition__name="")
-    assert fly.remixer == myagi
+    assert myagi in fly.remixers.all()
 
 
 def test_import_attaches_lyrics_by_song_title():

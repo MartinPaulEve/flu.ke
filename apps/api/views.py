@@ -112,10 +112,11 @@ class EditionViewSet(PublicReadOnlyViewSet):
 class TrackViewSet(PublicReadOnlyViewSet):
     queryset = (
         Track.objects.filter(edition__release__is_published=True)
-        .select_related("remixer", "lyric")
+        .select_related("lyric")
+        .prefetch_related("remixers")
     )
     serializer_class = TrackSerializer
-    filterset_fields = {"edition": ["exact"], "remixer__slug": ["exact"]}
+    filterset_fields = {"edition": ["exact"], "remixers__slug": ["exact"]}
     search_fields = ["name"]
     ordering_fields = ["display_order", "track_number", "name"]
     ordering = ["display_order", "track_number"]

@@ -203,7 +203,7 @@ class LyricSerializer(HALLinksMixin, serializers.ModelSerializer):
 
 
 class TrackSerializer(HALLinksMixin, serializers.ModelSerializer):
-    remixer = ArtistRefSerializer(read_only=True)
+    remixers = ArtistRefSerializer(many=True, read_only=True)
     lyric = LyricRefSerializer(read_only=True)
     sample = serializers.FileField(read_only=True)
     display_title = serializers.CharField(read_only=True)
@@ -217,7 +217,7 @@ class TrackSerializer(HALLinksMixin, serializers.ModelSerializer):
             "display_title",
             "track_number",
             "mix_info",
-            "remixer",
+            "remixers",
             "length",
             "sample",
             "sample_source_url",

@@ -282,8 +282,11 @@ class Track(TimeStampedModel):
     mix_info = models.CharField(
         max_length=200, blank=True, help_text="e.g. Instrumental, Radio Edit."
     )
-    remixer = models.ForeignKey(
-        Artist, null=True, blank=True, on_delete=models.SET_NULL, related_name="remixes"
+    remixers = models.ManyToManyField(
+        Artist,
+        blank=True,
+        related_name="remixed_tracks",
+        help_text="Artist(s) who remixed this track.",
     )
     length = models.CharField(max_length=20, blank=True, help_text="m:ss")
     sample = models.FileField(upload_to=uuid_upload_to("samples"), blank=True)

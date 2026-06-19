@@ -17,6 +17,7 @@
     <details class="edition"{% if forloop.first %} open{% endif %}>
       <summary>
         {{ edition.summary_lead }}{% for part in edition.summary_meta %} <span class="entry__meta">· {{ part }}</span>{% endfor %}
+        {% if edition.purchase_link %}<a class="edition__buy" href="{{ edition.purchase_link }}" rel="noopener" target="_blank" data-stop-toggle>Purchase</a>{% endif %}
       </summary>
 
       {% if edition.covers.all %}
@@ -31,7 +32,7 @@
         {% for track in edition.tracks.all %}
           <li>
             <span>{{ track.track_number }} {{ track.display_title }}</span>{% if track.length %} ({{ track.length }}){% endif %}
-            {% if track.remixer %} · rmx {{ track.remixer.name }}{% endif %}
+            {% if track.remixers.all %} · rmx {% for r in track.remixers.all %}{{ r.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
             {% if track.sample %} · <a href="{{ track.sample.url }}">sample</a>{% endif %}
             {% if track.lyric and track.lyric.lyrics %} · <a href="{{ track.lyric.get_absolute_url }}">lyrics</a>{% endif %}
           </li>
@@ -40,4 +41,13 @@
     </details>
   {% endfor %}
 </article>
+{% endblock %}
+{% block scripts %}
+<script>
+  // A "Purchase" link lives inside the <summary>; clicking it should follow the
+  // link without also toggling the edition open/closed.
+  document.querySelectorAll(".edition__buy[data-stop-toggle]").forEach(function (a) {
+    a.addEventListener("click", function (e) { e.stopPropagation(); });
+  });
+</script>
 {% endblock %}
