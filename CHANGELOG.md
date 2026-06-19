@@ -1,3 +1,10 @@
+## 1.30.0 (2026-06-19)
+
+### Feat
+
+- **discography**: multiple remixers per track and an edition purchase link
+- **discography**: import cover art from MusicBrainz onto editions
+
 ## 1.29.0 (2026-06-19)
 
 ### Feat
