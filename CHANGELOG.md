@@ -1,3 +1,13 @@
+## 1.33.0 (2026-06-20)
+
+### Feat
+
+- **discography**: audio_samples command for fading track samples
+
+### Fix
+
+- **core**: harden the image-upload endpoint (XSS + CSRF)
+
 ## 1.32.0 (2026-06-20)
 
 ### Feat
