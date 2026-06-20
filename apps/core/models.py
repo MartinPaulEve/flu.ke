@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models
 
+from apps.core.storage import uuid_upload_to
 from apps.core.text import unique_slug
 
 
@@ -67,6 +68,25 @@ class TimeStampedModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class Upload(TimeStampedModel):
+    """A tracked media file (e.g. an image embedded in a post).
+
+    Stored under a random UUID name (keeping only the extension); the title and
+    description are just so editors can recognise it in the admin. These are not
+    Resource files — they have no resource, and aren't listed or shown publicly.
+    """
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    file = models.FileField(upload_to=uuid_upload_to("uploads"))
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return self.title or self.file.name
 
 
 class SeoFieldsMixin(models.Model):

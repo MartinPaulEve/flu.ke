@@ -229,6 +229,13 @@ TINYMCE_DEFAULT_CONFIG = {
     "branding": False,
     "promotion": False,
     "convert_urls": False,
+    # Upload images straight from the editor (drag/drop, paste, or the Image
+    # dialog's Upload tab). Files are stored as tracked Upload records under a
+    # UUID name; see apps.core.views.tinymce_upload.
+    "images_upload_url": "/admin-uploads/tinymce-image/",
+    "automatic_uploads": True,
+    "images_file_types": "jpg,jpeg,png,gif,webp,svg,avif",
+    "file_picker_types": "image",
     # TinyMCE 7 sandboxes embedded iframes by default (adds sandbox=""), which
     # gives third-party players (Mixcloud, YouTube, …) an opaque origin and blocks
     # their scripts — breaking the embed with cross-origin/CORS errors. Editor

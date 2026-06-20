@@ -11,8 +11,11 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.static import serve
 
+from apps.core.views import tinymce_upload
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("admin-uploads/tinymce-image/", tinymce_upload, name="tinymce_upload"),
     path("tinymce/", include("tinymce.urls")),
     path("api/", include("apps.api.urls")),
 ]

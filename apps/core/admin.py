@@ -13,9 +13,27 @@ has ``get_absolute_url``. It adds:
 from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.urls import path, reverse
+from django.utils.html import format_html
 
 from apps.core.cache import invalidate_path, invalidate_site_cache
-from apps.core.models import SiteConfiguration
+from apps.core.models import SiteConfiguration, Upload
+
+
+@admin.register(Upload)
+class UploadAdmin(admin.ModelAdmin):
+    """A simple media library: upload a file (stored under a UUID name) and copy
+    its URL to embed in posts/pages. Not shown anywhere on the public site."""
+
+    list_display = ("title", "file", "created")
+    search_fields = ("title", "description")
+    readonly_fields = ("file_link",)
+    fields = ("title", "description", "file", "file_link")
+
+    @admin.display(description="File URL")
+    def file_link(self, obj):
+        if not obj.file:
+            return "—"
+        return format_html('<a href="{0}" target="_blank">{0}</a>', obj.file.url)
 
 
 class OgCacheAdminMixin:
