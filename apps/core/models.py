@@ -191,6 +191,12 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
         blank=True,
         help_text="Optional smaller line under the headline on the generated OG image.",
     )
+    og_card_image = models.ImageField(
+        upload_to="og/",
+        blank=True,
+        help_text="Optional image composited into the right-hand square of the generated "
+        "OG card (like album art on release cards). Leave blank for a text-only card.",
+    )
 
     class Meta:
         verbose_name = "site configuration"
@@ -240,8 +246,19 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
     def resolved_seo_title(self):
         return self.seo_title or "Fluke — official & fan archive"
 
+    def _og_card_image_bytes(self):
+        """Bytes of the image composited into the generated card, or ``None``."""
+        if not self.og_card_image:
+            return None
+        try:
+            with self.og_card_image.open("rb") as fh:
+                return fh.read()
+        except (FileNotFoundError, OSError, ValueError):
+            return None
+
     def og_card(self):
-        # The editable title/subtitle drive the auto-generated card (the generator
-        # always adds the FLUKE.FM mark). Upload an og_image to override it entirely;
-        # the editable og_title/og_description still drive the <meta> tags.
-        return (self.og_card_title, self.og_card_subtitle, None)
+        # The editable title/subtitle drive the auto-generated card and an optional
+        # og_card_image is composited in on the right (the generator always adds the
+        # FLUKE.FM mark). Upload an og_image to override the whole card instead; the
+        # editable og_title/og_description still drive the <meta> tags.
+        return (self.og_card_title, self.og_card_subtitle, self._og_card_image_bytes())

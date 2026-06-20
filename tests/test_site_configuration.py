@@ -116,6 +116,49 @@ def test_editing_card_text_regenerates_the_generated_image():
     assert before != after  # the card was rebuilt with the new text
 
 
+def _png_bytes(colour="#123456"):
+    from io import BytesIO
+
+    from PIL import Image
+
+    buf = BytesIO()
+    Image.new("RGB", (16, 16), colour).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def test_og_card_has_no_composited_image_by_default():
+    _title, _subtitle, cover = SiteConfiguration.load().og_card()
+    assert cover is None
+
+
+def test_uploaded_card_image_is_passed_to_the_generator_as_a_cover():
+    from django.core.files.base import ContentFile
+
+    config = SiteConfiguration.load()
+    config.og_card_image.save("art.png", ContentFile(_png_bytes()), save=False)
+    config.save()
+
+    _title, _subtitle, cover = SiteConfiguration.load().og_card()
+    assert cover is not None  # the bytes are handed to render_og_image as the cover
+
+
+def test_card_image_is_composited_into_the_generated_og_image():
+    from django.core.files.base import ContentFile
+
+    config = SiteConfiguration.load()
+    with config.og_image.open("rb") as fh:
+        before = fh.read()
+
+    config.og_card_image.save("art.png", ContentFile(_png_bytes()), save=False)
+    config.save()
+    config.refresh_from_db()
+
+    with config.og_image.open("rb") as fh:
+        after = fh.read()
+    assert before != after  # the uploaded art changed the generated card
+    assert config.og_image.name.startswith("og/siteconfiguration-")  # still generated
+
+
 def test_uploaded_custom_image_is_kept_and_not_overwritten():
     from django.core.files.base import ContentFile
 
