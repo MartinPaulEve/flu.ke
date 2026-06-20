@@ -134,6 +134,43 @@ def test_album_kind_maps_to_albums_type():
 
 
 # --------------------------------------------------------------------------- #
+# Release-year inference (from editions when the header has no year)
+# --------------------------------------------------------------------------- #
+
+
+def test_release_year_inferred_from_first_edition_when_unspecified():
+    rel = MarcolphusRelease(
+        section="Remixes", artist="Yello", name="Eccentrix Remixes", year=None,
+        fluke_is_remixer=True,
+        editions=[MarcolphusEdition(media="CD", year=1999, tracks=[
+            MarcolphusTrack(name="How How", mix_info="papa-who-ma-mix", remixer="Fluke")])],
+    )
+    import_marcolphus_releases([rel])
+    assert Release.objects.get(name="Eccentrix Remixes").year == 1999
+
+
+def test_release_year_skips_editions_without_a_year():
+    rel = MarcolphusRelease(
+        section="Remixes", artist="Opik", name="Eastern", year=None,
+        editions=[
+            MarcolphusEdition(media='12"', year=None),   # no year on the first edition
+            MarcolphusEdition(media='12"', year=1992),
+        ],
+    )
+    import_marcolphus_releases([rel])
+    assert Release.objects.get(name="Eastern").year == 1992
+
+
+def test_specified_release_year_takes_precedence_over_editions():
+    rel = MarcolphusRelease(
+        section="Fluke", artist="Fluke", name="Oto", year=1995, kind="album",
+        editions=[MarcolphusEdition(media="CD", year=1996)],
+    )
+    import_marcolphus_releases([rel])
+    assert Release.objects.get(name="Oto").year == 1995
+
+
+# --------------------------------------------------------------------------- #
 # Add-only / fill-blank / idempotency
 # --------------------------------------------------------------------------- #
 

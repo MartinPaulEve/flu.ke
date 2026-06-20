@@ -205,13 +205,21 @@ def _import_one(parsed, fluke, stats) -> None:
     artist = _resolve_release_artist(parsed, fluke, stats)
     rtype = _release_type(parsed, stats)
 
-    release = _match_release(artist, parsed.name, parsed.year)
+    # The header year is often absent (e.g. Remixes entries); fall back to the
+    # first edition that carries a year.
+    year = parsed.year
+    if year is None:
+        year = next((e.year for e in parsed.editions if e.year), None)
+
+    release = _match_release(artist, parsed.name, year)
     if release is None:
         release = Release.objects.create(
-            artist=artist, name=parsed.name, year=parsed.year, type=rtype
+            artist=artist, name=parsed.name, year=year, type=rtype
         )
         stats.releases_created += 1
         stats.changes.append(Change("create", "Release", str(release)))
+    elif year is not None:
+        _fill_blanks(release, {"year": year}, stats, "Release")
 
     for person in parsed.featured_credits:
         if person in FLUKE_MEMBERS and not release.featured_artists.filter(pk=fluke.pk).exists():
