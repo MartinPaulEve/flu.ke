@@ -10,6 +10,9 @@ has ``get_absolute_url``. It adds:
   site cache".
 """
 
+import os
+
+from django import forms
 from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.urls import path, reverse
@@ -18,12 +21,33 @@ from django.utils.html import format_html
 from apps.core.cache import invalidate_path, invalidate_site_cache
 from apps.core.models import SiteConfiguration, Upload
 
+# File types browsers execute when served inline — rejected to avoid stored XSS.
+_SCRIPTABLE_EXTENSIONS = frozenset(
+    {"svg", "svgz", "html", "htm", "xhtml", "xht", "xml", "mhtml", "htc"}
+)
+
+
+class UploadAdminForm(forms.ModelForm):
+    class Meta:
+        model = Upload
+        fields = "__all__"
+
+    def clean_file(self):
+        uploaded = self.cleaned_data["file"]
+        ext = os.path.splitext(getattr(uploaded, "name", ""))[1].lower().lstrip(".")
+        if ext in _SCRIPTABLE_EXTENSIONS:
+            raise forms.ValidationError(
+                f"“.{ext}” files can run scripts in the browser and aren't allowed."
+            )
+        return uploaded
+
 
 @admin.register(Upload)
 class UploadAdmin(admin.ModelAdmin):
     """A simple media library: upload a file (stored under a UUID name) and copy
     its URL to embed in posts/pages. Not shown anywhere on the public site."""
 
+    form = UploadAdminForm
     list_display = ("title", "file", "created")
     search_fields = ("title", "description")
     readonly_fields = ("file_link",)
