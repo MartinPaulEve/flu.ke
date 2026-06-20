@@ -1,3 +1,13 @@
+## 1.34.0 (2026-06-20)
+
+### Feat
+
+- **discography**: correct Smashing Pumpkins typo and add MARCOLPHUS.md run guide
+- **discography**: add MusicBrainz enrichment command (phase 2)
+- **discography**: add import_marcolphus management command
+- **discography**: add idempotent add-only Marcolphus ingest
+- **discography**: add Marcolphus discography text parser
+
 ## 1.33.0 (2026-06-20)
 
 ### Feat
