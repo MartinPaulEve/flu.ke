@@ -82,32 +82,79 @@ def output_filename(meta: AudioMeta) -> str:
     return f"{stem}{meta.ext}"
 
 
-def _norm_number(value: str) -> str:
-    """Normalise a track number for comparison ("01" and "1" are the same)."""
-    value = (value or "").strip()
-    return value.lstrip("0") or ("0" if value else "")
+_INSTRUMENTAL_RE = re.compile(r"^i-?0*(\d+)$")
+_PLAIN_RE = re.compile(r"^0*(\d+)$")
 
 
 def _norm_text(value: str) -> str:
     return (value or "").strip().lower()
 
 
+def _parse_number(value: str):
+    """Classify a track number → ``("plain", n)`` / ``("inst", n)`` / ``("other", s)``.
+
+    ``"plain"`` is an ordinary number (leading zeros ignored); ``"inst"`` is an
+    instrumental like ``i-01`` / ``i1`` (so a second-disc instrumental run);
+    ``"other"`` is anything else (e.g. a vinyl side "A1"), compared as text.
+    """
+    text = (value or "").strip().lower()
+    if not text:
+        return None
+    inst = _INSTRUMENTAL_RE.match(text)
+    if inst:
+        return ("inst", int(inst.group(1)))
+    plain = _PLAIN_RE.match(text)
+    if plain:
+        return ("plain", int(plain.group(1)))
+    return ("other", text)
+
+
+def _effective_number(parsed, offset):
+    """The position of a track in the overall sequence; instrumentals continue it.
+
+    ``i-01`` on a release whose main tracks run up to N is the (N+1)th track, so
+    its effective number is ``offset + 1`` where ``offset`` is the highest plain
+    track number. Returns ``None`` for non-numeric ("other") track numbers.
+    """
+    kind, value = parsed
+    if kind == "plain":
+        return value
+    if kind == "inst":
+        return offset + value
+    return None
+
+
 def match_track(meta: AudioMeta, tracks):
     """Find the track in ``tracks`` that ``meta`` belongs to, or ``None``.
 
-    Matches by track number first (leading zeros ignored), then by title — the
-    title is compared against each track's ``name`` and, if present, its
-    ``display_title`` (so "Bullet" or "Bullet (Bullion)" both match). ``tracks``
-    is any iterable of objects exposing ``track_number``, ``name`` and
-    (optionally) ``display_title``.
+    Matches by track number first, then by title. ``tracks`` is any iterable of
+    objects exposing ``track_number``, ``name`` and (optionally) ``display_title``.
+
+    Track-number matching is leading-zero insensitive and understands
+    instrumental second-disc numbering: where the site lists ``12, i-01, i-02``
+    the instrumentals continue the sequence, so a plain input ``13`` matches
+    ``i-01`` and ``14`` matches ``i-02``. Title matching compares against each
+    track's ``name`` and ``display_title`` (so "Bullet" or "Bullet (Bullion)"
+    both match).
     """
     tracks = list(tracks)
+    parsed = [(t, _parse_number(getattr(t, "track_number", ""))) for t in tracks]
+    want = _parse_number(meta.track_number)
 
-    number = _norm_number(meta.track_number)
-    if number:
-        for track in tracks:
-            if _norm_number(getattr(track, "track_number", "")) == number:
+    if want is not None:
+        # An exact same-kind match (plain↔plain, inst↔inst, other↔other) wins.
+        for track, track_num in parsed:
+            if track_num == want:
                 return track
+        # Otherwise fall back to the effective sequence position, so a plain
+        # input number can reach an instrumental that continues the numbering.
+        plain_numbers = [p[1] for _, p in parsed if p and p[0] == "plain"]
+        offset = max(plain_numbers, default=0)
+        target = _effective_number(want, offset)
+        if target is not None:
+            for track, track_num in parsed:
+                if track_num is not None and _effective_number(track_num, offset) == target:
+                    return track
 
     title = _norm_text(meta.title)
     if title:

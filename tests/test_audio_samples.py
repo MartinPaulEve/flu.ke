@@ -91,6 +91,32 @@ def test_match_track_returns_none_when_nothing_matches():
     assert match_track(meta, tracks) is None
 
 
+def test_match_track_instrumentals_continue_the_numbering():
+    # Site numbering: 12 then i-01, i-02 (instrumentals on a 2nd disc). The input
+    # is plain-sequential 12, 13, 14 — so 13 -> i-01 and 14 -> i-02.
+    tracks = [
+        _T("12", "Closer"),
+        _T("i-01", "Closer (Instrumental)"),
+        _T("i-02", "Bullet (Instrumental)"),
+    ]
+    assert match_track(AudioMeta(title="z", track_number="12"), tracks).name == "Closer"
+    assert match_track(AudioMeta(title="z", track_number="13"), tracks).track_number == "i-01"
+    assert match_track(AudioMeta(title="z", track_number="14"), tracks).track_number == "i-02"
+
+
+def test_match_track_instrumental_offset_uses_highest_plain_number():
+    tracks = [_T(str(n), f"T{n}") for n in range(1, 13)]
+    tracks += [_T("i-01", "First instrumental"), _T("i-02", "Second instrumental")]
+    assert match_track(AudioMeta(title="z", track_number="13"), tracks).track_number == "i-01"
+    assert match_track(AudioMeta(title="z", track_number="14"), tracks).track_number == "i-02"
+
+
+def test_match_track_direct_instrumental_number_still_matches():
+    tracks = [_T("12", "Closer"), _T("i-01", "Closer (Instrumental)")]
+    assert match_track(AudioMeta(title="z", track_number="i-01"), tracks).name == \
+        "Closer (Instrumental)"
+
+
 # --- real ffmpeg integration (skipped if tools missing) ---------------------
 
 requires_ffmpeg = pytest.mark.skipif(
