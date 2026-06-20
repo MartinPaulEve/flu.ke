@@ -1,6 +1,6 @@
 [project]
 name = "flukecms"
-version = "1.34.0"
+version = "1.34.1"
 description = "Django CMS and live fan site for the band Fluke (fluke.fm)"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -41,7 +41,7 @@ dev = [
 ]
 
 [tool.commitizen]
-version = "1.34.0"
+version = "1.34.1"
 version_files = [
     "__version__.py",
     "pyproject.toml:version",

@@ -1,3 +1,9 @@
+## 1.34.1 (2026-06-20)
+
+### Fix
+
+- **discography**: infer Marcolphus release year from first dated edition
+
 ## 1.34.0 (2026-06-20)
 
 ### Feat
