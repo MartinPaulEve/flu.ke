@@ -1,3 +1,9 @@
+## 1.36.1 (2026-06-20)
+
+### Fix
+
+- **discography**: stop edition meta stacking vertically on mobile
+
 ## 1.36.0 (2026-06-20)
 
 ### Feat
