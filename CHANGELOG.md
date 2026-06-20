@@ -1,3 +1,13 @@
+## 1.35.0 (2026-06-20)
+
+### Feat
+
+- **discography**: audio_samples --edition mode attaches samples to existing tracks
+
+### Fix
+
+- **discography**: never list Fluke as an additional artist credit
+
 ## 1.34.1 (2026-06-20)
 
 ### Fix
