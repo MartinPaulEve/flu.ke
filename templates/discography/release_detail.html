@@ -17,7 +17,7 @@
   {% for edition in release.editions.all %}
     <details class="edition" itemprop="albumRelease" itemscope itemtype="https://schema.org/MusicRelease"{% if forloop.first %} open{% endif %}>
       <summary>
-        <span itemprop="name">{{ edition.summary_lead }}</span>{% for part in edition.summary_meta %} <span class="entry__meta">· {{ part }}</span>{% endfor %}
+        <span class="edition__info"><span itemprop="name">{{ edition.summary_lead }}</span>{% for part in edition.summary_meta %} <span class="entry__meta">· {{ part }}</span>{% endfor %}</span>
         {% if edition.catalogue_number %}<meta itemprop="catalogNumber" content="{{ edition.catalogue_number }}">{% endif %}
         {% if edition.purchase_link %}<a class="edition__buy" href="{{ edition.purchase_link }}" rel="noopener" target="_blank" data-stop-toggle>Purchase</a>{% endif %}
       </summary>

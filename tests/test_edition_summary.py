@@ -50,3 +50,17 @@ def test_release_page_shows_label_and_catalogue_in_the_summary(client):
     assert "Astralwerks" in summary
     assert "ASW-1" in summary
     assert "2xLP" in summary
+
+
+def test_summary_groups_name_and_meta_in_one_block(client):
+    """Regression: the name and the meta pieces share a single ``edition__info``
+    container so they flow/wrap as one text block. When each meta piece was its
+    own flex child of <summary> it got squeezed to ~1ch wide on mobile and its
+    text stacked vertically (unreadable)."""
+    e = _edition(name="Deluxe", media="2xLP", year=2026, record_label="Astralwerks")
+    html = client.get(e.release.get_absolute_url()).content.decode()
+    summary = html.split("<summary>")[1].split("</summary>")[0]
+
+    # The wrapper opens before, and so contains, both the name and the meta pieces.
+    assert summary.index('class="edition__info"') < summary.index('itemprop="name"')
+    assert summary.index('itemprop="name"') < summary.index('class="entry__meta"')

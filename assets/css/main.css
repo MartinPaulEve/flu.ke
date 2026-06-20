@@ -245,6 +245,12 @@ details.edition > summary {
   align-items: baseline; font-family: var(--font-display); font-weight: 700; font-size: var(--step-1);
 }
 details.edition > summary::-webkit-details-marker { display: none; }
+/* Name + meta flow together as one wrapping text block (a single flex child),
+   so the "· 2x12" · 2002 · …" pieces wrap at word boundaries. Without this each
+   meta piece is its own flex child and gets squeezed to ~1ch wide on mobile,
+   stacking its text vertically. min-width:0 lets the block shrink to fit. */
+.edition__info { min-width: 0; }
+.edition__info .entry__meta { text-align: left; }
 details.edition > summary::before { content: "+"; color: var(--accent); font-weight: 800; }
 details.edition[open] > summary::before { content: "\2013"; }
 /* "Purchase" link pushed to the far right of the edition's summary line. */
