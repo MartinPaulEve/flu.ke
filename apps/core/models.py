@@ -170,6 +170,16 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
         default="Black & red since the rave.",
         help_text="The tagline shown in the site footer on every page.",
     )
+    header_kicker_lead = models.CharField(
+        max_length=120,
+        default="Est. on the dancefloor",
+        help_text="Homepage header kicker, first part (shown before the dash).",
+    )
+    header_kicker_detail = models.CharField(
+        max_length=120,
+        default="official & fan archive",
+        help_text="Homepage header kicker, second part (shown after the dash).",
+    )
 
     class Meta:
         verbose_name = "site configuration"

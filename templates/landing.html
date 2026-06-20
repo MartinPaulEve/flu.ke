@@ -4,7 +4,7 @@
 
 {% block content %}
 <section class="hero wrap" aria-labelledby="hero-title">
-  <p class="kicker">Est. on the dancefloor — official &amp; fan archive</p>
+  <p class="kicker">{{ site_config.header_kicker_lead }}{% if site_config.header_kicker_lead and site_config.header_kicker_detail %} — {% endif %}{{ site_config.header_kicker_detail }}</p>
   <h1 class="hero__mark" id="hero-title" data-parallax="0.06">Fluke<em>.</em>fm</h1>
   <p class="hero__sub">Everything {{ site_name }} — and its aliases and other projects {% for artist in other_homepage_artists %}<a class="alias-link" href="{{ artist.hero_url }}">{{ artist.name }}</a>{% if not forloop.last %}{% if forloop.revcounter == 2 %} &amp; {% else %}, {% endif %}{% endif %}{% endfor %}. <a href="/news/">News</a>, <a href="/discography/">the complete discography</a>, <a href="/resources/#official">official material</a> and <a href="/resources/#fan">the things fans made</a>.</p>
   <span class="hero__scrim" aria-hidden="true"></span>

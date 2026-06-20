@@ -66,3 +66,29 @@ def test_footer_renders_the_configurable_tagline(client):
     html = client.get("/news/").content.decode()
     # Django autoescapes the ampersand in HTML output.
     assert "Loud &amp; proud since forever" in html
+
+
+def test_header_kicker_defaults_match_the_current_copy():
+    config = SiteConfiguration.load()
+    assert config.header_kicker_lead == "Est. on the dancefloor"
+    assert config.header_kicker_detail == "official & fan archive"
+
+
+def test_homepage_renders_the_configurable_header_kicker(client):
+    config = SiteConfiguration.load()
+    config.header_kicker_lead = "Born in the booth"
+    config.header_kicker_detail = "a complete history"
+    config.save()
+    html = client.get("/").content.decode()
+    assert "Born in the booth" in html
+    assert "a complete history" in html
+
+
+def test_header_kicker_drops_the_dash_when_one_part_is_blank(client):
+    config = SiteConfiguration.load()
+    config.header_kicker_lead = "Just the lead"
+    config.header_kicker_detail = ""
+    config.save()
+    html = client.get("/").content.decode()
+    assert "Just the lead" in html
+    assert "Just the lead —" not in html  # no dangling separator
