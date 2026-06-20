@@ -1,3 +1,9 @@
+## 1.32.0 (2026-06-20)
+
+### Feat
+
+- **core**: add an Upload model and in-editor image upload for posts
+
 ## 1.31.0 (2026-06-19)
 
 ### Feat
