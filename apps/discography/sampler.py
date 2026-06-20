@@ -82,6 +82,45 @@ def output_filename(meta: AudioMeta) -> str:
     return f"{stem}{meta.ext}"
 
 
+def _norm_number(value: str) -> str:
+    """Normalise a track number for comparison ("01" and "1" are the same)."""
+    value = (value or "").strip()
+    return value.lstrip("0") or ("0" if value else "")
+
+
+def _norm_text(value: str) -> str:
+    return (value or "").strip().lower()
+
+
+def match_track(meta: AudioMeta, tracks):
+    """Find the track in ``tracks`` that ``meta`` belongs to, or ``None``.
+
+    Matches by track number first (leading zeros ignored), then by title — the
+    title is compared against each track's ``name`` and, if present, its
+    ``display_title`` (so "Bullet" or "Bullet (Bullion)" both match). ``tracks``
+    is any iterable of objects exposing ``track_number``, ``name`` and
+    (optionally) ``display_title``.
+    """
+    tracks = list(tracks)
+
+    number = _norm_number(meta.track_number)
+    if number:
+        for track in tracks:
+            if _norm_number(getattr(track, "track_number", "")) == number:
+                return track
+
+    title = _norm_text(meta.title)
+    if title:
+        for track in tracks:
+            names = {
+                _norm_text(getattr(track, "name", "")),
+                _norm_text(getattr(track, "display_title", "")),
+            }
+            if title in names:
+                return track
+    return None
+
+
 def make_sample(input_path, output_path, meta: AudioMeta, *, sample_seconds=40.0, fade_seconds=2.0):
     """Write a centred, fading sample of ``input_path`` to ``output_path``.
 

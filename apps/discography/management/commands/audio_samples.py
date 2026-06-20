@@ -1,14 +1,19 @@
 """Create short fading audio samples from a folder of tracks, optionally
-uploading them as an Edition's tracklist onto an existing Release.
+attaching them to an Edition's tracklist.
 
     manage.py audio_samples ./in ./out
     manage.py audio_samples ./in ./out --upload risotto
+    manage.py audio_samples ./in ./out --edition 42
 
 Each input file (flac/mp3) yields a 40-second sample taken from the middle of
 the track, fading in and out, keeping the source format and metadata (with
 "(sample)" appended to the title). The output is named from the metadata. The
-sampling itself needs no database. With ``--upload <release-slug>`` the samples
-are also attached to a new (unpublished) Edition of that Release for review.
+sampling itself needs no database.
+
+* ``--upload <release-slug>`` attaches the samples to a **new** (unpublished)
+  Edition of that Release for review.
+* ``--edition <id>`` attaches the samples to the tracks of an **existing**
+  Edition, matching each sample to a track by track number, then by title.
 """
 
 from pathlib import Path
@@ -30,10 +35,20 @@ class Command(BaseCommand):
             metavar="RELEASE_SLUG",
             help="Attach the samples to a new Edition of this Release (held unpublished).",
         )
+        parser.add_argument(
+            "--edition",
+            type=int,
+            metavar="EDITION_ID",
+            help="Attach the samples to an existing Edition's tracks "
+            "(matched by track number, then title).",
+        )
         parser.add_argument("--length", type=float, default=40.0, help="Sample length, seconds.")
         parser.add_argument("--fade", type=float, default=2.0, help="Fade in/out, seconds.")
 
     def handle(self, *args, **options):
+        if options["upload"] and options["edition"]:
+            raise CommandError("Use either --upload or --edition, not both.")
+
         input_dir = Path(options["input_dir"])
         output_dir = Path(options["output_dir"])
         if not input_dir.is_dir():
@@ -65,6 +80,54 @@ class Command(BaseCommand):
 
         if options["upload"]:
             self._upload(options["upload"], samples)
+        elif options["edition"]:
+            self._attach_to_edition(options["edition"], samples)
+
+    def _attach_to_edition(self, edition_id, samples):
+        """Attach each sample to the matching track of an existing Edition.
+
+        Samples are matched to tracks by track number, then by title (see
+        :func:`apps.discography.sampler.match_track`). Tracks are never created;
+        a sample that matches nothing is reported and left on disk.
+        """
+        from django.core.files import File
+
+        from apps.discography.models import Edition
+
+        try:
+            edition = Edition.objects.select_related("release__artist").get(pk=edition_id)
+        except Edition.DoesNotExist:
+            self.stderr.write(
+                self.style.ERROR(
+                    f"!!! No Edition with id {edition_id} — samples were written but NOT attached."
+                )
+            )
+            return
+
+        tracks = list(edition.tracks.all())
+        attached = 0
+        for meta, out_path in samples:
+            track = sampler.match_track(meta, tracks)
+            if track is None:
+                self.stderr.write(
+                    self.style.WARNING(
+                        f"  no track in edition #{edition_id} matched "
+                        f"{meta.track_number or '?'} · {meta.title!r} — skipped."
+                    )
+                )
+                continue
+            with open(out_path, "rb") as handle:
+                track.sample.save(out_path.name, File(handle), save=False)
+            track.save(update_fields=["sample"])
+            attached += 1
+            self.stdout.write(f"  {meta.title}  ->  track #{track.track_number or '?'} {track.name}")
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Attached {attached}/{len(samples)} sample(s) to Edition #{edition.pk} "
+                f"of “{edition.release.name}”."
+            )
+        )
 
     def _upload(self, slug, samples):
         # Imported here so the command runs offline (no DB) without --upload.

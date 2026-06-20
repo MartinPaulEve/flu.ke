@@ -9,13 +9,23 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from apps.discography import sampler
-from apps.discography.models import Artist, Edition, Release, ReleaseType
+from apps.discography.models import Artist, Edition, Release, ReleaseType, Track
 from apps.discography.sampler import (
     AudioMeta,
     format_duration,
+    match_track,
     output_filename,
     sample_window,
 )
+
+
+class _T:
+    """Lightweight stand-in for a Track (attribute access only)."""
+
+    def __init__(self, track_number="", name="", display_title=None):
+        self.track_number = track_number
+        self.name = name
+        self.display_title = display_title if display_title is not None else name
 
 # --- pure helpers -----------------------------------------------------------
 
@@ -47,6 +57,38 @@ def test_output_filename_sanitises_illegal_characters():
     name = output_filename(meta)
     assert "/" not in name and "?" not in name
     assert name.endswith(".flac")
+
+
+# --- track matching (pure) --------------------------------------------------
+
+def test_match_track_by_track_number():
+    tracks = [_T("1", "Squelch"), _T("2", "Bullet")]
+    meta = AudioMeta(title="Different", track_number="2")
+    assert match_track(meta, tracks).name == "Bullet"
+
+
+def test_match_track_by_number_ignores_leading_zeros():
+    tracks = [_T("01", "Squelch"), _T("02", "Bullet")]
+    meta = AudioMeta(title="x", track_number="2")
+    assert match_track(meta, tracks).name == "Bullet"
+
+
+def test_match_track_falls_back_to_title_when_no_number():
+    tracks = [_T("1", "Squelch"), _T("2", "Bullet")]
+    meta = AudioMeta(title="bullet", track_number="")
+    assert match_track(meta, tracks).name == "Bullet"
+
+
+def test_match_track_title_matches_display_title_with_mix():
+    tracks = [_T("", "Bullet", display_title="Bullet (Bullion)")]
+    meta = AudioMeta(title="Bullet (Bullion)")
+    assert match_track(meta, tracks).name == "Bullet"
+
+
+def test_match_track_returns_none_when_nothing_matches():
+    tracks = [_T("1", "Squelch")]
+    meta = AudioMeta(title="Nope", track_number="9")
+    assert match_track(meta, tracks) is None
 
 
 # --- real ffmpeg integration (skipped if tools missing) ---------------------
@@ -145,3 +187,76 @@ def test_upload_unknown_release_warns_but_still_writes_samples(tmp_path, mocked_
     # samples written to disk regardless
     assert (out / "01 Fluke - Squelch - Risotto - 1997.mp3").exists()
     assert Edition.objects.count() == 0  # nothing uploaded
+
+
+# --- attaching samples to an existing Edition's tracks ----------------------
+
+@pytest.fixture
+def existing_edition():
+    artist = Artist.objects.create(name="Fluke", slug="fluke")
+    rtype = ReleaseType.objects.create(name="Albums")
+    release = Release.objects.create(
+        name="Risotto", slug="risotto", artist=artist, type=rtype, year=1997,
+    )
+    edition = Edition.objects.create(release=release, media="CD")
+    Track.objects.create(edition=edition, name="Squelch", track_number="1", display_order=0)
+    Track.objects.create(edition=edition, name="Bullet", track_number="2", display_order=1)
+    return edition
+
+
+@pytest.mark.django_db
+def test_edition_mode_attaches_samples_to_existing_tracks(tmp_path, mocked_sampler,
+                                                          existing_edition):
+    inp = tmp_path / "in"
+    inp.mkdir()
+    (inp / "01.mp3").write_bytes(b"x")  # Squelch, #1
+    (inp / "02.mp3").write_bytes(b"x")  # Bullet, #2
+    out = tmp_path / "out"
+
+    call_command("audio_samples", str(inp), str(out), edition=existing_edition.pk)
+
+    squelch = existing_edition.tracks.get(name="Squelch")
+    bullet = existing_edition.tracks.get(name="Bullet")
+    assert squelch.sample and bullet.sample  # samples attached to the matched tracks
+    assert existing_edition.tracks.count() == 2  # no new tracks created
+
+
+@pytest.mark.django_db
+def test_edition_mode_reports_unmatched_samples(tmp_path, mocked_sampler, existing_edition,
+                                                capsys):
+    # An input whose metadata matches no track in the edition.
+    metas = mocked_sampler
+    metas["99.mp3"] = AudioMeta(artist="Fluke", title="Unknown Thing", album="Risotto",
+                                year="1997", track_number="99", duration=100.0, ext=".mp3")
+    inp = tmp_path / "in"
+    inp.mkdir()
+    (inp / "99.mp3").write_bytes(b"x")
+    out = tmp_path / "out"
+
+    call_command("audio_samples", str(inp), str(out), edition=existing_edition.pk)
+
+    assert existing_edition.tracks.count() == 2  # unchanged — nothing created
+    assert all(not t.sample for t in existing_edition.tracks.all())  # nothing attached
+    assert "Unknown Thing" in capsys.readouterr().out  # the miss is reported
+
+
+@pytest.mark.django_db
+def test_edition_and_upload_are_mutually_exclusive(tmp_path, mocked_sampler):
+    inp = tmp_path / "in"
+    inp.mkdir()
+    (inp / "01.mp3").write_bytes(b"x")
+    out = tmp_path / "out"
+    with pytest.raises(CommandError):
+        call_command("audio_samples", str(inp), str(out), upload="risotto", edition=1)
+
+
+@pytest.mark.django_db
+def test_edition_mode_unknown_edition_warns_but_writes_samples(tmp_path, mocked_sampler):
+    inp = tmp_path / "in"
+    inp.mkdir()
+    (inp / "01.mp3").write_bytes(b"x")
+    out = tmp_path / "out"
+
+    call_command("audio_samples", str(inp), str(out), edition=999999)
+
+    assert (out / "01 Fluke - Squelch - Risotto - 1997.mp3").exists()  # samples still written
