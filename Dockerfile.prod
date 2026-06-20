@@ -22,9 +22,10 @@ ENV PYTHONUNBUFFERED=1 \
 RUN pip install --no-cache-dir uv==0.11.11
 
 # ffmpeg: required by the `audio_samples` management command (extracting fading
-# track samples). Installed here, early, so the layer is cached.
+# track samples). nano: a convenience editor for poking around inside the
+# container. Installed here, early, so the layer is cached.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ffmpeg \
+ && apt-get install -y --no-install-recommends ffmpeg nano \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
