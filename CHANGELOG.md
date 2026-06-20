@@ -1,3 +1,9 @@
+## 1.36.0 (2026-06-20)
+
+### Feat
+
+- **discography**: match instrumental i- tracks as a continuation of the input sequence
+
 ## 1.35.0 (2026-06-20)
 
 ### Feat
