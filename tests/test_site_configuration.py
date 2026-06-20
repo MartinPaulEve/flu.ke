@@ -84,6 +84,53 @@ def test_homepage_renders_the_configurable_header_kicker(client):
     assert "a complete history" in html
 
 
+def test_og_card_text_has_sensible_defaults():
+    title, subtitle, _cover = SiteConfiguration.load().og_card()
+    assert title == "The fan source"
+    assert subtitle == ""
+
+
+def test_og_card_uses_the_configured_text():
+    config = SiteConfiguration.load()
+    config.og_card_title = "Custom card title"
+    config.og_card_subtitle = "a subtitle"
+    config.save()
+    title, subtitle, _cover = SiteConfiguration.load().og_card()
+    assert title == "Custom card title"
+    assert subtitle == "a subtitle"
+
+
+def test_editing_card_text_regenerates_the_generated_image():
+    config = SiteConfiguration.load()
+    assert config.og_image.name.startswith("og/siteconfiguration-")  # generated card
+    with config.og_image.open("rb") as fh:
+        before = fh.read()
+
+    config.og_card_title = "Brand new wording"
+    config.save()
+    config.refresh_from_db()
+
+    assert config.og_image.name.startswith("og/siteconfiguration-")  # still a generated card
+    with config.og_image.open("rb") as fh:
+        after = fh.read()
+    assert before != after  # the card was rebuilt with the new text
+
+
+def test_uploaded_custom_image_is_kept_and_not_overwritten():
+    from django.core.files.base import ContentFile
+
+    config = SiteConfiguration.load()
+    config.og_image.save("custom-card.jpg", ContentFile(b"pretend-image-bytes"), save=False)
+    config.save()
+    config.refresh_from_db()
+    assert "custom-card" in config.og_image.name  # the upload wins over generation
+    # Saving again leaves the custom image in place.
+    config.og_card_title = "changed"
+    config.save()
+    config.refresh_from_db()
+    assert "custom-card" in config.og_image.name
+
+
 def test_header_kicker_drops_the_dash_when_one_part_is_blank(client):
     config = SiteConfiguration.load()
     config.header_kicker_lead = "Just the lead"

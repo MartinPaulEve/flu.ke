@@ -180,6 +180,17 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
         default="official & fan archive",
         help_text="Homepage header kicker, second part (shown after the dash).",
     )
+    og_card_title = models.CharField(
+        max_length=120,
+        default="The fan source",
+        help_text="Headline on the auto-generated homepage social-share (OG) image. "
+        "Ignored if you upload your own image below.",
+    )
+    og_card_subtitle = models.CharField(
+        max_length=160,
+        blank=True,
+        help_text="Optional smaller line under the headline on the generated OG image.",
+    )
 
     class Meta:
         verbose_name = "site configuration"
@@ -202,8 +213,23 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
         )
         return config
 
+    def _og_image_is_generated(self) -> bool:
+        """True when ``og_image`` holds an auto-generated card (not a manual upload).
+
+        Generated cards are saved as ``siteconfiguration-<pk>.jpg``; a custom
+        upload keeps its own filename, which is how we tell them apart.
+        """
+        basename = (self.og_image.name or "").rsplit("/", 1)[-1]
+        return basename.startswith(f"{self._meta.model_name}-")
+
     def save(self, *args, **kwargs):
         self.pk = 1  # enforce a single row
+        # Refresh the generated card from the (possibly edited) card text on save,
+        # so changes take effect without a manual regenerate. A custom uploaded
+        # image has a different filename and is left untouched.
+        if self._og_image_is_generated():
+            self.og_image.delete(save=False)
+            self.og_image = ""
         super().save(*args, **kwargs)
         if self.ensure_og_image():
             super().save(update_fields=["og_image"])
@@ -215,7 +241,7 @@ class SiteConfiguration(SeoFieldsMixin, TimeStampedModel):
         return self.seo_title or "Fluke — official & fan archive"
 
     def og_card(self):
-        # A clean brand card matching the site's default (the generator always adds
-        # the FLUKE.FM mark). The editable og_title/og_description drive the <meta>
-        # tags; the card stays a fixed brand image (or upload a custom og_image).
-        return ("The fan source", "", None)
+        # The editable title/subtitle drive the auto-generated card (the generator
+        # always adds the FLUKE.FM mark). Upload an og_image to override it entirely;
+        # the editable og_title/og_description still drive the <meta> tags.
+        return (self.og_card_title, self.og_card_subtitle, None)
