@@ -54,6 +54,41 @@ def test_display_title_still_omits_the_suffix_for_solo_fluke():
     assert rel.display_title == "Risotto"
 
 
+# -- Fluke is never shown as an additional (secondary) artist -------------
+
+
+@pytest.fixture
+def fluke_guesting():
+    """A release owned by another act on which Fluke is only an additional artist."""
+    fluke = Artist.objects.create(name="Fluke", slug="fluke")
+    sander = Artist.objects.create(name="Sander Kleinenberg", slug="sander-kleinenberg")
+    rtype = ReleaseType.objects.create(name="Collaborations")
+    rel = Release.objects.create(
+        name="4 Seasons EP (Part 2)", artist=sander, type=rtype, year=2001,
+        is_published=True,
+    )
+    rel.additional_artists.add(fluke)
+    return {"fluke": fluke, "sander": sander, "rel": rel}
+
+
+def test_fluke_excluded_from_additional_artist_list(fluke_guesting):
+    assert [a.name for a in fluke_guesting["rel"].all_artists] == ["Sander Kleinenberg"]
+
+
+def test_display_title_drops_fluke_when_only_an_additional_artist(fluke_guesting):
+    assert fluke_guesting["rel"].display_title == "4 Seasons EP (Part 2) (Sander Kleinenberg)"
+
+
+def test_fluke_as_primary_with_additional_is_unaffected():
+    # When Fluke is the primary act, a co-credit still lists both as before.
+    fluke = Artist.objects.create(name="Fluke", slug="fluke")
+    other = Artist.objects.create(name="Yothu Yindi", slug="yothu-yindi")
+    rtype = ReleaseType.objects.create(name="Singles")
+    rel = Release.objects.create(name="Timeless Land", artist=fluke, type=rtype, year=2003)
+    rel.additional_artists.add(other)
+    assert [a.name for a in rel.all_artists] == ["Fluke", "Yothu Yindi"]
+
+
 # -- rendered pages -------------------------------------------------------
 
 

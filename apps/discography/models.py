@@ -163,11 +163,16 @@ class Release(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     @property
     def all_artists(self):
-        """Primary artist followed by any additional artists, de-duplicated."""
+        """Primary artist followed by any additional artists, de-duplicated.
+
+        Fluke is never listed as an *additional* (secondary) credit: this is a
+        Fluke site, so crediting Fluke alongside the act whose release it is would
+        be redundant. Fluke as the *primary* artist is unaffected.
+        """
         artists = [self.artist] if self.artist_id else []
         seen = {a.pk for a in artists}
         for extra in self.additional_artists.all():
-            if extra.pk not in seen:
+            if extra.pk not in seen and extra.name != PRIMARY_ARTIST_NAME:
                 artists.append(extra)
                 seen.add(extra.pk)
         return artists
