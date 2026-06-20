@@ -19,6 +19,7 @@ dependencies = [
     "drf-spectacular>=0.29.0",
     "django-filter>=25.2",
     "django-redis>=5.4",
+    "mutagen>=1.47.0",
 ]
 
 [project.optional-dependencies]
