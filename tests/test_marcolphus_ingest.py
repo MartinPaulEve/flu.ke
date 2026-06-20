@@ -83,6 +83,18 @@ def test_2bit_pie_normalised_and_aliased():
     assert twobit.is_alias is True
 
 
+def test_source_artist_typo_is_corrected():
+    # The source misspells "Smashing Pumpkins" as "Smashing Pumpinks" on one line.
+    rel = MarcolphusRelease(
+        section="Remixes", artist="Smashing Pumpinks",
+        name="The End is the Beginning... (the remixes)", year=1997,
+        editions=[MarcolphusEdition(media="CD5", year=1997)],
+    )
+    import_marcolphus_releases([rel])
+    assert Release.objects.get(name__startswith="The End").artist.name == "Smashing Pumpkins"
+    assert not Artist.objects.filter(name="Smashing Pumpinks").exists()
+
+
 def test_various_artists_created_and_not_alias():
     rel = MarcolphusRelease(
         section="Compilation Appearances", artist="Various Artists",

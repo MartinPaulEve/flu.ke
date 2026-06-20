@@ -38,6 +38,9 @@ ALIAS_NAMES = {"lucky monkeys": "Lucky Monkeys", "2bitpie": "2 Bit Pie"}
 #: The four members of Fluke. A credit naming any of them signals Fluke.
 FLUKE_MEMBERS = {"Jon Fugler", "Mike Tournier", "Mike Bryant", "Julian Nugent"}
 
+#: Known typos in the source, keyed by normalised (lower-case) name.
+NAME_CORRECTIONS = {"smashing pumpinks": "Smashing Pumpkins"}
+
 #: Release-kind word (Fluke / Lucky Monkeys releases) → ReleaseType section name.
 KIND_TO_TYPE = {
     "album": "Albums",
@@ -117,16 +120,17 @@ def _get_or_create_artist(name: str, stats: MarcolphusStats, *, alias_of=None) -
 
 
 def _resolve_release_artist(parsed, fluke: Artist, stats: MarcolphusStats) -> Artist:
-    """Resolve the owning artist for a parsed release (alias-aware)."""
-    canonical = _alias_canonical(parsed.artist)
+    """Resolve the owning artist for a parsed release (alias-aware, typo-corrected)."""
+    name = NAME_CORRECTIONS.get(parsed.artist.lower(), parsed.artist)
+    canonical = _alias_canonical(name)
     if canonical == PRIMARY_ARTIST_NAME:
         return fluke
     if canonical is not None:  # a Fluke alias (Lucky Monkeys, 2 Bit Pie)
         return _get_or_create_artist(canonical, stats, alias_of=fluke)
     # Lucky Monkeys / Fluke sections own everything via Fluke even if unnamed.
     if parsed.section in ("Fluke", "Lucky Monkeys"):
-        return _get_or_create_artist(parsed.artist, stats, alias_of=fluke)
-    return _get_or_create_artist(parsed.artist, stats)
+        return _get_or_create_artist(name, stats, alias_of=fluke)
+    return _get_or_create_artist(name, stats)
 
 
 def _release_type(parsed, stats: MarcolphusStats) -> ReleaseType:
