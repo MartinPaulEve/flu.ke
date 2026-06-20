@@ -1,3 +1,10 @@
+## 1.37.0 (2026-06-20)
+
+### Feat
+
+- **core**: editable homepage OG card text, with custom image override
+- **core**: make the homepage header kicker editable in site configuration
+
 ## 1.36.1 (2026-06-20)
 
 ### Fix
