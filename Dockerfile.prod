@@ -21,6 +21,12 @@ ENV PYTHONUNBUFFERED=1 \
 
 RUN pip install --no-cache-dir uv==0.11.11
 
+# ffmpeg: required by the `audio_samples` management command (extracting fading
+# track samples). Installed here, early, so the layer is cached.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Dependencies only (cached unless the lockfile changes). `--extra prod` pulls in
