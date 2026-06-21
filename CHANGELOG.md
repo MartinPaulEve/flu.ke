@@ -1,3 +1,11 @@
+## 1.38.0 (2026-06-21)
+
+### Feat
+
+- **discography**: edit edition notes as TinyMCE rich text
+- **discography**: add a Notes field to editions, shown when expanded
+- **core**: composite an uploaded image into the homepage OG card
+
 ## 1.37.0 (2026-06-20)
 
 ### Feat
