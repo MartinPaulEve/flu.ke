@@ -1,7 +1,9 @@
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.db import models
 from django.shortcuts import redirect, render
 from django.urls import path
+from tinymce.widgets import TinyMCE
 
 from apps.core.admin import OgCacheAdminMixin
 from apps.core.cache import invalidate_site_cache
@@ -70,6 +72,8 @@ class EditionAdmin(admin.ModelAdmin):
     autocomplete_fields = ("release",)
     inlines = [CoverImageInline, TrackInline]
     change_form_template = "admin/discography/edition_change_form.html"
+    # Notes is the only TextField on Edition; edit it as rich text like posts/pages.
+    formfield_overrides = {models.TextField: {"widget": TinyMCE()}}
 
     def get_urls(self):
         custom = [

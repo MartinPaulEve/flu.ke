@@ -230,8 +230,9 @@ class Edition(TimeStampedModel):
     media = models.CharField(max_length=100, blank=True, help_text="e.g. CD, 2xCD, Vinyl, CD-R.")
     notes = models.TextField(
         blank=True,
-        help_text="A few words about this specific edition (e.g. how rare it is, the "
-        "source for the entry). Shown under the edition heading when expanded.",
+        help_text="Rich text (HTML), edited with TinyMCE. A few words about this specific "
+        "edition (e.g. how rare it is, the source for the entry). Shown under the edition "
+        "heading when expanded.",
     )
     purchase_link = models.URLField(blank=True)
     display_order = models.IntegerField(default=0)

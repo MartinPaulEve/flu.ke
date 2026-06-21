@@ -29,3 +29,16 @@ def test_post_admin_form_uses_tinymce_widget(rf, admin_user):
     form = form_class()
     assert isinstance(form.fields["body"].widget, TinyMCE)
     assert isinstance(form.fields["excerpt"].widget, TinyMCE)
+
+
+def test_edition_admin_uses_tinymce_for_notes(rf, admin_user):
+    from django.contrib.admin.sites import site
+    from tinymce.widgets import TinyMCE
+
+    from apps.discography.models import Edition
+
+    request = rf.get("/admin/discography/edition/add/")
+    request.user = admin_user
+    form_class = site._registry[Edition].get_form(request)
+    form = form_class()
+    assert isinstance(form.fields["notes"].widget, TinyMCE)

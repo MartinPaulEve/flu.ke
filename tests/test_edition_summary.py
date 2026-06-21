@@ -65,6 +65,12 @@ def test_edition_notes_render_below_the_summary_when_present(client):
     assert "Rare promo; source: Marcolphus discography." in body
 
 
+def test_edition_notes_render_as_rich_html(client):
+    e = _edition(media="CD", notes="<strong>Very rare</strong> promo")
+    html = client.get(e.release.get_absolute_url()).content.decode()
+    assert "<strong>Very rare</strong> promo" in html  # HTML, not escaped
+
+
 def test_edition_notes_absent_when_blank(client):
     e = _edition(media="CD")
     html = client.get(e.release.get_absolute_url()).content.decode()
