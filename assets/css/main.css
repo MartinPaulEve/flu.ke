@@ -251,6 +251,8 @@ details.edition > summary::-webkit-details-marker { display: none; }
    stacking its text vertically. min-width:0 lets the block shrink to fit. */
 .edition__info { min-width: 0; }
 .edition__info .entry__meta { text-align: left; }
+/* Free-text notes about an edition, shown under its heading when expanded. */
+.edition__notes { margin: 0 0 1rem 2rem; max-width: 60ch; color: var(--muted); font-size: var(--step--1); }
 details.edition > summary::before { content: "+"; color: var(--accent); font-weight: 800; }
 details.edition[open] > summary::before { content: "\2013"; }
 /* "Purchase" link pushed to the far right of the edition's summary line. */

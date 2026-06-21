@@ -22,6 +22,8 @@
         {% if edition.purchase_link %}<a class="edition__buy" href="{{ edition.purchase_link }}" rel="noopener" target="_blank" data-stop-toggle>Purchase</a>{% endif %}
       </summary>
 
+      {% if edition.notes %}<p class="edition__notes">{{ edition.notes|linebreaksbr }}</p>{% endif %}
+
       {% if edition.covers.all %}
         <ul class="covers">
           {% for cover in edition.covers.all %}

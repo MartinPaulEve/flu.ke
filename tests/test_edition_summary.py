@@ -52,6 +52,25 @@ def test_release_page_shows_label_and_catalogue_in_the_summary(client):
     assert "2xLP" in summary
 
 
+def test_edition_notes_default_to_blank():
+    assert _edition(media="CD").notes == ""
+
+
+def test_edition_notes_render_below_the_summary_when_present(client):
+    e = _edition(media="CD", notes="Rare promo; source: Marcolphus discography.")
+    html = client.get(e.release.get_absolute_url()).content.decode()
+    assert "Rare promo; source: Marcolphus discography." in html
+    # The notes sit inside the edition's <details>, after its <summary>.
+    body = html.split("</summary>", 1)[1]
+    assert "Rare promo; source: Marcolphus discography." in body
+
+
+def test_edition_notes_absent_when_blank(client):
+    e = _edition(media="CD")
+    html = client.get(e.release.get_absolute_url()).content.decode()
+    assert "edition__notes" not in html
+
+
 def test_summary_groups_name_and_meta_in_one_block(client):
     """Regression: the name and the meta pieces share a single ``edition__info``
     container so they flow/wrap as one text block. When each meta piece was its
