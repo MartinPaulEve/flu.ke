@@ -1,3 +1,9 @@
+## 1.40.0 (2026-06-22)
+
+### Feat
+
+- **discography**: show comps on an artist page where they're a track artist
+
 ## 1.39.0 (2026-06-22)
 
 ### Feat
