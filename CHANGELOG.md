@@ -1,3 +1,9 @@
+## 1.39.0 (2026-06-22)
+
+### Feat
+
+- **discography**: per-track artist display and zero-padded track numbers
+
 ## 1.38.0 (2026-06-21)
 
 ### Feat
