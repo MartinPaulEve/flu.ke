@@ -38,7 +38,7 @@ def test_copy_overwrites_with_source_tracklist(admin_client):
     names = list(target.tracks.order_by("display_order").values_list("name", flat=True))
     assert names == ["Fly", "Bermuda"]          # old track replaced
     fly = target.tracks.get(name="Fly")
-    assert fly.length == "6:01" and fly.track_number == "1"   # metadata copied
+    assert fly.length == "6:01" and fly.track_number == "01"  # metadata copied (number zero-padded)
     assert source.tracks.count() == 2           # source untouched (copy, not move)
 
 

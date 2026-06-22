@@ -21,11 +21,16 @@ from apps.core.models import (
     SluggedModel,
     TimeStampedModel,
 )
+from apps.core.text import normalize_track_number
 from apps.discography.storage import uuid_upload_to
 
 # The canonical primary act. Any release by an artist other than this one is
 # rendered with the artist name in parentheses (see Release.display_title).
 PRIMARY_ARTIST_NAME = "Fluke"
+
+# A "Various Artists" release groups tracks by many artists; it is never itself
+# shown as a track's performing artist (see Track.display_artist).
+VARIOUS_ARTISTS_NAME = "Various Artists"
 
 
 class ReleaseType(models.Model):
@@ -300,6 +305,16 @@ class Lyric(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 class Track(TimeStampedModel):
     edition = models.ForeignKey(Edition, on_delete=models.CASCADE, related_name="tracks")
     name = models.CharField(max_length=300)
+    artist = models.ForeignKey(
+        Artist,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="performed_tracks",
+        help_text="Performing artist for this track (useful on Various Artists comps). "
+        "Blank inherits the release's artist; that inherited artist isn't repeated on "
+        "each track, and “Various Artists” is never shown.",
+    )
     track_number = models.CharField(max_length=20, blank=True)
     mix_info = models.CharField(
         max_length=200, blank=True, help_text="e.g. Instrumental, Radio Edit."
@@ -326,12 +341,33 @@ class Track(TimeStampedModel):
     def __str__(self):
         return f"{self.track_number} {self.display_title}".strip()
 
+    def save(self, *args, **kwargs):
+        # Silently enforce zero-padded track numbers ("1" → "01", "A1" → "A01").
+        self.track_number = normalize_track_number(self.track_number)
+        super().save(*args, **kwargs)
+
     @property
     def display_title(self):
         """Track title with its mix qualifier, e.g. 'Blue (Instrumental)'."""
         if self.mix_info:
             return f"{self.name} ({self.mix_info})"
         return self.name
+
+    @property
+    def display_artist(self):
+        """The artist to show for this track, or ``None`` to show none.
+
+        An explicitly-set track artist is shown; otherwise the track inherits its
+        release's artist, which the heading already shows, so it isn't repeated.
+        “Various Artists” is never shown as a track artist.
+        """
+        release = self.edition.release
+        artist = self.artist or (release.artist if release else None)
+        if artist is None or artist.name == VARIOUS_ARTISTS_NAME:
+            return None
+        if self.artist_id is None and artist.pk == release.artist_id:
+            return None  # inherited the release's own artist — already in the heading
+        return artist
 
 
 class CoverImage(TimeStampedModel):

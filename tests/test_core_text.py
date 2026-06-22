@@ -1,6 +1,8 @@
 """Tests for apps.core.text.unique_slug (pure, no database)."""
 
-from apps.core.text import unique_slug
+import pytest
+
+from apps.core.text import normalize_track_number, unique_slug
 
 
 def test_slugifies_value_when_free():
@@ -37,3 +39,28 @@ def test_empty_value_falls_back_to_default_base():
 
 def test_empty_value_fallback_is_also_made_unique():
     assert unique_slug("???", exists=lambda s: s == "item") == "item-2"
+
+
+# --- normalize_track_number -------------------------------------------------
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("1", "01"),
+        ("9", "09"),
+        ("01", "01"),      # already padded
+        ("10", "10"),      # two digits left alone
+        ("123", "123"),    # three digits left alone
+        ("A1", "A01"),     # vinyl side prefix
+        ("B9", "B09"),
+        ("A01", "A01"),
+        ("B12", "B12"),
+        ("i-1", "i-01"),   # instrumental-disc numbering
+        ("i-01", "i-01"),
+        ("", ""),          # blank untouched
+        ("  3  ", "03"),   # trimmed then padded
+        ("Bonus", "Bonus"),  # non-numeric untouched
+    ],
+)
+def test_normalize_track_number(value, expected):
+    assert normalize_track_number(value) == expected

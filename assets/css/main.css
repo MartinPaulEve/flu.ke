@@ -274,6 +274,9 @@ details.edition[open] > summary::before { content: "\2013"; }
 .tracklist { list-style: none; padding: 0 0 1rem 2rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
 .tracklist li { padding: 0.2rem 0; color: var(--muted); }
 .tracklist li span { color: var(--fg); }
+/* Per-track performing artist (e.g. on Various Artists comps), before the title. */
+.track__artist { color: var(--fg); font-weight: 600; }
+.track__artist:hover { color: var(--accent-text); }
 .covers { display: flex; flex-wrap: wrap; gap: 0.8rem; list-style: none; padding: 0 0 1rem 2rem; }
 .covers img { width: clamp(80px, 16vw, 150px); aspect-ratio: 1; object-fit: cover; border: var(--rule) solid var(--hairline); filter: grayscale(0.2) contrast(1.05); cursor: zoom-in; }
 .covers img:hover { filter: none; }

@@ -107,7 +107,7 @@ def test_sync_editions_attaches_to_existing_release():
     track = Track.objects.get(recording_mbid=REC_MBID)
     assert track.edition == edition
     assert track.name == "The Fruit"
-    assert track.track_number == "1"
+    assert track.track_number == "01"  # normalised (zero-padded)
     assert track.length == "7:00"
     assert (stats.editions, stats.tracks) == (1, 1)
 

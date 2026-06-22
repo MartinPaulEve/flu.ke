@@ -28,8 +28,9 @@ class EditionInline(admin.TabularInline):
 class TrackInline(admin.TabularInline):
     model = Track
     extra = 0
-    fields = ("track_number", "name", "mix_info", "remixers", "length", "sample", "lyric")
-    autocomplete_fields = ("remixers", "lyric")
+    fields = ("track_number", "name", "artist", "mix_info", "remixers", "length",
+              "sample", "lyric")
+    autocomplete_fields = ("artist", "remixers", "lyric")
 
 
 class CoverImageInline(admin.TabularInline):
@@ -152,9 +153,9 @@ class LyricAdmin(OgCacheAdminMixin, admin.ModelAdmin):
 
 @admin.register(Track)
 class TrackAdmin(admin.ModelAdmin):
-    list_display = ("name", "edition", "track_number", "mix_info", "remixers_display")
+    list_display = ("name", "edition", "track_number", "artist", "mix_info", "remixers_display")
     search_fields = ("name", "edition__release__name")
-    autocomplete_fields = ("edition", "remixers", "lyric")
+    autocomplete_fields = ("edition", "artist", "remixers", "lyric")
     actions = ["move_to_edition"]
 
     @admin.display(description="Remixers")

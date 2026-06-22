@@ -35,7 +35,7 @@
       <ol class="tracklist">
         {% for track in edition.tracks.all %}
           <li itemprop="track" itemscope itemtype="https://schema.org/MusicRecording">
-            <span><span itemprop="position">{{ track.track_number }}</span> <span itemprop="name">{{ track.display_title }}</span></span>{% if track.length %} (<span itemprop="duration">{{ track.length }}</span>){% endif %}
+            <span><span itemprop="position">{{ track.track_number }}</span> {% if track.display_artist %}<a class="track__artist" href="{{ track.display_artist.get_absolute_url }}">{{ track.display_artist.name }}</a> — {% endif %}<span itemprop="name">{{ track.display_title }}</span></span>{% if track.length %} (<span itemprop="duration">{{ track.length }}</span>){% endif %}
             {% if track.remixers.all %} · rmx {% for r in track.remixers.all %}<span itemprop="contributor" itemscope itemtype="https://schema.org/{{ r.schema_type }}"><span itemprop="name">{{ r.name }}</span></span>{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
             {% if track.sample %} · <a itemprop="audio" href="{{ track.sample.url }}">sample</a>{% endif %}
             {% if track.lyric and track.lyric.lyrics %} · <a href="{{ track.lyric.get_absolute_url }}">lyrics</a>{% endif %}

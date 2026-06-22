@@ -195,7 +195,7 @@ def test_upload_creates_an_edition_with_sampled_tracks(tmp_path, mocked_sampler)
     tracks = list(edition.tracks.order_by("display_order"))
     assert [t.name for t in tracks] == ["Squelch", "Bullet"]  # no "(sample)"
     assert tracks[0].length == "5:30"  # original duration, not the 40s sample
-    assert tracks[0].track_number == "1"
+    assert tracks[0].track_number == "01"  # normalised (zero-padded)
     assert tracks[0].sample  # the sample file was attached
     release.refresh_from_db()
     assert release.is_published is False  # held back for review
