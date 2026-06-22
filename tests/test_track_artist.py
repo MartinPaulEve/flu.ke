@@ -80,6 +80,35 @@ def test_comp_track_artist_renders_on_the_release_page(client):
     assert "05" in html     # and the number is zero-padded
 
 
+def test_artist_page_lists_comps_where_they_appear_as_a_track_artist(client):
+    va = Artist.objects.create(name="Various Artists", slug="various-artists")
+    rtype = ReleaseType.objects.create(name="Compilation Appearances")
+    release = Release.objects.create(
+        name="Future Funk", artist=va, type=rtype, year=1996, is_published=True
+    )
+    edition = Edition.objects.create(release=release, media="2xCD")
+    chem = Artist.objects.create(name="The Chemical Brothers", slug="the-chemical-brothers")
+    Track.objects.create(edition=edition, name="Loops of Fury", artist=chem, track_number="3")
+
+    html = client.get(chem.get_absolute_url()).content.decode()
+    assert "Future Funk" in html  # the comp appears on their page
+    assert f'href="{release.get_absolute_url()}"' in html
+
+
+def test_track_appearance_not_duplicated_when_already_their_release(client):
+    chem = Artist.objects.create(name="The Chemical Brothers", slug="the-chemical-brothers")
+    rtype = ReleaseType.objects.create(name="Albums")
+    release = Release.objects.create(
+        name="Exit Planet Dust", artist=chem, type=rtype, year=1995, is_published=True
+    )
+    edition = Edition.objects.create(release=release, media="CD")
+    Track.objects.create(edition=edition, name="Leave Home", artist=chem, track_number="1")
+
+    html = client.get(chem.get_absolute_url()).content.decode()
+    # Listed once (under Releases), not also repeated under "Appears on".
+    assert html.count(f'href="{release.get_absolute_url()}"') == 1
+
+
 def test_legacy_bare_track_numbers_are_normalised_by_the_migration_logic():
     from apps.core.text import normalize_track_number
 

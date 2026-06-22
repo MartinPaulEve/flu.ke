@@ -34,5 +34,17 @@
     {% endfor %}
   </ul>
   {% endif %}
+  {% if appears_on %}
+  <h2 style="margin-top:2.5rem">Appears on</h2>
+  <ul class="entries">
+    {% for release in appears_on %}
+      <li class="entry">
+        <span class="entry__index">{% if release.year %}{{ release.year }}{% else %}—{% endif %}</span>
+        <span class="entry__title"><a href="{{ release.get_absolute_url }}">{{ release.display_title }}</a></span>
+        <span class="entry__meta">{{ release.type.name }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
 </section>
 {% endblock %}

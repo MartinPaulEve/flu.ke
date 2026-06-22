@@ -196,6 +196,18 @@ def artist_detail(request, artist_slug):
         .prefetch_related("additional_artists")
         if r.id not in shown
     ]
+    shown |= {r.id for r in featured_on}
+    # Releases (e.g. Various Artists comps) where the artist is credited only on a
+    # track, not as the release/feature artist — minus anything already shown.
+    appears_on = [
+        r
+        for r in Release.objects.published()
+        .filter(editions__tracks__artist=artist)
+        .distinct()
+        .select_related("artist", "type")
+        .prefetch_related("additional_artists")
+        if r.id not in shown
+    ]
     jsonld = jsonld_dumps(music_group_jsonld(artist, releases, settings.SITE_BASE_URL))
     return render(
         request,
@@ -204,6 +216,7 @@ def artist_detail(request, artist_slug):
             "artist": artist,
             "releases": releases,
             "featured_on": featured_on,
+            "appears_on": appears_on,
             "jsonld": jsonld,
             "edit_object": artist,
             "api_url": reverse("artist-detail", kwargs={"slug": artist.slug}),
