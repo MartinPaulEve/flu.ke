@@ -25,7 +25,7 @@ class ResourceAdminForm(forms.ModelForm):
 
     class Meta:
         model = Resource
-        exclude = ("recorded_date", "recorded_precision")
+        exclude = ("recorded_date", "recorded_precision", "article_date_precision")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

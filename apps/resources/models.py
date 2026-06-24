@@ -248,6 +248,27 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         default=timezone.now, help_text="When this was added to the site."
     )
     external_url = models.URLField(blank=True, help_text="Used when not hosted on-site.")
+
+    # --- Print-article metadata (magazine / journal interviews etc.) --------
+    # All optional; populated only for resources that represent a print article.
+    article_authors = models.CharField(
+        max_length=300, blank=True, help_text="Article author(s), free text."
+    )
+    publication_title = models.CharField(
+        max_length=200, blank=True, help_text="Magazine or journal title."
+    )
+    article_date = models.DateField(null=True, blank=True)
+    article_date_precision = models.CharField(
+        max_length=5,
+        choices=[(YEAR, "Year"), (MONTH, "Month"), (DAY, "Day")],
+        default=DAY,
+    )
+    page_numbers = models.CharField(
+        max_length=50, blank=True, help_text='e.g. "pp. 34–37".'
+    )
+    article_url = models.URLField(blank=True, help_text="Link to the article online.")
+    purchase_url = models.URLField(blank=True, help_text="Where to buy the issue.")
+
     is_published = models.BooleanField(default=False)
 
     objects = PublishableQuerySet.as_manager()
@@ -346,6 +367,25 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
     def recorded_display(self) -> str:
         """The recorded date shown only as precisely as it's known (year/month/day)."""
         return format_partial_date(self.recorded_date, self.recorded_precision)
+
+    @property
+    def has_print_metadata(self) -> bool:
+        """True when any print-article field is populated."""
+        return any(
+            [
+                self.article_authors,
+                self.publication_title,
+                self.article_date,
+                self.page_numbers,
+                self.article_url,
+                self.purchase_url,
+            ]
+        )
+
+    @property
+    def article_date_display(self) -> str:
+        """The article date shown only as precisely as it's known."""
+        return format_partial_date(self.article_date, self.article_date_precision)
 
     def og_card(self):
         subtitle = "Fan" if self.kind == KIND_FAN else "Official"
