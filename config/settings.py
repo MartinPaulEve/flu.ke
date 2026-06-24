@@ -22,6 +22,7 @@ env = environ.Env(
     SITE_NAME=(str, "Fluke"),
     MEDIA_ROOT=(str, "media"),
     MEDIA_URL=(str, "/media/"),
+    PRIVATE_MEDIA_ROOT=(str, "private_media"),
     MUSICBRAINZ_APP=(str, "flukecms"),
     MUSICBRAINZ_VERSION=(str, "1.0"),
     MUSICBRAINZ_CONTACT=(str, ""),
@@ -143,6 +144,10 @@ STORAGES = {
 
 MEDIA_URL = env("MEDIA_URL")
 MEDIA_ROOT = BASE_DIR / env("MEDIA_ROOT")
+
+# Locked resource files live here — OUTSIDE MEDIA_ROOT, so the media web server
+# never serves them. They are reachable only through the gated download view.
+PRIVATE_MEDIA_ROOT = BASE_DIR / env("PRIVATE_MEDIA_ROOT")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

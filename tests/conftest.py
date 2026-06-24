@@ -11,6 +11,13 @@ def _isolate_media(tmp_path_factory, settings):
 
 
 @pytest.fixture(autouse=True)
+def _isolate_private_media(tmp_path_factory, settings):
+    """Point PRIVATE_MEDIA_ROOT at a throwaway dir so locked-file tests never
+    write into the repo."""
+    settings.PRIVATE_MEDIA_ROOT = str(tmp_path_factory.mktemp("private_media"))
+
+
+@pytest.fixture(autouse=True)
 def _clear_cache():
     """The cache is not transactional, so clear it around every test to keep page
     caching from leaking responses between tests."""
