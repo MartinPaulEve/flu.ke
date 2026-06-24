@@ -27,8 +27,14 @@
       {% for f in resource.files.all %}
         <li class="entry">
           <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
-          <span class="entry__title"><a href="{{ f.download_url }}"{% if f.is_external %} rel="noopener" target="_blank"{% else %} download{% endif %}>{{ f.display_name }}</a>{% with size=f.display_byte_size %}{% if size %} <span class="entry__size">({{ size|filesizeformat }})</span>{% endif %}{% endwith %}</span>
-          <span class="entry__meta">{% if f.is_external %}{{ f.get_file_kind_display }} ↗{% else %}{{ f.get_file_kind_display }}{% endif %}</span>
+          {% if f.is_locked and not request.user.is_staff %}
+            <span class="entry__title">{{ f.display_name }} <span class="entry__lock">🔒 Archived — not publicly available</span></span>
+            <span class="entry__meta">{{ f.get_file_kind_display }}</span>
+          {% else %}
+            <span class="entry__title"><a href="{{ f.download_url }}"{% if f.is_external %} rel="noopener" target="_blank"{% else %} download{% endif %}>{{ f.display_name }}</a>{% if f.is_locked %} <span class="entry__lock">🔒</span>{% endif %}{% with size=f.display_byte_size %}{% if size %} <span class="entry__size">({{ size|filesizeformat }})</span>{% endif %}{% endwith %}</span>
+            <span class="entry__meta">{% if f.is_external %}{{ f.get_file_kind_display }} ↗{% else %}{{ f.get_file_kind_display }}{% endif %}</span>
+          {% endif %}
+          {% if f.is_locked and f.preview_image %}<img class="entry__preview" src="{{ f.preview_image.url }}" alt="" loading="lazy">{% endif %}
         </li>
       {% endfor %}
     </ul>

@@ -145,3 +145,27 @@ def test_gated_view_redirects_unlocked_to_public_url(client):
     resp = client.get(reverse("resource_file_download", args=[rf.pk]))
     assert resp.status_code == 302
     assert resp["Location"] == rf.file.url
+
+
+# ---------------------------------------------------------------------------
+# Detail page: locked file rendering
+# ---------------------------------------------------------------------------
+
+
+def test_detail_hides_link_and_shows_notice_for_locked_anon(client):
+    r = _resource()
+    ResourceFile.objects.create(
+        resource=r, file=SimpleUploadedFile("s.flac", b"AUDIO"), is_locked=True
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert reverse("resource_file_download", args=[r.files.first().pk]) not in html
+    assert "Archived" in html
+
+
+def test_detail_shows_link_for_locked_staff(client):
+    r = _resource()
+    rf = ResourceFile.objects.create(
+        resource=r, file=SimpleUploadedFile("s.flac", b"AUDIO"), is_locked=True
+    )
+    html = _staff_client(client).get(r.get_absolute_url()).content.decode()
+    assert reverse("resource_file_download", args=[rf.pk]) in html
