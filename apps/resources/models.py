@@ -5,9 +5,11 @@ several files (e.g. a live-set archive plus its cover) and may link to discograp
 records (the artist/alias vocabulary lives in the discography app).
 """
 
+import os
 from collections import namedtuple
 
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.utils import timezone
@@ -19,6 +21,7 @@ from apps.core.models import (
     TimeStampedModel,
 )
 from apps.resources.partial_date import DAY, MONTH, YEAR, format_partial_date
+from apps.resources.storage import private_storage
 
 KIND_OFFICIAL = "official"
 KIND_FAN = "fan"
@@ -369,6 +372,22 @@ class ResourceFile(TimeStampedModel):
         help_text="Link to an off-site copy instead of uploading a file. "
         "Provide either a file or a URL.",
     )
+    is_locked = models.BooleanField(
+        default=False,
+        help_text="Archived: stored but downloadable only by staff. The file is "
+        "moved to private storage and is not publicly reachable.",
+    )
+    locked_file = models.FileField(
+        upload_to="resources/",
+        storage=private_storage,
+        blank=True,
+        help_text="Internal: holds the bytes while locked. Managed automatically.",
+    )
+    preview_image = models.ImageField(
+        upload_to="resources/previews/",
+        blank=True,
+        help_text="Optional public preview shown for a locked file.",
+    )
     original_filename = models.CharField(max_length=300, blank=True)
     file_kind = models.CharField(max_length=20, choices=KIND_CHOICES, default="audio")
     byte_size = models.BigIntegerField(default=0)
@@ -385,13 +404,18 @@ class ResourceFile(TimeStampedModel):
 
     def clean(self):
         super().clean()
-        if not self.file and not self.external_url:
+        if not self.file and not self.locked_file and not self.external_url:
             raise ValidationError("Provide either an uploaded file or an external URL.")
 
     @property
     def is_external(self) -> bool:
-        """True when this file is a remote link rather than an uploaded file."""
-        return not self.file and bool(self.external_url)
+        """True when this is a remote link rather than stored bytes (public or private)."""
+        return not self.file and not self.locked_file and bool(self.external_url)
+
+    @property
+    def stored_file(self):
+        """The field holding the uploaded bytes, whichever side they're on."""
+        return self.locked_file if self.locked_file else self.file
 
     @property
     def download_url(self) -> str:
@@ -416,6 +440,27 @@ class ResourceFile(TimeStampedModel):
         if self.byte_size:
             return self.byte_size
         try:
-            return self.file.size or None
+            return self.stored_file.size or None
         except (ValueError, OSError):
             return None
+
+    def _reconcile_lock_storage(self):
+        """Keep the bytes on the side that matches ``is_locked``.
+
+        Idempotent: only acts when a move is actually needed. External-URL rows
+        have no bytes and are left alone.
+        """
+        if self.is_locked and self.file:
+            data = self.file.read()
+            name = os.path.basename(self.file.name)
+            self.locked_file.save(name, ContentFile(data), save=False)
+            self.file.delete(save=False)
+        elif not self.is_locked and self.locked_file:
+            data = self.locked_file.read()
+            name = os.path.basename(self.locked_file.name)
+            self.file.save(name, ContentFile(data), save=False)
+            self.locked_file.delete(save=False)
+
+    def save(self, *args, **kwargs):
+        self._reconcile_lock_storage()
+        super().save(*args, **kwargs)
