@@ -27,6 +27,11 @@ urlpatterns = [
     path("lyrics/<slug:slug>/", views.lyric_detail, name="lyric_detail"),
     path("resources/", views.resource_list, name="resource_list"),
     path(
+        "resources/file/<int:pk>/download/",
+        views.resource_file_download,
+        name="resource_file_download",
+    ),
+    path(
         "resources/<slug:kind>/<slug:slug>/",
         views.resource_detail,
         name="resource_detail",

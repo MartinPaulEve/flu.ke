@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models
 from django.template.defaultfilters import filesizeformat
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.core.models import (
@@ -419,17 +420,20 @@ class ResourceFile(TimeStampedModel):
 
     @property
     def download_url(self) -> str:
-        """Where the file can be fetched — the uploaded file, else the remote URL."""
+        """Where the file can be fetched. Locked files go through the gated view;
+        unlocked files keep their direct public URL (unchanged)."""
+        if self.is_locked:
+            return reverse("resource_file_download", args=[self.pk])
         return self.file.url if self.file else self.external_url
 
     @property
     def display_name(self) -> str:
         """The label shown for this file: a given filename, the uploaded file's
-        name, else the last path segment of the remote URL."""
+        name (public or private storage), else the last path segment of the remote URL."""
         if self.original_filename:
             return self.original_filename
-        if self.file:
-            return self.file.name
+        if self.stored_file:
+            return self.stored_file.name
         return self.external_url.rstrip("/").rsplit("/", 1)[-1] or self.external_url
 
     @property

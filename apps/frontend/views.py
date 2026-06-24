@@ -12,8 +12,8 @@ import datetime
 
 from django.conf import settings
 from django.db.models import Exists, OuterRef, Q
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.http import FileResponse, Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from apps.blog.models import Category, Post
@@ -36,7 +36,7 @@ from apps.discography.models import (
 from apps.discography.queries import linkable_artist_ids
 from apps.pages.models import Page
 from apps.resources.grouping import group_by_subcategory
-from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource
+from apps.resources.models import KIND_FAN, KIND_OFFICIAL, Resource, ResourceFile
 
 
 def _ensure_og(obj):
@@ -346,6 +346,21 @@ def resource_detail(request, kind, slug):
             "api_url": reverse("resource-detail", kwargs={"slug": resource.slug}),
         },
     )
+
+
+def resource_file_download(request, pk):
+    """Serve a resource file. Locked files require staff and are streamed from
+    private storage; unlocked files just redirect to their public URL."""
+    rf = get_object_or_404(ResourceFile, pk=pk)
+    if rf.is_locked and not request.user.is_staff:
+        raise Http404
+    if rf.is_external:
+        return redirect(rf.external_url)
+    if rf.is_locked:
+        return FileResponse(
+            rf.locked_file.open("rb"), as_attachment=True, filename=rf.display_name
+        )
+    return redirect(rf.file.url)
 
 
 @cached_page

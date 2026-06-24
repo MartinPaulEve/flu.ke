@@ -73,3 +73,75 @@ def test_locked_external_link_has_no_bytes_to_move():
     )
     assert rf.is_external is True
     assert not rf.file and not rf.locked_file
+
+
+# ---------------------------------------------------------------------------
+# display_name fix: locked file (no original_filename) still shows a name
+# ---------------------------------------------------------------------------
+
+
+def test_locked_file_display_name_is_non_empty():
+    """A locked file with no original_filename must return a non-empty display_name."""
+    rf = ResourceFile.objects.create(
+        resource=_resource(),
+        file=SimpleUploadedFile("set.flac", b"AUDIO"),
+        is_locked=True,
+    )
+    # After locking, file is empty and locked_file holds the bytes.
+    assert not rf.file
+    assert rf.locked_file
+    assert rf.display_name != ""
+
+
+# ---------------------------------------------------------------------------
+# Gated download view
+# ---------------------------------------------------------------------------
+
+from django.contrib.auth import get_user_model  # noqa: E402
+from django.urls import reverse  # noqa: E402
+
+
+def _staff_client(client):
+    user = get_user_model().objects.create_user("ed", password="x", is_staff=True)
+    client.force_login(user)
+    return client
+
+
+def test_locked_download_404_for_anonymous(client):
+    rf = ResourceFile.objects.create(
+        resource=_resource(), file=SimpleUploadedFile("s.flac", b"AUDIO"), is_locked=True
+    )
+    resp = client.get(reverse("resource_file_download", args=[rf.pk]))
+    assert resp.status_code == 404
+
+
+def test_locked_download_streams_for_staff(client):
+    rf = ResourceFile.objects.create(
+        resource=_resource(), file=SimpleUploadedFile("s.flac", b"AUDIO"), is_locked=True
+    )
+    resp = _staff_client(client).get(reverse("resource_file_download", args=[rf.pk]))
+    assert resp.status_code == 200
+    assert b"".join(resp.streaming_content) == b"AUDIO"
+
+
+def test_download_url_is_gated_when_locked(client):
+    rf = ResourceFile.objects.create(
+        resource=_resource(), file=SimpleUploadedFile("s.flac", b"AUDIO"), is_locked=True
+    )
+    assert rf.download_url == reverse("resource_file_download", args=[rf.pk])
+
+
+def test_download_url_unchanged_when_unlocked():
+    rf = ResourceFile.objects.create(
+        resource=_resource(), file=SimpleUploadedFile("s.flac", b"AUDIO")
+    )
+    assert rf.download_url == rf.file.url
+
+
+def test_gated_view_redirects_unlocked_to_public_url(client):
+    rf = ResourceFile.objects.create(
+        resource=_resource(), file=SimpleUploadedFile("s.flac", b"AUDIO")
+    )
+    resp = client.get(reverse("resource_file_download", args=[rf.pk]))
+    assert resp.status_code == 302
+    assert resp["Location"] == rf.file.url
