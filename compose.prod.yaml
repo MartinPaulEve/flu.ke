@@ -61,7 +61,7 @@ services:
       # the HOST dir's real ownership — create and chown these to the container's
       # UID/GID (1000:1000 by default) BEFORE the first `up`, or Docker creates
       # them as root and `migrate` cannot write the DB:
-      #   mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media
+      #   mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media "$DATA_DIR"/private_media
       #   sudo chown -R 1000:1000 "$DATA_DIR"
       #
       # The SQLite db.sqlite3 (and its -wal/-shm) live at $DATA_DIR/db on the
@@ -69,6 +69,11 @@ services:
       - "${DATA_DIR:-../fluke-data}/db:/data"
       # Uploaded media persists on the host, separate from the image.
       - "${DATA_DIR:-../fluke-data}/media:/app/media"
+      # Locked/archival resource files — kept OUTSIDE /app/media so the media web
+      # server never serves them; only the gated download view streams them. Must
+      # be owned by the container UID/GID (1000:1000) on the host, like the dirs
+      # above, or locked-file uploads fail with a permission error (500).
+      - "${DATA_DIR:-../fluke-data}/private_media:/app/private_media"
     networks:
       - traefik
     labels:

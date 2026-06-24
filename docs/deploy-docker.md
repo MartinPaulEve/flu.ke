@@ -100,7 +100,7 @@ snapshot of the DB into place (this checkpoints the WAL), and copy the media:
 
 ```sh
 # 1. Create the data dirs and give them to the container user (1000:1000):
-mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media && sudo chown -R 1000:1000 "$DATA_DIR"
+mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media "$DATA_DIR"/private_media && sudo chown -R 1000:1000 "$DATA_DIR"
 
 # 2. A consistent snapshot of your local DB straight into place:
 sqlite3 db.sqlite3 ".backup '$DATA_DIR/db/db.sqlite3'"
@@ -183,6 +183,11 @@ data to `/srv/fluke-data`); set it to an absolute path like `/srv/fluke-data` in
   this directory so it survives rebuilds.
 - **`$DATA_DIR/media` → `/app/media`** — uploaded media, kept separate from the
   image.
+- **`$DATA_DIR/private_media` → `/app/private_media`** — locked/archival resource
+  files. Deliberately **outside** `media/` so the media web server never serves
+  them; only the gated, staff-only download view streams them. Same ownership
+  rules apply — if this dir isn't writable by the container UID/GID, locking a
+  file fails with a permission error (HTTP 500).
 
 Rebuilding (`up -d --build`) replaces the container but leaves `$DATA_DIR`
 intact.
@@ -195,7 +200,7 @@ default, set via the build args). So you **must create the directories and
 auto-creates them as `root` and `migrate` cannot write the database:
 
 ```sh
-mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media
+mkdir -p "$DATA_DIR"/db "$DATA_DIR"/media "$DATA_DIR"/private_media
 sudo chown -R 1000:1000 "$DATA_DIR"     # match the UID/GID the image was built with
 ```
 
