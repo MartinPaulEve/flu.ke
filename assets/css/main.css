@@ -376,6 +376,13 @@ time { font-variant-numeric: tabular-nums; }
   /* One tracklist column on narrow screens so long track names have full width
      to wrap into rather than being squeezed (and overflowing) in two columns. */
   .tracklist { grid-template-columns: 1fr; }
+  /* Discography listing rows: drop the type-name meta below the title on narrow
+     screens. The meta column is auto-sized to its content, so a long type like
+     "Compilation Appearances" would otherwise steal the row width and crush the
+     title into a one-word-per-line sliver. Direct child only, so the inline
+     .entry__meta spans in release_detail (alias/edition notes) stay put. */
+  .discography .entry { grid-template-columns: 4ch minmax(0, 1fr); }
+  .discography .entry > .entry__meta { grid-column: 2; text-align: left; margin-top: 0.25rem; }
 }
 
 @media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }
