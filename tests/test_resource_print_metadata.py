@@ -50,3 +50,24 @@ def test_admin_form_parses_partial_article_date():
     obj = form.save(commit=False)
     assert obj.article_date == datetime.date(2005, 6, 1)
     assert obj.article_date_precision == "month"
+
+
+def test_detail_shows_print_block_when_populated(client):
+    r = Resource.objects.create(
+        title="Interview",
+        kind="official",
+        is_published=True,
+        publication_title="Mixmag",
+        article_authors="Jane Smith",
+        page_numbers="pp. 34–37",
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert "Mixmag" in html
+    assert "Jane Smith" in html
+    assert "pp. 34" in html
+
+
+def test_detail_hides_print_block_when_empty(client):
+    r = Resource.objects.create(title="Plain", kind="official", is_published=True)
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert "Print article" not in html

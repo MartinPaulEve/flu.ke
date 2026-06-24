@@ -42,6 +42,20 @@
     <p class="prose"><a href="{{ resource.external_url }}">Open resource →</a></p>
   {% endif %}
 
+  {% if resource.has_print_metadata %}
+    <section class="print-article" aria-labelledby="print-article-title" style="margin-top:2.5rem">
+      <h2 id="print-article-title">Print article</h2>
+      <ul class="resource-meta">
+        {% if resource.article_authors %}<li><span class="resource-meta__label">Author</span> {{ resource.article_authors }}</li>{% endif %}
+        {% if resource.publication_title %}<li><span class="resource-meta__label">Publication</span> {{ resource.publication_title }}</li>{% endif %}
+        {% if resource.article_date %}<li><span class="resource-meta__label">Date</span> <time datetime="{{ resource.article_date|date:'Y-m-d' }}">{{ resource.article_date_display }}</time></li>{% endif %}
+        {% if resource.page_numbers %}<li><span class="resource-meta__label">Pages</span> {{ resource.page_numbers }}</li>{% endif %}
+        {% if resource.article_url %}<li><span class="resource-meta__label">Article</span> <a href="{{ resource.article_url }}" rel="noopener">Read online ↗</a></li>{% endif %}
+        {% if resource.purchase_url %}<li><span class="resource-meta__label">Purchase</span> <a href="{{ resource.purchase_url }}" rel="noopener">Buy issue ↗</a></li>{% endif %}
+      </ul>
+    </section>
+  {% endif %}
+
   {% if resource.related_post and resource.related_post.is_live %}
     <section class="related-post" aria-labelledby="related-post-title" style="margin-top:2.5rem">
       <p class="kicker">From the blog</p>
