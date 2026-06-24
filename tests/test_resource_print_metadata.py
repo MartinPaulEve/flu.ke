@@ -30,3 +30,23 @@ def test_article_date_display_respects_month_precision():
     )
     assert r.article_date_display == "Jun 2005"
     assert "1" not in r.article_date_display.replace("2005", "")
+
+
+def test_admin_form_parses_partial_article_date():
+    from apps.resources.forms import ResourceAdminForm
+
+    form = ResourceAdminForm(
+        data={
+            "title": "Interview",
+            "kind": "official",
+            "slug": "interview",
+            "recorded": "",
+            "article_date_input": "2005-06",
+            "recorded_precision": "day",
+            "uploaded_at": "2024-01-01 00:00:00",
+        }
+    )
+    assert form.is_valid(), form.errors
+    obj = form.save(commit=False)
+    assert obj.article_date == datetime.date(2005, 6, 1)
+    assert obj.article_date_precision == "month"

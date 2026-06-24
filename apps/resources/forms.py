@@ -23,15 +23,29 @@ class ResourceAdminForm(forms.ModelForm):
         ),
     )
 
+    article_date_input = forms.CharField(
+        required=False,
+        label="Article date",
+        help_text="Year, year-month or full date — e.g. 2005, 2005-06.",
+    )
+
     class Meta:
         model = Resource
-        exclude = ("recorded_date", "recorded_precision", "article_date_precision")
+        exclude = (
+            "recorded_date",
+            "recorded_precision",
+            "article_date",
+            "article_date_precision",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields["recorded"].initial = to_input_value(
                 self.instance.recorded_date, self.instance.recorded_precision
+            )
+            self.fields["article_date_input"].initial = to_input_value(
+                self.instance.article_date, self.instance.article_date_precision
             )
 
     def clean_recorded(self):
@@ -42,8 +56,19 @@ class ResourceAdminForm(forms.ModelForm):
             raise forms.ValidationError(str(exc)) from exc
         return text
 
+    def clean_article_date_input(self):
+        text = self.cleaned_data.get("article_date_input", "")
+        try:
+            self._article_date = parse_partial_date(text)
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+        return text
+
     def save(self, commit=True):
         date, precision = getattr(self, "_recorded", (None, "day"))
         self.instance.recorded_date = date
         self.instance.recorded_precision = precision
+        a_date, a_precision = getattr(self, "_article_date", (None, "day"))
+        self.instance.article_date = a_date
+        self.instance.article_date_precision = a_precision
         return super().save(commit=commit)

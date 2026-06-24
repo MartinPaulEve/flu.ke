@@ -103,6 +103,20 @@ class ResourceAdmin(OgCacheAdminMixin, PublishActionsMixin, admin.ModelAdmin):
                 )
             },
         ),
+        (
+            "Print article",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "article_authors",
+                    "publication_title",
+                    "article_date_input",
+                    "page_numbers",
+                    "article_url",
+                    "purchase_url",
+                ),
+            },
+        ),
         ("Publishing", {"fields": ("is_published",)}),
         (
             "SEO & Open Graph",
