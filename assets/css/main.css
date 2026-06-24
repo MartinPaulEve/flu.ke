@@ -383,6 +383,12 @@ time { font-variant-numeric: tabular-nums; }
      .entry__meta spans in release_detail (alias/edition notes) stay put. */
   .discography .entry { grid-template-columns: 4ch minmax(0, 1fr); }
   .discography .entry > .entry__meta { grid-column: 2; text-align: left; margin-top: 0.25rem; }
+  /* Resource listing rows: cap the meta column so a long contributor name (e.g.
+     "Martin Paul Eve") wraps onto its own lines instead of auto-sizing the column
+     to its full width and crushing the title. The prominent year stays pinned
+     top-right, and year-only rows keep a tight meta (so their title stays wide).
+     Direct child only, to leave the snippet's own .entry__meta usages untouched. */
+  .resources-index .entry > .entry__meta { max-width: 7rem; }
 }
 
 @media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }
