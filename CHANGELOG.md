@@ -1,3 +1,16 @@
+## 1.41.0 (2026-06-24)
+
+### Feat
+
+- **resources**: render print-article metadata on detail page
+- **resources**: admin editing for print-article metadata
+- **resources**: add optional print-article metadata fields
+- **resources**: surface lock controls in the admin
+- **resources**: show locked files as archived with preview on detail page
+- **resources**: gated download view for locked files
+- **resources**: store locked files in private storage with move-on-toggle
+- **resources**: add private storage root for locked files
+
 ## 1.40.0 (2026-06-22)
 
 ### Feat
