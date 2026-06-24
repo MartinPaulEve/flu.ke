@@ -13,16 +13,16 @@ class ResourceFileInline(admin.TabularInline):
     model = ResourceFile
     extra = 0
     fields = (
-        "file", "external_url", "file_kind", "original_filename",
-        "byte_size", "duration", "display_order",
+        "file", "external_url", "is_locked", "preview_image", "file_kind",
+        "original_filename", "byte_size", "duration", "display_order",
     )
     readonly_fields = ("byte_size",)
 
 
 @admin.register(ResourceFile)
 class ResourceFileAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "resource", "file_kind", "byte_size")
-    list_filter = ("file_kind",)
+    list_display = ("__str__", "resource", "file_kind", "is_locked", "byte_size")
+    list_filter = ("file_kind", "is_locked")
     search_fields = ("original_filename", "file", "resource__title")
     autocomplete_fields = ("resource",)
     actions = ["move_to_resource"]

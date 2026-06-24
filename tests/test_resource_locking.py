@@ -169,3 +169,15 @@ def test_detail_shows_link_for_locked_staff(client):
     )
     html = _staff_client(client).get(r.get_absolute_url()).content.decode()
     assert reverse("resource_file_download", args=[rf.pk]) in html
+
+
+# ---------------------------------------------------------------------------
+# Admin: locking fields surfaced in inline and list views
+# ---------------------------------------------------------------------------
+
+
+def test_admin_inline_exposes_locking_fields():
+    from apps.resources.admin import ResourceFileInline
+
+    assert "is_locked" in ResourceFileInline.fields
+    assert "preview_image" in ResourceFileInline.fields
