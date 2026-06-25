@@ -1,3 +1,15 @@
+## 1.42.0 (2026-06-25)
+
+### Feat
+
+- **blog**: composite post cover image into its OG card
+
+### Fix
+
+- **deploy**: create, mount and chown private_media for locked files
+- **resources**: cap listing meta width on mobile so contributor wraps
+- **discography**: stack listing meta below title on mobile
+
 ## 1.41.0 (2026-06-24)
 
 ### Feat
