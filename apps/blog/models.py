@@ -1,6 +1,7 @@
 """Blog / News models."""
 
 from django.db import models
+from django.template.defaultfilters import date as date_filter
 from django.utils import timezone
 
 from apps.core.models import (
@@ -125,6 +126,27 @@ class Post(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     def get_absolute_url(self):
         return f"/news/{self.display_date.year}/{self.slug}/"
+
+    def og_card(self):
+        """Title on the left, published-date subtitle, and the cover on the right.
+
+        Mirrors the discography Release card. No cover (or an unreadable one) falls
+        back to the engine's text-only card.
+        """
+        subtitle = date_filter(self.published_at, "j F Y") if self.published_at else ""
+        return (self.resolved_og_title(), subtitle, self._og_cover_bytes())
+
+    def _og_cover_bytes(self):
+        """Cover image bytes for the OG card, or None when there's no usable cover."""
+        if not self.cover_image:
+            return None
+        try:
+            if not self.cover_image.storage.exists(self.cover_image.name):
+                return None
+            with self.cover_image.storage.open(self.cover_image.name, "rb") as fh:
+                return fh.read()
+        except (FileNotFoundError, OSError, ValueError):
+            return None
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
