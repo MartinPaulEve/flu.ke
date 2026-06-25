@@ -4,6 +4,7 @@ Ingest/
 .venv/
 dist/
 media/
+private_media/
 *.sqlite3
 .git/
 .github/

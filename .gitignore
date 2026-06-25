@@ -4,6 +4,9 @@ Ingest/
 # Uploaded media
 media/
 
+# Locked/archival resource files (private storage, outside MEDIA_ROOT)
+private_media/
+
 # Secrets
 .env
 .env.prod

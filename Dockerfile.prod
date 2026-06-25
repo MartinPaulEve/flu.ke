@@ -45,13 +45,14 @@ RUN chmod +x /usr/local/bin/entrypoint.prod.sh
 #   docker compose -f compose.prod.yaml build --build-arg UID=$(id -u) --build-arg GID=$(id -g)
 ARG UID=1000
 ARG GID=1000
-# Create /data (SQLite DB volume) and /app/media owned by the app user *before*
-# the volumes mount: Docker seeds an empty named volume with the mount point's
-# ownership, so the non-root user can write db.sqlite3 (+ its WAL/SHM) and media.
+# Create /data (SQLite DB volume), /app/media and /app/private_media owned by the
+# app user *before* the volumes mount: Docker seeds an empty named volume with the
+# mount point's ownership, so the non-root user can write db.sqlite3 (+ its
+# WAL/SHM), public media, and the locked/archival files in private_media.
 RUN groupadd --gid "$GID" app || true \
  && useradd --uid "$UID" --gid "$GID" --create-home --shell /bin/bash app \
- && mkdir -p /data /app/media /app/.staticcollect \
- && chown "$UID":"$GID" /data /app /app/media /app/.staticcollect
+ && mkdir -p /data /app/media /app/private_media /app/.staticcollect \
+ && chown "$UID":"$GID" /data /app /app/media /app/private_media /app/.staticcollect
 
 # The application source, owned by the app user as it lands (avoids a recursive
 # chown of the whole tree afterwards). .dockerignore keeps the dev DB, media/,
@@ -70,12 +71,12 @@ RUN uv sync --frozen --extra prod --extra postgres
 # command at build time, this is skipped harmlessly — the entrypoint re-runs
 # collectstatic at start-up (with the real env) before gunicorn launches.
 # Runs as root, so afterwards hand only the few dirs the app user must write
-# (the SQLite /data dir, uploaded media, and the collected-static STATIC_ROOT)
-# to it — NOT a recursive chown of all of /app.
+# (the SQLite /data dir, uploaded media, the locked-files private_media dir, and
+# the collected-static STATIC_ROOT) to it — NOT a recursive chown of all of /app.
 RUN DJANGO_SECRET_KEY="build-only-throwaway-not-used-at-runtime" \
     DATABASE_URL="sqlite:////tmp/build.sqlite3" \
     python manage.py collectstatic --noinput || true \
- && chown -R "$UID":"$GID" /data /app/media /app/.staticcollect
+ && chown -R "$UID":"$GID" /data /app/media /app/private_media /app/.staticcollect
 ENV HOME=/home/app
 USER app
 
