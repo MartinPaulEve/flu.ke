@@ -1,3 +1,9 @@
+## 1.42.1 (2026-06-26)
+
+### Fix
+
+- **og**: size the card title so it never overlaps the subtitle
+
 ## 1.42.0 (2026-06-25)
 
 ### Feat
