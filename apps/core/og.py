@@ -71,6 +71,29 @@ def _wrap(draw, text, font, max_width):
     return lines or [""]
 
 
+def _line_height(font) -> int:
+    """The font's natural line height (ascent + descent)."""
+    ascent, descent = font.getmetrics()
+    return ascent + descent
+
+
+def _fit_title(draw, title, text_width, available_height, *, max_px, min_px, line_factor=1.04):
+    """Largest title size whose wrapped block fits ``available_height``.
+
+    Returns ``(lines, px, line_height)``. Steps down from ``max_px`` to the first
+    size whose wrapped block is no taller than ``available_height`` — so the title
+    is as large as possible without the bottom-anchored block rising into the
+    header above it. Falls back to ``min_px`` if even that overflows.
+    """
+    px = max_px
+    while True:
+        lines = _wrap(draw, title, _font(px), text_width)
+        line_height = px * line_factor
+        if px <= min_px or line_height * len(lines) <= available_height:
+            return lines, px, line_height
+        px -= 1
+
+
 def _square_cover(data: bytes, side: int) -> Image.Image:
     """Center-crop cover image bytes to a square and resize to ``side`` px (RGB)."""
     cover = Image.open(BytesIO(data)).convert("RGB")
@@ -118,27 +141,32 @@ def render_og_image(
 
     text_width = text_right - margin
 
-    # Red accent bar + brand mark, top-left.
+    # Red accent bar + brand mark, top-left, with an optional subtitle beneath it.
+    brand_font = _font(round(height * 0.05), 600)
     draw.rectangle([margin, margin, margin + round(width * 0.12), margin + 14], fill=accent)
-    draw.text((margin, margin + 30), "FLUKE.FM", font=_font(round(height * 0.05), 600), fill=accent)
+    brand_y = margin + 30
+    draw.text((margin, brand_y), "FLUKE.FM", font=brand_font, fill=accent)
+    header_bottom = brand_y + _line_height(brand_font)
     if subtitle:
-        draw.text(
-            (margin, margin + 80),
-            subtitle,
-            font=_font(round(height * 0.055), 600),
-            fill=fg,
-        )
+        sub_font = _font(round(height * 0.055), 600)
+        sub_y = margin + 80
+        draw.text((margin, sub_y), subtitle, font=sub_font, fill=fg)
+        header_bottom = sub_y + _line_height(sub_font)
 
-    # Title: fill from the bottom, shrinking until it fits in <= 4 lines.
-    title_px = round(height * 0.16)
-    lines = _wrap(draw, title, _font(title_px), text_width)
-    while len(lines) > 4 and title_px > round(height * 0.07):
-        title_px -= round(height * 0.012) or 1
-        lines = _wrap(draw, title, _font(title_px), text_width)
-
+    # Title: bottom-anchored, sized as large as possible without rising into the
+    # header. The top clamp keeps a pathologically long title off the subtitle
+    # even when it can't shrink enough to fit the space below the header.
+    top_limit = header_bottom + round(height * 0.045)
+    lines, title_px, line_height = _fit_title(
+        draw,
+        title,
+        text_width,
+        (height - margin) - top_limit,
+        max_px=round(height * 0.16),
+        min_px=round(height * 0.05),
+    )
     title_font = _font(title_px)
-    line_height = title_px * 1.04
-    y = height - margin - line_height * len(lines)
+    y = max(top_limit, height - margin - line_height * len(lines))
     for line in lines:
         draw.text((margin, y), line, font=title_font, fill=fg)
         y += line_height
