@@ -84,3 +84,21 @@ def test_robots_txt_is_plain_text_with_sitemap_line(client, seeded):
     body = response.content.decode()
     assert "User-agent: *" in body
     assert "Sitemap: https://fluke.fm/sitemap.xml" in body
+
+
+def test_atom_feed_returns_atom_and_lists_published_post(client, seeded):
+    response = client.get("/feed.atom")
+    assert response.status_code == 200
+    assert "atom" in response["Content-Type"]
+    body = response.content.decode()
+    assert "Hello World" in body
+    assert "Draft Post" not in body
+    assert "Fluke" in body
+
+
+def test_footer_links_to_both_feeds(client, seeded):
+    body = client.get("/news/").content.decode()
+    # The visible footer anchors (the <link> autodiscovery tags have no text).
+    assert ">RSS</a>" in body
+    assert ">Atom</a>" in body
+    assert "/feed.atom" in body

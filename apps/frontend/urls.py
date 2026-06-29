@@ -8,7 +8,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import path
 
 from apps.frontend import views
-from apps.frontend.feeds import LatestPostsFeed
+from apps.frontend.feeds import AtomPostsFeed, LatestPostsFeed
 from apps.frontend.sitemaps import sitemaps
 
 urlpatterns = [
@@ -43,6 +43,7 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path("feed.xml", LatestPostsFeed(), name="feed"),
+    path("feed.atom", AtomPostsFeed(), name="feed_atom"),
     path("robots.txt", views.robots_txt, name="robots_txt"),
     # CMS-page catch-all MUST be last.
     path("<slug:slug>/", views.page_detail, name="page_detail"),

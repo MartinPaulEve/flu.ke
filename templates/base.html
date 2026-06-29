@@ -24,6 +24,7 @@
   <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}?v={{ static_version }}">
   <meta name="theme-color" content="#fcfcfd">
   <link rel="alternate" type="application/rss+xml" title="{{ site_name }} news" href="/feed.xml">
+  <link rel="alternate" type="application/atom+xml" title="{{ site_name }} news" href="/feed.atom">
   {% block meta %}
   <meta property="og:site_name" content="{{ site_name }}">
   <meta property="og:title" content="{{ site_name }} — the fan source">
@@ -63,7 +64,7 @@
   <footer class="site-footer">
     {% block footer %}
     {% load editlinks %}
-    <p>{{ site_name }} — independent fan archive. {{ site_config.footer_tagline }} <a href="{{ api_url|default:'/api/' }}">API</a>{% if request.user.is_staff %}{% if edit_object %} · <a href="{% admin_change_url edit_object %}">Edit this page</a>{% elif edit_changelist %} · <a href="{% admin_changelist_url edit_changelist %}">Edit this page</a>{% else %} · <a href="/admin/">Edit in admin</a>{% endif %}{% endif %}</p>
+    <p>{{ site_name }} — independent fan archive. {{ site_config.footer_tagline }} <a href="{{ api_url|default:'/api/' }}">API</a> · <a href="{% url 'feed' %}">RSS</a> · <a href="{% url 'feed_atom' %}">Atom</a>{% if request.user.is_staff %}{% if edit_object %} · <a href="{% admin_change_url edit_object %}">Edit this page</a>{% elif edit_changelist %} · <a href="{% admin_changelist_url edit_changelist %}">Edit this page</a>{% else %} · <a href="/admin/">Edit in admin</a>{% endif %}{% endif %}</p>
     {% endblock %}
   </footer>
   <script src="{% static 'js/theme.js' %}?v={{ static_version }}" defer></script>
