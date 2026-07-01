@@ -389,6 +389,15 @@ time { font-variant-numeric: tabular-nums; }
      top-right, and year-only rows keep a tight meta (so their title stays wide).
      Direct child only, to leave the snippet's own .entry__meta usages untouched. */
   .resources-index .entry > .entry__meta { max-width: 7rem; }
+  /* Homepage listing rows (Latest news / Latest resources): the kind label
+     ("Fan remixes & resources") auto-sizes its column and crushes the title into
+     a one-word-per-line sliver on narrow screens. Drop the meta below the title
+     at full width, left-aligned and quieter, so the title gets the whole row. */
+  .home .entry { grid-template-columns: 4ch minmax(0, 1fr); }
+  .home .entry > .entry__meta {
+    grid-column: 2; text-align: left; margin-top: 0.35rem;
+    font-size: 0.7rem; letter-spacing: 0.08em;
+  }
 }
 
 @media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }
