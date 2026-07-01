@@ -467,6 +467,22 @@ class ResourceFile(TimeStampedModel):
         return self.file.url if self.file else self.external_url
 
     @property
+    def image_preview_url(self) -> str | None:
+        """URL of an image to render inline under this file, or ``None``.
+
+        Public image files preview themselves (their own bytes). Locked files
+        expose only an explicitly-uploaded ``preview_image`` — never their real,
+        privately-stored bytes."""
+        if self.is_locked:
+            return self.preview_image.url if self.preview_image else None
+        if self.file_kind == "image":
+            if self.file:
+                return self.file.url
+            if self.is_external:
+                return self.external_url
+        return None
+
+    @property
     def display_name(self) -> str:
         """The label shown for this file: a given filename, the uploaded file's
         name (public or private storage), else the last path segment of the remote URL."""
