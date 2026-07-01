@@ -1,3 +1,9 @@
+## 1.47.0 (2026-07-01)
+
+### Feat
+
+- **resources**: use a resource file image for the OG/Twitter card
+
 ## 1.46.0 (2026-07-01)
 
 ### Feat
