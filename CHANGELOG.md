@@ -1,3 +1,9 @@
+## 1.43.0 (2026-06-29)
+
+### Feat
+
+- **frontend**: add Atom feed and link RSS + Atom in the footer
+
 ## 1.42.1 (2026-06-26)
 
 ### Fix
