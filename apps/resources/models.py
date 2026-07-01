@@ -438,6 +438,9 @@ class ResourceFile(TimeStampedModel):
         help_text="Optional public preview shown for a locked file.",
     )
     original_filename = models.CharField(max_length=300, blank=True)
+    purchase_url = models.URLField(
+        blank=True, help_text="Where to buy this file/item, if it's for sale."
+    )
     file_kind = models.CharField(max_length=20, choices=KIND_CHOICES, default="audio")
     byte_size = models.BigIntegerField(default=0)
     mime_type = models.CharField(max_length=100, blank=True)

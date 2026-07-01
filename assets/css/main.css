@@ -410,3 +410,6 @@ time { font-variant-numeric: tabular-nums; }
 
 .entry__lock { color: var(--accent-text); font-size: 0.85em; }
 .entry__preview { display: block; max-width: 320px; margin-top: 0.5rem; border-radius: 4px; }
+/* Per-file purchase link: a quiet, mono accent link sitting after the filename. */
+.entry__buy { font-family: var(--font-mono); font-weight: 400; font-size: var(--step--1); color: var(--accent-text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.18em; }
+.entry__title a.entry__buy { color: var(--accent-text); }

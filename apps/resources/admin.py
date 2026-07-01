@@ -14,7 +14,7 @@ class ResourceFileInline(admin.TabularInline):
     extra = 0
     fields = (
         "file", "external_url", "is_locked", "preview_image", "file_kind",
-        "original_filename", "byte_size", "duration", "display_order",
+        "purchase_url", "original_filename", "byte_size", "duration", "display_order",
     )
     readonly_fields = ("byte_size",)
 
