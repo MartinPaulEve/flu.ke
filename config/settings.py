@@ -231,6 +231,9 @@ TINYMCE_DEFAULT_CONFIG = {
     "toolbar": "undo redo | blocks | bold italic underline | "
     "alignleft aligncenter alignright | bullist numlist | link image media | "
     "removeformat code",
+    # Add Blockquote to the block-format dropdown (not in TinyMCE's default set).
+    "block_formats": "Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; "
+    "Heading 4=h4; Blockquote=blockquote; Preformatted=pre",
     "branding": False,
     "promotion": False,
     "convert_urls": False,
