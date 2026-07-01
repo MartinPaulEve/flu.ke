@@ -1,3 +1,9 @@
+## 1.44.0 (2026-07-01)
+
+### Feat
+
+- **frontend**: label the footer Atom feed link ATOM (BOMB)
+
 ## 1.43.0 (2026-06-29)
 
 ### Feat
