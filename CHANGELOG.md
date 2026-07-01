@@ -1,3 +1,10 @@
+## 1.45.0 (2026-07-01)
+
+### Feat
+
+- **resources**: allow a purchase URL on any resource, not just print items
+- **resources**: preview image files inline on the resource detail page
+
 ## 1.44.1 (2026-07-01)
 
 ### Fix
