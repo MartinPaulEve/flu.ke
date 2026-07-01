@@ -100,5 +100,5 @@ def test_footer_links_to_both_feeds(client, seeded):
     body = client.get("/news/").content.decode()
     # The visible footer anchors (the <link> autodiscovery tags have no text).
     assert ">RSS</a>" in body
-    assert ">Atom</a>" in body
+    assert ">ATOM (BOMB)</a>" in body
     assert "/feed.atom" in body
