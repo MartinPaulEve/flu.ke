@@ -267,7 +267,11 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         max_length=50, blank=True, help_text='e.g. "pp. 34–37".'
     )
     article_url = models.URLField(blank=True, help_text="Link to the article online.")
-    purchase_url = models.URLField(blank=True, help_text="Where to buy the issue.")
+
+    # --- Commerce (any resource, not only print) ----------------------------
+    purchase_url = models.URLField(
+        blank=True, help_text="Where to buy this, if it's for sale."
+    )
 
     is_published = models.BooleanField(default=False)
 
@@ -370,7 +374,12 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
 
     @property
     def has_print_metadata(self) -> bool:
-        """True when any print-article field is populated."""
+        """True when any print-article field is populated.
+
+        ``purchase_url`` is deliberately excluded: it applies to any resource
+        (a CD, a print, a book) and is surfaced on its own, so a purchase link
+        alone must not flag a resource as a print article.
+        """
         return any(
             [
                 self.article_authors,
@@ -378,7 +387,6 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
                 self.article_date,
                 self.page_numbers,
                 self.article_url,
-                self.purchase_url,
             ]
         )
 

@@ -8,7 +8,7 @@
   <h1>{{ resource.title }}</h1>
   {% if resource.contributor %}<p class="entry__meta">By {{ resource.contributor }}</p>{% endif %}
   {% with arts=resource.all_artists %}
-  {% if arts or resource.related_release or resource.recorded_date or resource.released_date or resource.license or resource.source_attribution %}
+  {% if arts or resource.related_release or resource.recorded_date or resource.released_date or resource.license or resource.source_attribution or resource.purchase_url %}
     <ul class="resource-meta">
       {% if arts %}<li><span class="resource-meta__label">Artist{{ arts|length|pluralize }}</span> {% for a in arts %}{% if a.id in linkable_artist_ids %}<a href="{{ a.get_absolute_url }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</li>{% endif %}
       {% if resource.related_release %}<li><span class="resource-meta__label">Release</span> <a href="{{ resource.related_release.get_absolute_url }}">{{ resource.related_release.name }}</a></li>{% endif %}
@@ -16,6 +16,7 @@
       {% if resource.released_date %}<li><span class="resource-meta__label">Released</span> <time datetime="{{ resource.released_date|date:'Y-m-d' }}">{{ resource.released_date|date:'j M Y' }}</time></li>{% endif %}
       {% if resource.license %}<li><span class="resource-meta__label">License</span> {{ resource.license }}</li>{% endif %}
       {% if resource.source_attribution %}<li><span class="resource-meta__label">Source</span> {{ resource.source_attribution }}</li>{% endif %}
+      {% if resource.purchase_url %}<li><span class="resource-meta__label">Purchase</span> <a href="{{ resource.purchase_url }}" rel="noopener">Buy ↗</a></li>{% endif %}
     </ul>
   {% endif %}
   {% endwith %}
@@ -51,7 +52,6 @@
         {% if resource.article_date %}<li><span class="resource-meta__label">Date</span> <time datetime="{{ resource.article_date|date:'Y-m-d' }}">{{ resource.article_date_display }}</time></li>{% endif %}
         {% if resource.page_numbers %}<li><span class="resource-meta__label">Pages</span> {{ resource.page_numbers }}</li>{% endif %}
         {% if resource.article_url %}<li><span class="resource-meta__label">Article</span> <a href="{{ resource.article_url }}" rel="noopener">Read online ↗</a></li>{% endif %}
-        {% if resource.purchase_url %}<li><span class="resource-meta__label">Purchase</span> <a href="{{ resource.purchase_url }}" rel="noopener">Buy issue ↗</a></li>{% endif %}
       </ul>
     </section>
   {% endif %}

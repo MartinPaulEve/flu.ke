@@ -100,6 +100,7 @@ class ResourceAdmin(OgCacheAdminMixin, PublishActionsMixin, admin.ModelAdmin):
                     "released_date",
                     "uploaded_at",
                     "external_url",
+                    "purchase_url",
                 )
             },
         ),
@@ -113,7 +114,6 @@ class ResourceAdmin(OgCacheAdminMixin, PublishActionsMixin, admin.ModelAdmin):
                     "article_date_input",
                     "page_numbers",
                     "article_url",
-                    "purchase_url",
                 ),
             },
         ),
