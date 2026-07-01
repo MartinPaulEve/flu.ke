@@ -395,9 +395,27 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         """The article date shown only as precisely as it's known."""
         return format_partial_date(self.article_date, self.article_date_precision)
 
+    def _og_cover_bytes(self):
+        """Image bytes for the OG card from the resource's files, or ``None``.
+
+        Uses the first file that offers an image (in display order): a public
+        image file previews itself, and a locked file uses its uploaded preview
+        image — regardless of the file's kind — since its real bytes are private.
+        """
+        for f in self.files.all():
+            source = f.og_image_source
+            if not source:
+                continue
+            try:
+                with source.open("rb") as fh:
+                    return fh.read()
+            except (FileNotFoundError, OSError, ValueError):
+                continue
+        return None
+
     def og_card(self):
         subtitle = "Fan" if self.kind == KIND_FAN else "Official"
-        return (self.resolved_og_title(), subtitle, None)
+        return (self.resolved_og_title(), subtitle, self._og_cover_bytes())
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -491,6 +509,18 @@ class ResourceFile(TimeStampedModel):
                 return self.file.url
             if self.is_external:
                 return self.external_url
+        return None
+
+    @property
+    def og_image_source(self):
+        """The stored image field to represent this file in a social card, or
+        ``None``. Locked files expose only their uploaded ``preview_image`` (real
+        bytes are private); public image files use their own bytes. External-only
+        images have no local file to read."""
+        if self.is_locked:
+            return self.preview_image or None
+        if self.file_kind == "image" and self.file:
+            return self.file
         return None
 
     @property
