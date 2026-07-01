@@ -1,3 +1,9 @@
+## 1.44.1 (2026-07-01)
+
+### Fix
+
+- **frontend**: stop listing meta from crushing the title on mobile
+
 ## 1.44.0 (2026-07-01)
 
 ### Feat
