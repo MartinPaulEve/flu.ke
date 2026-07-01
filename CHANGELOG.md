@@ -1,3 +1,14 @@
+## 1.46.0 (2026-07-01)
+
+### Feat
+
+- **resources**: add a purchase link to individual resource files
+- **admin**: add a Blockquote option to the TinyMCE block-format dropdown
+
+### Fix
+
+- **frontend**: render editor italics that font-synthesis was suppressing
+
 ## 1.45.0 (2026-07-01)
 
 ### Feat
