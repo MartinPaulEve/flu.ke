@@ -8,7 +8,7 @@
   <ul class="entries">
     {% for post in posts %}
       <li class="entry">
-        <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
+        <span class="entry__index entry__index--mark" aria-hidden="true"></span>
         <span>
           <span class="entry__title"><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></span>
           {% if post.excerpt %}<span class="prose" style="display:block;color:var(--muted)">{{ post.excerpt }}</span>{% endif %}

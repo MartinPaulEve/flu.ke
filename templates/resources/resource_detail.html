@@ -27,7 +27,7 @@
     <ul class="entries">
       {% for f in resource.files.all %}
         <li class="entry">
-          <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
+          <span class="entry__index entry__index--mark" aria-hidden="true"></span>
           {% if f.is_locked and not request.user.is_staff %}
             <span class="entry__title">{{ f.display_name }} <span class="entry__lock">🔒 Archived — not publicly available</span>{% if f.purchase_url %} <a class="entry__buy" href="{{ f.purchase_url }}" rel="noopener">Buy ↗</a>{% endif %}</span>
             <span class="entry__meta">{{ f.get_file_kind_display }}</span>

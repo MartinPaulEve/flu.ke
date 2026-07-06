@@ -223,6 +223,22 @@ h3 { font-size: var(--step-1); }
 }
 .entry:last-child { border-bottom: var(--rule) solid var(--hairline); }
 .entry__index { font-size: var(--step--1); color: var(--accent-text); }
+/* Decorative row marker that replaces the old sequential index numbers on the
+   news / resources / home listings. Keeps the 4ch index column occupied so
+   titles stay indented, sits quiet at rest, and lights up to the accent while
+   nudging right on row hover — echoing the growing underline and the "→" used
+   in the section CTAs. (The discography keeps real years in this column.) */
+.entry__index--mark::before {
+  content: "\2192"; /* → */
+  display: inline-block;
+  color: var(--muted);
+  transition: color 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.entry:hover .entry__index--mark::before,
+.entry:focus-within .entry__index--mark::before {
+  color: var(--accent-text);
+  transform: translateX(3px);
+}
 .entry__title { font-family: var(--font-display); font-weight: 700; font-size: var(--step-1); letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; }
 .entry__title a { color: var(--fg); }
 /* Right-aligned so the year/date stays flush right even when a taller stacked

@@ -6,7 +6,7 @@
     <ul class="entries">
       {% for resource in group.resources %}
         <li class="entry">
-          <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
+          <span class="entry__index entry__index--mark" aria-hidden="true"></span>
           <span class="entry__title">
             <a href="{{ resource.get_absolute_url }}">{{ resource.title }}</a>
             {% with snip=resource.snippet_display %}<span class="entry__snippet">{{ snip.lead }}{% if snip.artists %} · {% for a in snip.artists %}{% if a.id in linkable_artist_ids %}<a href="{{ a.get_absolute_url }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if snip.tail %} · {{ snip.tail }}{% endif %}</span>{% endwith %}

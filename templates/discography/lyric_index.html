@@ -9,7 +9,7 @@
   <ul class="entries">
     {% for lyric in lyrics %}
       <li class="entry">
-        <span class="entry__index">{{ forloop.counter|stringformat:"02d" }}</span>
+        <span class="entry__index entry__index--mark" aria-hidden="true"></span>
         <span class="entry__title"><a href="{{ lyric.get_absolute_url }}">{{ lyric.title }}</a></span>
         <span class="entry__meta">{% if lyric.artist %}{{ lyric.artist.name }}{% endif %}</span>
       </li>
