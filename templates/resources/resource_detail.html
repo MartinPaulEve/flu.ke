@@ -12,8 +12,8 @@
     <ul class="resource-meta">
       {% if arts %}<li><span class="resource-meta__label">Artist{{ arts|length|pluralize }}</span> {% for a in arts %}{% if a.id in linkable_artist_ids %}<a href="{{ a.get_absolute_url }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</li>{% endif %}
       {% if resource.related_release %}<li><span class="resource-meta__label">Release</span> <a href="{{ resource.related_release.get_absolute_url }}">{{ resource.related_release.name }}</a></li>{% endif %}
-      {% if resource.recorded_date %}<li><span class="resource-meta__label">Recorded</span> <time datetime="{{ resource.recorded_date|date:'Y-m-d' }}">{{ resource.recorded_display }}</time></li>{% endif %}
-      {% if resource.released_date %}<li><span class="resource-meta__label">Released</span> <time datetime="{{ resource.released_date|date:'Y-m-d' }}">{{ resource.released_date|date:'j M Y' }}</time></li>{% endif %}
+      {% if resource.recorded_date %}<li><span class="resource-meta__label">Created</span> <time datetime="{{ resource.recorded_date|date:'Y-m-d' }}">{{ resource.recorded_display }}</time></li>{% endif %}
+      {% if resource.released_date %}<li><span class="resource-meta__label">Released on Fluke.fm</span> <time datetime="{{ resource.released_date|date:'Y-m-d' }}">{{ resource.released_date|date:'j M Y' }}</time></li>{% endif %}
       {% if resource.license %}<li><span class="resource-meta__label">License</span> {{ resource.license }}</li>{% endif %}
       {% if resource.source_attribution %}<li><span class="resource-meta__label">Source</span> {{ resource.source_attribution }}</li>{% endif %}
       {% if resource.purchase_url %}<li><span class="resource-meta__label">Purchase</span> <a href="{{ resource.purchase_url }}" rel="noopener">Buy ↗</a></li>{% endif %}
