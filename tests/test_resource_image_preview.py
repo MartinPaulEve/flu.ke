@@ -1,7 +1,10 @@
 """Image resource files render an inline preview of themselves, mirroring the
 existing locked-file ``preview_image`` behaviour."""
 
+import re
+
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.resources.models import Resource, ResourceFile
@@ -123,6 +126,79 @@ def test_detail_renders_img_for_audio_file_with_preview_image(client):
     )
     html = client.get(r.get_absolute_url()).content.decode()
     assert f'src="{rf.preview_image.url}"' in html
+
+
+# ---------------------------------------------------------------------------
+# The preview image links to the file it previews (when that file is downloadable)
+# ---------------------------------------------------------------------------
+
+
+def _preview_link_href(html):
+    """The href of the link wrapping the preview image, or ``None`` if unlinked."""
+    m = re.search(r'<a\s+[^>]*href="([^"]+)"[^>]*>\s*<img[^>]*class="entry__preview"', html)
+    return m.group(1) if m else None
+
+
+def test_preview_image_links_to_the_file_it_previews(client):
+    r = _resource()
+    rf = ResourceFile.objects.create(
+        resource=r, file=SimpleUploadedFile("cover.jpg", b"IMG"), file_kind="image"
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert _preview_link_href(html) == rf.download_url
+
+
+def test_preview_image_of_an_audio_file_links_to_the_audio(client):
+    r = _resource()
+    rf = ResourceFile.objects.create(
+        resource=r,
+        file=SimpleUploadedFile("track.mp3", b"AUDIO"),
+        file_kind="audio",
+        preview_image=SimpleUploadedFile("sleeve.png", b"THUMB"),
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert _preview_link_href(html) == rf.download_url
+
+
+def test_external_file_preview_links_to_the_remote_file(client):
+    r = _resource()
+    ResourceFile.objects.create(
+        resource=r,
+        external_url="https://example.com/set.mp3",
+        file_kind="audio",
+        preview_image=SimpleUploadedFile("flyer.png", b"THUMB"),
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert _preview_link_href(html) == "https://example.com/set.mp3"
+
+
+def test_locked_file_preview_is_not_linked_for_anonymous(client):
+    r = _resource()
+    ResourceFile.objects.create(
+        resource=r,
+        file=SimpleUploadedFile("scan.png", b"IMG"),
+        file_kind="image",
+        preview_image=SimpleUploadedFile("thumb.png", b"THUMB"),
+        is_locked=True,
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert 'class="entry__preview"' in html
+    assert _preview_link_href(html) is None
+
+
+def test_locked_file_preview_links_to_gated_download_for_staff(client):
+    r = _resource()
+    rf = ResourceFile.objects.create(
+        resource=r,
+        file=SimpleUploadedFile("scan.png", b"IMG"),
+        file_kind="image",
+        preview_image=SimpleUploadedFile("thumb.png", b"THUMB"),
+        is_locked=True,
+    )
+    user = get_user_model().objects.create_user("ed", password="x", is_staff=True)
+    client.force_login(user)
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert _preview_link_href(html) == rf.download_url
 
 
 def test_og_cover_uses_preview_image_of_an_unlocked_non_image_file():

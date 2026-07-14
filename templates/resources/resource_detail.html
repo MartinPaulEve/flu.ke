@@ -35,7 +35,7 @@
             <span class="entry__title"><a href="{{ f.download_url }}"{% if f.is_external %} rel="noopener" target="_blank"{% else %} download{% endif %}>{{ f.display_name }}</a>{% if f.is_locked %} <span class="entry__lock">🔒</span>{% endif %}{% with size=f.display_byte_size %}{% if size %} <span class="entry__size">({{ size|filesizeformat }})</span>{% endif %}{% endwith %}{% if f.purchase_url %} <a class="entry__buy" href="{{ f.purchase_url }}" rel="noopener">Buy ↗</a>{% endif %}</span>
             <span class="entry__meta">{% if f.is_external %}{{ f.get_file_kind_display }} ↗{% else %}{{ f.get_file_kind_display }}{% endif %}</span>
           {% endif %}
-          {% if f.image_preview_url %}<img class="entry__preview" src="{{ f.image_preview_url }}" alt="" loading="lazy">{% endif %}
+          {% if f.image_preview_url %}{% if f.is_locked and not request.user.is_staff %}<img class="entry__preview" src="{{ f.image_preview_url }}" alt="" loading="lazy">{% else %}<a class="entry__preview-link" href="{{ f.download_url }}"{% if f.is_external %} rel="noopener" target="_blank"{% else %} download{% endif %}><img class="entry__preview" src="{{ f.image_preview_url }}" alt="{{ f.display_name }}" loading="lazy"></a>{% endif %}{% endif %}
         </li>
       {% endfor %}
     </ul>
