@@ -1,3 +1,9 @@
+## 1.50.0 (2026-07-14)
+
+### Feat
+
+- **resources**: link a file's preview image to the file itself
+
 ## 1.49.0 (2026-07-14)
 
 ### Feat
