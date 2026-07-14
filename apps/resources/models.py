@@ -458,7 +458,9 @@ class ResourceFile(TimeStampedModel):
     preview_image = models.ImageField(
         upload_to="resources/previews/",
         blank=True,
-        help_text="Optional public preview shown for a locked file.",
+        help_text="Optional public preview image, shown inline for this file "
+        "whatever its kind. Required to preview a locked file, whose real bytes "
+        "stay private.",
     )
     original_filename = models.CharField(max_length=300, blank=True)
     purchase_url = models.URLField(
@@ -504,11 +506,13 @@ class ResourceFile(TimeStampedModel):
     def image_preview_url(self) -> str | None:
         """URL of an image to render inline under this file, or ``None``.
 
-        Public image files preview themselves (their own bytes). Locked files
-        expose only an explicitly-uploaded ``preview_image`` — never their real,
-        privately-stored bytes."""
+        An uploaded ``preview_image`` is shown whatever the file's kind or lock
+        state. Failing that, a public image file previews itself (its own bytes);
+        a locked file never does, since its real bytes are privately stored."""
+        if self.preview_image:
+            return self.preview_image.url
         if self.is_locked:
-            return self.preview_image.url if self.preview_image else None
+            return None
         if self.file_kind == "image":
             if self.file:
                 return self.file.url
@@ -519,11 +523,13 @@ class ResourceFile(TimeStampedModel):
     @property
     def og_image_source(self):
         """The stored image field to represent this file in a social card, or
-        ``None``. Locked files expose only their uploaded ``preview_image`` (real
-        bytes are private); public image files use their own bytes. External-only
-        images have no local file to read."""
+        ``None``. An uploaded ``preview_image`` is preferred, whatever the kind;
+        failing that, a public image file uses its own bytes. A locked file never
+        exposes its real bytes, and an external-only image has none to read."""
+        if self.preview_image:
+            return self.preview_image
         if self.is_locked:
-            return self.preview_image or None
+            return None
         if self.file_kind == "image" and self.file:
             return self.file
         return None

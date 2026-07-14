@@ -69,6 +69,74 @@ def test_locked_image_without_preview_image_has_no_preview():
 
 
 # ---------------------------------------------------------------------------
+# An uploaded preview_image is shown for any file, whatever its kind or lock state
+# ---------------------------------------------------------------------------
+
+
+def test_unlocked_audio_with_preview_image_shows_it():
+    rf = ResourceFile.objects.create(
+        resource=_resource(),
+        file=SimpleUploadedFile("track.mp3", b"AUDIO"),
+        file_kind="audio",
+        preview_image=SimpleUploadedFile("sleeve.png", b"THUMB"),
+    )
+    assert rf.image_preview_url == rf.preview_image.url
+
+
+def test_unlocked_document_with_preview_image_shows_it():
+    rf = ResourceFile.objects.create(
+        resource=_resource(),
+        file=SimpleUploadedFile("zine.pdf", b"PDF"),
+        file_kind="document",
+        preview_image=SimpleUploadedFile("page1.png", b"THUMB"),
+    )
+    assert rf.image_preview_url == rf.preview_image.url
+
+
+def test_external_file_with_preview_image_shows_the_preview():
+    rf = ResourceFile.objects.create(
+        resource=_resource(),
+        external_url="https://example.com/set.mp3",
+        file_kind="audio",
+        preview_image=SimpleUploadedFile("flyer.png", b"THUMB"),
+    )
+    assert rf.image_preview_url == rf.preview_image.url
+
+
+def test_preview_image_wins_over_an_image_files_own_bytes():
+    rf = ResourceFile.objects.create(
+        resource=_resource(),
+        file=SimpleUploadedFile("huge-scan.png", b"IMG"),
+        file_kind="image",
+        preview_image=SimpleUploadedFile("thumb.png", b"THUMB"),
+    )
+    assert rf.image_preview_url == rf.preview_image.url
+
+
+def test_detail_renders_img_for_audio_file_with_preview_image(client):
+    r = _resource()
+    rf = ResourceFile.objects.create(
+        resource=r,
+        file=SimpleUploadedFile("track.mp3", b"AUDIO"),
+        file_kind="audio",
+        preview_image=SimpleUploadedFile("sleeve.png", b"THUMB"),
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert f'src="{rf.preview_image.url}"' in html
+
+
+def test_og_cover_uses_preview_image_of_an_unlocked_non_image_file():
+    r = _resource()
+    rf = ResourceFile.objects.create(
+        resource=r,
+        file=SimpleUploadedFile("zine.pdf", b"PDF"),
+        file_kind="document",
+        preview_image=SimpleUploadedFile("page1.png", b"THUMB"),
+    )
+    assert rf.og_image_source == rf.preview_image
+
+
+# ---------------------------------------------------------------------------
 # Detail page rendering
 # ---------------------------------------------------------------------------
 
