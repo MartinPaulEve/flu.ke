@@ -1,3 +1,9 @@
+## 1.49.0 (2026-07-14)
+
+### Feat
+
+- **resources**: show an uploaded preview image for any resource file
+
 ## 1.48.0 (2026-07-14)
 
 ### Feat
