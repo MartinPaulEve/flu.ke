@@ -1,3 +1,9 @@
+## 1.48.0 (2026-07-14)
+
+### Feat
+
+- **resources**: explain locked files on resource detail pages
+
 ## 1.47.0 (2026-07-01)
 
 ### Feat
