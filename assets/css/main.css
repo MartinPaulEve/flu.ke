@@ -425,6 +425,8 @@ time { font-variant-numeric: tabular-nums; }
 @media print { body::before, body::after, .site-nav { display: none; } body { color: #000; background: #fff; } }
 
 .entry__lock { color: var(--accent-text); font-size: 0.85em; }
+/* Explains the 🔒 entries above: why locked files are listed but not downloadable. */
+.locked-note { color: var(--muted); font-size: var(--step--1); max-width: 46ch; margin-top: 0.75rem; }
 .entry__preview { display: block; max-width: 320px; margin-top: 0.5rem; border-radius: 4px; }
 /* Per-file purchase link: a quiet, mono accent link sitting after the filename. */
 .entry__buy { font-family: var(--font-mono); font-weight: 400; font-size: var(--step--1); color: var(--accent-text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.18em; }

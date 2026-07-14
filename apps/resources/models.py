@@ -391,6 +391,11 @@ class Resource(SluggedModel, SeoFieldsMixin, TimeStampedModel):
         )
 
     @property
+    def has_locked_files(self) -> bool:
+        """True when any of this resource's files is locked."""
+        return any(f.is_locked for f in self.files.all())
+
+    @property
     def article_date_display(self) -> str:
         """The article date shown only as precisely as it's known."""
         return format_partial_date(self.article_date, self.article_date_precision)

@@ -172,6 +172,46 @@ def test_detail_shows_link_for_locked_staff(client):
 
 
 # ---------------------------------------------------------------------------
+# Detail page: explainer for resources holding locked files
+# ---------------------------------------------------------------------------
+
+
+def test_has_locked_files_true_when_any_file_is_locked():
+    r = _resource()
+    ResourceFile.objects.create(resource=r, file=SimpleUploadedFile("a.mp3", b"x"))
+    ResourceFile.objects.create(
+        resource=r, file=SimpleUploadedFile("b.flac", b"y"), is_locked=True
+    )
+    assert r.has_locked_files is True
+
+
+def test_has_locked_files_false_when_no_file_is_locked():
+    r = _resource()
+    ResourceFile.objects.create(resource=r, file=SimpleUploadedFile("a.mp3", b"x"))
+    assert r.has_locked_files is False
+
+
+def test_has_locked_files_false_without_files():
+    assert _resource().has_locked_files is False
+
+
+def test_detail_explains_locked_items_when_resource_has_them(client):
+    r = _resource()
+    ResourceFile.objects.create(
+        resource=r, file=SimpleUploadedFile("s.flac", b"AUDIO"), is_locked=True
+    )
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert "preservation purposes" in html
+
+
+def test_detail_omits_locked_explainer_when_no_locked_files(client):
+    r = _resource()
+    ResourceFile.objects.create(resource=r, file=SimpleUploadedFile("s.mp3", b"AUDIO"))
+    html = client.get(r.get_absolute_url()).content.decode()
+    assert "preservation purposes" not in html
+
+
+# ---------------------------------------------------------------------------
 # Admin: locking fields surfaced in inline and list views
 # ---------------------------------------------------------------------------
 

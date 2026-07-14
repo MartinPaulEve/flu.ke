@@ -39,6 +39,9 @@
         </li>
       {% endfor %}
     </ul>
+    {% if resource.has_locked_files %}
+      <p class="locked-note">This resource has some locked items associated with it. These are not available for public download, but are kept as historic artefacts for preservation purposes.</p>
+    {% endif %}
   {% elif resource.external_url %}
     <p class="prose"><a href="{{ resource.external_url }}">Open resource →</a></p>
   {% endif %}
